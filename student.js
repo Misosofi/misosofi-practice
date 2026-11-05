@@ -6,7 +6,7 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans"];
+const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
@@ -310,6 +310,7 @@ function vHome() {
   const msg = starred ? t("m_star") : Q.piece ? t("m_greet2") : t("m_greet");
   return `${!teen() ? `<div class="section mascot">${mascotSVG()}<div class="bubble">${msg}</div></div>` : ""}
  ${!PROF.teacher_id ? `<div class="section"><div class="card muted small">${t("noTeacher")}</div></div>` : ""}
+ ${typeof ppHome === "function" ? ppHome() : ""}
  ${bellBanner()}
  ${ev ? `<div class="section">${countdownCard(ev)}</div>` : ""}
  ${openPlan() ? `<div class="section">${planCard("start")}</div>` : ""}
@@ -689,8 +690,9 @@ function settings() {
 
 /* ===== render & events ===== */
 function refresh() {
-  if (!S) return; applySkin(); refreshTop(); const v = document.getElementById("view"); v.innerHTML = ({ home: vHome, pieces: vPieces, goals: vGoals, me: vMe })[tab](); hydrateMedia(v); hydratePlans(v);
+  if (!S) return; if (typeof thiefCheck === "function" && !OB) thiefCheck(); applySkin(); refreshTop(); const v = document.getElementById("view"); v.innerHTML = ({ home: vHome, pieces: vPieces, goals: vGoals, me: vMe })[tab](); hydrateMedia(v); hydratePlans(v);
   if ((tab === "home" || tab === "me") && PROF?.teacher_id !== undefined) visitsLoad();
+  if (tab === "home" && typeof thiefNews === "function" && !OB) setTimeout(() => { thiefNews(); giftCheck(); }, 400);
   document.getElementById("tabs").innerHTML = Object.entries(TABS).map(([k, ic]) => `<button data-act="tab" data-t="${k}" ${k === tab ? 'aria-current="page"' : ""}>${I[ic]}<span>${t("tab_" + k)}</span></button>`).join("");
 }
 function studentClick(b, e) {

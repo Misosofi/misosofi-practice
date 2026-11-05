@@ -76,6 +76,10 @@ function roomOf() {
 }
 let ROOM = { edit: false, sel: null, drag: null, cat: "food" };
 
+/* what the thief leaves behind: a cracked window and cobwebs (drawn, not pictures) */
+const CRACKS = `<svg class="th-crack" viewBox="0 0 100 60" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width=".7" stroke-linecap="round" opacity=".9"><path d="M50 22 L44 8 L41 2 M50 22 L58 6 M50 22 L66 20 L80 16 M50 22 L62 34 L70 46 M50 22 L40 30 L30 40 M50 22 L34 20 L22 15 M44 8 L36 6 M62 34 L74 34 M40 30 L42 42"/><circle cx="50" cy="22" r="1.6" fill="#fff"/></g></svg>`;
+const WEB = (x, y, r, rot) => { let s = `<g transform="translate(${x} ${y}) rotate(${rot})">`; for (let i = 0; i <= 6; i++) { const a = i * 15 * Math.PI / 180; s += `<line x1="0" y1="0" x2="${(r * Math.cos(a)).toFixed(1)}" y2="${(r * Math.sin(a)).toFixed(1)}"/>`; } for (let k = 1; k <= 4; k++) { const rr = r * k / 4; let d = ""; for (let i = 0; i <= 6; i++) { const a = i * 15 * Math.PI / 180; d += (i ? " Q" + ((rr * .82) * Math.cos(a - .13)).toFixed(1) + " " + ((rr * .82) * Math.sin(a - .13)).toFixed(1) + " " : "M") + (rr * Math.cos(a)).toFixed(1) + " " + (rr * Math.sin(a)).toFixed(1); } s += `<path d="${d}"/>`; } return s + "</g>"; };
+const WEBS = `<svg class="th-webs" viewBox="0 0 100 78" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width=".35" opacity=".85">${WEB(0, 0, 22, 0)}${WEB(100, 0, 20, 90)}${WEB(0, 78, 14, -90)}</g><g stroke="#fff" stroke-width=".3"><line x1="72" y1="0" x2="72" y2="14"/></g><circle cx="72" cy="15" r="1.4" fill="#2A2438"/></svg>`;
 /* night: 8 pm to 7 am, or when the student turns the lights off */
 const isNight = () => { if (ROOM.lights === "off") return true; if (ROOM.lights === "on") return false; const h = new Date().getHours(); return h >= 20 || h < 7; };
 /* where your friend sleeps: a bed, then a futon, otherwise on the floor */
@@ -87,21 +91,22 @@ function sleepSpot(R) {
   return { x: R.me.x, y: Math.min(99, R.me.y + 3), w: 15, where: "floor" };
 }
 function roomHTML(edit) {
-  const R = roomOf(), ins = INSTR[instrNow()], night = !edit && isNight(), sp = night ? sleepSpot(R) : null;
+  const R = roomOf(), ins = INSTR[instrNow()], night = !edit && isNight(), sp = night && !S.thief?.boxed ? sleepSpot(R) : null;
   const meY = sp ? sp.y + 0.5 : R.me.y;
   const objs = R.items.filter(i => i.placed).map(i => ({ k: "i", i, y: i.y }))
     .concat([{ k: "me", y: meY }, { k: "inst", y: R.inst.y }]).sort((a, b) => a.y - b.y);
   let toyN = 0;
   const el = o => {
     if (o.k === "me" && sp) return `<div class="ri me sleep" data-ri="me" style="left:${sp.x}%;top:${sp.y}%;width:${sp.w}%;z-index:${Math.round(meY)}">${avatarSVG(S.avatar, { room: true })}<span class="zzz">z<b>z</b><i>Z</i></span></div>`;
-    if (o.k === "me") return `<div class="ri me ${ROOM.sel === "me" ? "sel" : ""}" data-ri="me" style="left:${R.me.x}%;top:${R.me.y}%;width:22%;z-index:${Math.round(R.me.y)}">${avatarSVG(S.avatar, { room: true })}<span class="hearts" id="hearts"></span><span class="notes" id="notes"></span></div>`;
+    if (o.k === "me") return `<div class="ri me ${ROOM.sel === "me" ? "sel" : ""}" data-ri="me" style="left:${R.me.x}%;top:${R.me.y}%;width:22%;z-index:${Math.round(R.me.y)}">${S.thief?.boxed ? `<span class="pet-full"><img src="${ART}boxed.webp" alt="" draggable="false"></span>` : avatarSVG(S.avatar, { room: true })}<span class="hearts" id="hearts"></span><span class="notes" id="notes"></span></div>`;
     if (o.k === "inst") return `<div class="ri ${ROOM.sel === "inst" ? "sel" : ""}" data-ri="inst" style="left:${R.inst.x}%;top:${R.inst.y}%;width:${ins.w}%;z-index:${Math.round(R.inst.y)}">${itemImg(ins.id)}</div>`;
     const it = itemOf(o.i.id);
     const alive = night && it.cat === "toy" && o.i.id !== "r_guitar";
     return `<div class="ri ${ROOM.sel === o.i.u ? "sel" : ""} ${o.i.flip ? "flip" : ""} ${it.cat === "food" && !edit && !night ? "food" : ""} ${alive ? "alive" : ""}" data-ri="${o.i.u}" style="left:${o.i.x}%;top:${o.i.y}%;width:${it.w}%;z-index:${Math.round(o.i.y)}${alive ? `;--d:${(toyN++ * 0.37) % 1.5}s;--k:${toyN % 3}` : ""}">${itemImg(o.i.id)}</div>`;
   };
   const sel = ROOM.sel && ROOM.sel.length > 6 ? R.items.find(i => i.u === ROOM.sel) : null;
-  return `<div class="room ${edit ? "edit" : ""} ${night ? "night" : ""}" id="room" style="background-image:url('${ART}${R.bg}.webp')">${objs.map(el).join("")}${night ? `<span class="moon" aria-hidden="true">☾</span>` : ""}</div>
+  const TH = S.thief || {};
+  return `<div class="room ${edit ? "edit" : ""} ${night ? "night" : ""} ${TH.dark ? "th-dark" : ""}" id="room" style="background-image:url('${ART}${R.bg}.webp')">${objs.map(el).join("")}${night ? `<span class="moon" aria-hidden="true">☾</span>` : ""}${TH.broken ? CRACKS : ""}${TH.webs ? WEBS : ""}</div>
   ${edit && sel ? `<div class="chips room-tools"><button class="btn sm soft" data-act="rmFlip">↔ ${t("rm_flip")}</button><button class="btn sm soft" data-act="rmFront">${t("rm_front")}</button><button class="btn sm soft" data-act="rmAway">${t("rm_away")}</button></div>` : edit ? `<div class="muted small">${t("rm_hint")}</div>` : ""}`;
 }
 function instrLine() {
@@ -111,7 +116,7 @@ function instrLine() {
 }
 function roomCard() {
   const R = roomOf();
-  const night = isNight(), sp = night ? sleepSpot(R) : null, hasG = R.items.some(i => i.id === "r_guitar");
+  const night = isNight(), sp = night && !S.thief?.boxed ? sleepSpot(R) : null, hasG = R.items.some(i => i.id === "r_guitar");
   const hint = night ? t("rm_nightHint") + (sp.where === "floor" ? " " + t("rm_floorHint") : "") : t("rm_feedHint");
   return `<div class="section"><div class="section-head"><h2>${t("rm_title", { name: esc(S.profile.name || "") })}</h2><span class="pill m">♥ ${R.happy}</span></div>${roomHTML(false)}
   <div class="muted small">${hint}</div>
