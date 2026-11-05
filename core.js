@@ -136,17 +136,26 @@ function staff({clef="treble",notes=[],keyAcc=0,width=220}){
  let s=`<svg viewBox="0 0 ${width} 130" width="${width}" role="img" aria-label="Music staff">`;
  for(let i=0;i<5;i++)s+=`<line x1="4" x2="${width-4}" y1="${top+i*gap}" y2="${top+i*gap}" stroke="${INK}" stroke-width="1.3"/>`;
  s+=clefGlyph(clef,8,top,gap);let x=48;
- const n=Math.abs(keyAcc);for(let i=0;i<n;i++){const st=(keyAcc>0?SHARP_STEPS:FLAT_STEPS)[i]+shift;s+=`<text x="${x}" y="${y(base+st)+(keyAcc>0?6:3)}" font-size="21" font-weight="700" fill="${INK}" text-anchor="middle">${keyAcc>0?"♯":"♭"}</text>`;x+=10}
+ const n=Math.abs(keyAcc);s+=keySig(keyAcc,x,y,base,shift,gap);x+=n*gap*1.05;
  if(n)x+=10;
  const stp=notes.length?Math.min(64,(width-x-20)/notes.length):0;
  notes.forEach((nt,i)=>{const nx=x+stp*(i+.5)+8;s+=noteHead(nt,nx,y,base);if((nt.dur??4)<4){const up=(nt.d-base)<4,sx=up?nx+6:nx-6,y1=y(nt.d),y2=up?y1-34:y1+34;s+=`<line x1="${sx}" x2="${sx}" y1="${y1}" y2="${y2}" stroke="${INK}" stroke-width="1.6"/>`}});
  return s+"</svg>";
 }
-function clefGlyph(clef,x,top,gap){return clef==="treble"?`<text x="${x}" y="${top+gap*3}" font-family="${MUSICFONT}" font-size="${gap*4}" fill="${INK}">&#x1D11E;</text>`:(()=>{const F=top+gap,X=x+2;return `<g aria-hidden="true"><circle cx="${X+5}" cy="${F+1}" r="${gap*.38}" fill="${INK}"/><path d="M${X+3} ${F} C${X+3} ${top-gap*.55}, ${X+gap*2.1} ${top-gap*.55}, ${X+gap*2.1} ${F+gap*.6} C${X+gap*2.1} ${F+gap*1.9}, ${X+gap*1.1} ${top+gap*3.2}, ${X} ${top+gap*3.9}" fill="none" stroke="${INK}" stroke-width="${gap*.28}" stroke-linecap="round"/><circle cx="${X+gap*2.7}" cy="${F-gap*.45}" r="${gap*.19}" fill="${INK}"/><circle cx="${X+gap*2.7}" cy="${F+gap*.45}" r="${gap*.19}" fill="${INK}"/></g>`})()}
+function accG(sym,x,y,g){const k=sym==="♯"?1:sym==="♭"?-1:sym==="♮"?0:null,L=(x1,y1,x2,y2,w)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${INK}" stroke-width="${w}"/>`;
+ if(k===1)return L(x-.25*g,y-1.25*g,x-.25*g,y+1.45*g,.12*g)+L(x+.25*g,y-1.45*g,x+.25*g,y+1.25*g,.12*g)+L(x-.6*g,y-.25*g,x+.6*g,y-.62*g,.34*g)+L(x-.6*g,y+.62*g,x+.6*g,y+.25*g,.34*g);
+ if(k===-1)return L(x-.32*g,y-2*g,x-.32*g,y+.55*g,.13*g)+`<path d="M${x-.32*g} ${y+.55*g} C${x+.2*g} ${y+.2*g} ${x+.75*g} ${y-.3*g} ${x+.45*g} ${y-.62*g} C${x+.2*g} ${y-.88*g} ${x-.12*g} ${y-.55*g} ${x-.32*g} ${y-.22*g}" fill="none" stroke="${INK}" stroke-width="${.22*g}" stroke-linejoin="round"/>`;
+ if(k===0)return L(x-.25*g,y-1.4*g,x-.25*g,y+.6*g,.12*g)+L(x+.25*g,y-.6*g,x+.25*g,y+1.4*g,.12*g)+L(x-.25*g,y-.28*g,x+.25*g,y-.5*g,.3*g)+L(x-.25*g,y+.5*g,x+.25*g,y+.28*g,.3*g);
+ return `<text x="${x}" y="${y+5}" font-size="${g*1.6}" font-weight="700" fill="${INK}" text-anchor="middle">${sym}</text>`}
+function keySig(keyAcc,x,yOf,base,shift,g){let s="";const n=Math.abs(keyAcc);for(let i=0;i<n;i++){const st=(keyAcc>0?SHARP_STEPS:FLAT_STEPS)[i]+shift;s+=accG(keyAcc>0?"♯":"♭",x+i*g*1.05,yOf(base+st),g)}return s}
+function timeSig(T,x,top,g){const f=`font-family="Georgia,'Times New Roman',serif" font-weight="900" font-size="${g*2.75}" fill="${INK}" text-anchor="middle"`;return `<text x="${x}" y="${top+2*g-.6}" ${f}>${T.n}</text><text x="${x}" y="${top+4*g-.6}" ${f}>${T.d}</text>`}
+function trebleClef(x,top,g){const X=x+g*.95,Y=top+3*g,P=(a,b)=>`${(X+a*g).toFixed(1)} ${(Y+b*g).toFixed(1)}`;
+ return `<g aria-hidden="true"><path d="M${P(.22,.12)} C${P(-.38,.18)} ${P(-.42,-.62)} ${P(.15,-.66)} C${P(.95,-.66)} ${P(1.05,.62)} ${P(.08,.82)} C${P(-.95,.98)} ${P(-1.25,-.45)} ${P(-.62,-1.15)} C${P(-.05,-1.75)} ${P(.8,-2.4)} ${P(.68,-3.5)} C${P(.6,-4.2)} ${P(-.05,-4.25)} ${P(-.25,-3.6)} C${P(-.42,-2.95)} ${P(-.08,-1.05)} ${P(.18,.95)} C${P(.33,1.95)} ${P(.22,2.38)} ${P(-.32,2.4)}" fill="none" stroke="${INK}" stroke-width="${(g*.2).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${(X-.42*g).toFixed(1)}" cy="${(Y+2.05*g).toFixed(1)}" r="${(g*.34).toFixed(1)}" fill="${INK}"/></g>`}
+function clefGlyph(clef,x,top,gap){return clef==="treble"?trebleClef(x,top,gap):(()=>{const F=top+gap,X=x+2;return `<g aria-hidden="true"><circle cx="${X+5}" cy="${F+1}" r="${gap*.38}" fill="${INK}"/><path d="M${X+3} ${F} C${X+3} ${top-gap*.55}, ${X+gap*2.1} ${top-gap*.55}, ${X+gap*2.1} ${F+gap*.6} C${X+gap*2.1} ${F+gap*1.9}, ${X+gap*1.1} ${top+gap*3.2}, ${X} ${top+gap*3.9}" fill="none" stroke="${INK}" stroke-width="${gap*.28}" stroke-linecap="round"/><circle cx="${X+gap*2.7}" cy="${F-gap*.45}" r="${gap*.19}" fill="${INK}"/><circle cx="${X+gap*2.7}" cy="${F+gap*.45}" r="${gap*.19}" fill="${INK}"/></g>`})()}
 function noteHead(nt,nx,y,base,opt={}){let s="";const ny=y(nt.d),st=nt.d-base;
  for(let L=-2;L>=st;L-=2)s+=`<line x1="${nx-11}" x2="${nx+11}" y1="${y(base+L)}" y2="${y(base+L)}" stroke="${INK}" stroke-width="1.3"/>`;
  for(let L=10;L<=st;L+=2)s+=`<line x1="${nx-11}" x2="${nx+11}" y1="${y(base+L)}" y2="${y(base+L)}" stroke="${INK}" stroke-width="1.3"/>`;
- if(nt.sym)s+=`<text x="${nx-16}" y="${ny+6}" font-size="19" font-weight="700" fill="${INK}" text-anchor="middle">${nt.sym}</text>`;
+ if(nt.sym)s+=accG(nt.sym,nx-17,ny,opt.gap||11);
  const hollow=(nt.dur??4)>=2;
  s+=`<ellipse cx="${nx}" cy="${ny}" rx="6.6" ry="4.8" transform="rotate(-20 ${nx} ${ny})" fill="${hollow?"#FFFDF8":INK}" stroke="${INK}" stroke-width="${hollow?2:1}"/>`;
  if(nt.dur===3||nt.dur===1.5||nt.dur===.75)s+=`<circle cx="${nx+12}" cy="${ny-(st%2===0?3:0)}" r="2.2" fill="${INK}"/>`;
@@ -155,20 +164,24 @@ function noteHead(nt,nx,y,base,opt={}){let s="";const ny=y(nt.d),st=nt.d-base;
 const TSS={"2/4":{n:2,d:4,len:2,grp:1},"3/4":{n:3,d:4,len:3,grp:1},"4/4":{n:4,d:4,len:4,grp:1},"3/8":{n:3,d:8,len:1.5,grp:1.5},"6/8":{n:6,d:8,len:3,grp:1.5}};
 const barsOf=(notes,len)=>Math.round(notes.reduce((a,n)=>a+n.dur,0)/len);
 const allD=nt=>nt.chord?[nt.d,...nt.chord]:[nt.d];
-function grand({keyAcc,ts,rh,lh,width,single,noTime}){
+function grand({keyAcc,ts,rh,lh,width,single,noTime,final=true}){
  const T=TSS[ts],gap=11,tT=30,bT=tT+4*gap+52,H=single?tT+4*gap+40:bT+4*gap+34;
  const yAt=(top,base)=>d=>top+4*gap-(d-base)*gap/2;
  const staves=single?[[tT,single]]:[[tT,"treble"],[bT,"bass"]],lastTop=staves[staves.length-1][0];
+ const L0=single?10:16,endX=Math.round(width-8),sb=(top)=>top+4*gap;
  let s=`<svg viewBox="0 0 ${width} ${H}" width="${width}" role="img" aria-label="Sight-reading exercise">`;
- staves.forEach(([top,clef])=>{for(let i=0;i<5;i++)s+=`<line x1="10" x2="${width-4}" y1="${top+i*gap}" y2="${top+i*gap}" stroke="${INK}" stroke-width="1.2"/>`;s+=clefGlyph(clef,13,top,gap)});
- s+=`<line x1="10" x2="10" y1="${tT}" y2="${lastTop+4*gap}" stroke="${INK}" stroke-width="1.6"/>`;
- let x=50;const n=Math.abs(keyAcc),ksw=n*9+(n?10:2);
- staves.forEach(([top,clef])=>{const base=clef==="treble"?30:18,yy=yAt(top,base),shift=clef==="treble"?0:-2;let xx=x;
-  for(let i=0;i<n;i++){const st=(keyAcc>0?SHARP_STEPS:FLAT_STEPS)[i]+shift;s+=`<text x="${xx}" y="${yy(base+st)+(keyAcc>0?5:3)}" font-size="19" font-weight="700" fill="${INK}" text-anchor="middle">${keyAcc>0?"♯":"♭"}</text>`;xx+=9}
-  if(!noTime){const tx=x+ksw+8;s+=`<text x="${tx}" y="${top+2*gap-2}" font-size="21" font-weight="800" fill="${INK}" text-anchor="middle">${T.n}</text><text x="${tx}" y="${top+4*gap-2}" font-size="21" font-weight="800" fill="${INK}" text-anchor="middle">${T.d}</text>`}});
- x+=ksw+(noTime?6:24);
- const total=Math.max(1,barsOf(rh.length?rh:lh,T.len)),W=(width-x-14)/(total*T.len);
- for(let b=1;b<=total;b++){const bx=x+b*T.len*W-2;s+=`<line x1="${bx}" x2="${bx}" y1="${tT}" y2="${lastTop+4*gap}" stroke="${INK}" stroke-width="${b===total?3:1.2}"/>`}
+ staves.forEach(([top,clef])=>{for(let i=0;i<5;i++)s+=`<line x1="${L0}" x2="${endX}" y1="${top+i*gap}" y2="${top+i*gap}" stroke="${INK}" stroke-width="1.2" shape-rendering="crispEdges"/>`;s+=clefGlyph(clef,L0+3,top,gap)});
+ s+=`<line x1="${L0}" x2="${L0}" y1="${tT}" y2="${sb(lastTop)}" stroke="${INK}" stroke-width="1.4" shape-rendering="crispEdges"/>`;
+ if(!single){const a=tT,b=sb(lastTop),m=(a+b)/2,h=b-a;s+=`<path d="M${L0-3} ${a} C${L0-10} ${a+h*.06} ${L0-4} ${m-h*.1} ${L0-11} ${m} C${L0-4} ${m+h*.1} ${L0-10} ${b-h*.06} ${L0-3} ${b}" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linecap="round"/>`}
+ let x=L0+44;const n=Math.abs(keyAcc),ksw=n*gap*1.05;
+ staves.forEach(([top,clef])=>{const base=clef==="treble"?30:18,yy=yAt(top,base),shift=clef==="treble"?0:-2;
+  s+=keySig(keyAcc,x+gap*.5,yy,base,shift,gap);
+  if(!noTime)s+=timeSig(T,x+ksw+(n?gap*.9:0)+gap*.9,top,gap)});
+ x+=ksw+(n?gap*.9:0)+(noTime?gap*.6:gap*2.4);
+ const total=Math.max(1,barsOf(rh.length?rh:lh,T.len)),W=(endX-x-6)/(total*T.len);
+ for(let b=1;b<=total;b++){const last=b===total,bx=last?endX:Math.round(x+b*T.len*W)+.5;
+  if(last&&final)s+=`<line x1="${bx-7}" x2="${bx-7}" y1="${tT}" y2="${sb(lastTop)}" stroke="${INK}" stroke-width="1.3"/><line x1="${bx-2}" x2="${bx-2}" y1="${tT}" y2="${sb(lastTop)}" stroke="${INK}" stroke-width="4"/>`;
+  else s+=`<line x1="${last?bx-.65:bx}" x2="${last?bx-.65:bx}" y1="${tT}" y2="${sb(lastTop)}" stroke="${INK}" stroke-width="1.3"/>`}
  const voice=(notes,top,clef)=>{const base=clef==="treble"?30:18,yy=yAt(top,base);let pos=0,out="";
   const P=notes.map(nt=>{const o={nt,pos,nx:x+pos*W+11};pos+=nt.dur;return o});const done=new Set();
   const heads=o=>allD(o.nt).forEach((dd,j)=>out+=noteHead({...o.nt,d:dd,sym:j===0?o.nt.sym:null},o.nx,yy,base));

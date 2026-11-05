@@ -428,7 +428,7 @@ function splitBars(notes, L) { const out = []; let cur = [], pos = 0; notes.forE
 function sightLines(E, w) {
   const L = TSS[E.ts].len, R = splitBars(E.rh, L), Lh = splitBars(E.lh, L), nb = Math.max(R.length, Lh.length);
   if (nb <= 2) return grand({ keyAcc: E.keyAcc, ts: E.ts, rh: E.rh, lh: E.lh, width: w, single: E.single });
-  let html = ""; for (let i = 0; i < nb; i += 2) html += grand({ keyAcc: E.keyAcc, ts: E.ts, rh: R.slice(i, i + 2).flat(), lh: Lh.slice(i, i + 2).flat(), width: w, single: E.single, noTime: i > 0 }); return html;
+  let html = ""; for (let i = 0; i < nb; i += 2) html += grand({ keyAcc: E.keyAcc, ts: E.ts, rh: R.slice(i, i + 2).flat(), lh: Lh.slice(i, i + 2).flat(), width: w, single: E.single, noTime: i > 0, final: i + 2 >= nb }); return html;
 }
 function playSight() { const E = A.ex, spb = .6;[E.rh, E.lh].forEach(v => { let pos = 0; v.forEach(n => { if (!n.rest) { tone(midiOf(n.d, n.alt), pos * spb, Math.max(.35, n.dur * spb), .26); (n.chord || []).forEach(c => tone(midiOf(c, keyAlt(m7(c), E.keyAcc)), pos * spb, n.dur * spb, .2)); } pos += n.dur; }); }); }
 /* Note Catcher: our own note-reading game (tap mode) */
