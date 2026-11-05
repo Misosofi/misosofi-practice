@@ -2,10 +2,10 @@
    Pictures live in assets/art/*.webp (all original, generated for Misosofi).
    Avatar data: { animal, outfit, shape, bg } */
 const ART = "assets/art/";
-const ANIMALS = ["boy", "girl", "bunny", "cat", "dog", "panda", "fox", "penguin", "hamster"];
+const ANIMALS = ["boy", "girl", "bunny", "cat", "dog", "panda", "fox", "penguin", "hamster", "tofu", "edamame", "tako", "pudding", "ebi"];
 const OUTFITS = ["tee", "dress", "hoodie"];
 /* the two kids have their own clothes */
-const KID_OUTFITS = { boy: ["hoodie", "jacket", "tee"], girl: ["jacket", "raincoat", "overalls"] };
+const KID_OUTFITS = { boy: ["hoodie", "jacket", "tee"], girl: ["jacket", "raincoat", "overalls"], tofu: ["plain"], edamame: ["plain"], tako: ["plain"], pudding: ["plain"], ebi: ["plain"] };
 const outfitsOf = an => KID_OUTFITS[an] || OUTFITS;
 const SHAPES = { round: 1.1, normal: 1, slim: 0.9 };
 const AVBG = ["#EFEAFF", "#FFE6EF", "#E2F7EE", "#FFF0DC", "#E1F1FF", "#FFF7CC", "#2A2F45"];
@@ -20,7 +20,7 @@ function petOf(a) {
   return { animal, outfit, shape: SHAPES[a.shape] ? a.shape : "normal", bg: Math.min(+a.bg || 0, AVBG.length - 1) };
 }
 const petSrc = a => ART + a.animal + "_" + a.outfit + ".webp";
-const HEADCROP = { bunny: [128, 30], cat: [118, 8], dog: [104, 8], panda: [118, 6], fox: [118, 10], penguin: [122, 10], hamster: [118, 8], boy: [112, 4], girl: [118, 6] };
+const HEADCROP = { bunny: [128, 30], cat: [118, 8], dog: [104, 8], panda: [118, 6], fox: [118, 10], penguin: [122, 10], hamster: [118, 8], boy: [112, 4], girl: [118, 6], tofu: [100, 40], edamame: [150, 14], tako: [125, 22], pudding: [100, 45], ebi: [150, 26] };
 
 /* the character: full body, or just the head for small round pictures */
 function avatarSVG(a, o = {}) {

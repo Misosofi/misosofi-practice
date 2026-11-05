@@ -73,6 +73,7 @@ function supabaseDB() {
       if (r.error) throw dbError(r.error); return r.data.signedUrl;
     }),
     rmFiles: wrap(async (bucket, paths) => { if (paths.length) ok(await sb.storage.from(bucket).remove(paths)); }),
+    rpc: wrap(async (fn, args) => ok(await sb.rpc(fn, args || {}))),
     planWeek: wrap(async body => {
       const r = await sb.functions.invoke("plan-week", { body });
       if (r.error) {

@@ -184,6 +184,7 @@ function TrenderDetail() {
  <div class="section" style="margin-block:4px"><h2>${t("t_history")}</h2><div class="card stack"><div class="heat">${t("wd").map(w => `<div class="label" style="text-align:center">${w}</div>`).join("")}${cells.map(d => `<div class="c ${lv(byDay[d])} ${d === TK ? "t" : ""}">${d > TK || !byDay[d] ? "" : Math.max(1, Math.round(byDay[d] / 60))}</div>`).join("")}</div></div>
   <div class="list">${hist.length ? hist.map(d => `<div class="row" style="align-items:flex-start"><div class="grow"><div class="title">${fmt(d.day, { weekday: "short", month: "short", day: "numeric" })} · ${fmtDur(+d.seconds || 0)}${d.feel ? ` <span class="pill m">${t("feel_" + d.feel)}</span>` : ""}</div>${d.note ? `<div class="muted small">${esc(d.note)}</div>` : ""}</div></div>`).join("") : `<div class="empty">${t("t_noHistory")}</div>`}</div></div>
 
+ <div class="section" style="margin-block:4px" id="tVisit" data-sid="${esc(sid)}"></div>
 ${(() => { const p = (Array.isArray(st.plans) ? st.plans : [])[0]; if (!p) return ""; return `<div class="section" style="margin-block:4px"><h2>${t("t_planH")}</h2><div class="card stack"><div class="muted small">${esc(fmt(p.date))}${p.done ? " · ✓" : ""}</div>${p.path ? (p.kind === "video" ? `<video class="plan-video" data-tplan="${esc(p.path)}" controls playsinline preload="metadata"></video>` : `<audio data-tplan="${esc(p.path)}" controls preload="none"></audio>`) : ""}${p.text ? `<div class="plan-text">${esc(p.text)}</div>` : ""}</div></div>`; })()}
  <div class="section" style="margin-block:4px"><h2>${t("t_recs")}</h2><div class="list">${D.recs.length ? D.recs.map(r => `<div class="row" style="align-items:flex-start"><div class="grow">
    <div class="title">${r.kind === "video" ? ico("video") + " " : ""}${fmt(key(new Date(r.created_at)), { weekday: "short", month: "short", day: "numeric" })} · ${fmtDur(+r.seconds || 0)} ${r.listened ? `<span class="pill g">${t("listened")}</span>` : ""}</div>
@@ -194,6 +195,7 @@ ${(() => { const p = (Array.isArray(st.plans) ? st.plans : [])[0]; if (!p) retur
  </div>`;
   const panel = document.getElementById("panel"), y = panel.scrollTop;
   TopenSheet(html); panel.scrollTop = y;
+  tVisitFill(sid);
   panel.querySelectorAll("[data-tplan]").forEach(async a => { try { a.src = await signed("recordings", a.dataset.tplan); } catch (e) { } });
   panel.querySelectorAll("[data-trec]").forEach(async a => { const r = D.recs.find(x => x.id === a.dataset.trec); try { a.src = await signed("recordings", r.path); } catch (e) { const m = document.createElement("div"); m.className = "muted small"; m.textContent = t("err_net"); a.replaceWith(m); } });
 }

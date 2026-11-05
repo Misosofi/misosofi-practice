@@ -310,6 +310,7 @@ function vHome() {
   const msg = starred ? t("m_star") : Q.piece ? t("m_greet2") : t("m_greet");
   return `${!teen() ? `<div class="section mascot">${mascotSVG()}<div class="bubble">${msg}</div></div>` : ""}
  ${!PROF.teacher_id ? `<div class="section"><div class="card muted small">${t("noTeacher")}</div></div>` : ""}
+ ${bellBanner()}
  ${ev ? `<div class="section">${countdownCard(ev)}</div>` : ""}
  ${openPlan() ? `<div class="section">${planCard("start")}</div>` : ""}
  ${Q.piece && lastPlan()?.date !== TK ? `<div class="section"><button class="card plan-cta" data-act="planOpen"><b>${t("pl_title")}</b><span class="muted small">${t("pl_cta")}</span></button></div>` : ""}
@@ -373,7 +374,7 @@ function vMe() {
   const start = monday(addDays(TODAY, -21)), cells = [...Array(28)].map((_, i) => key(addDays(start, i)));
   const byDay = {}; S.log.forEach(l => byDay[l.date] = (byDay[l.date] || 0) + (+l.sec || 0)); const lv = s => !s ? "" : s < 600 ? "l1" : s < 1500 ? "l2" : "l3"; const inR = S.log.filter(l => l.date >= cells[0] && l.date <= TK);
   const recs = allRecs();
-  return `${roomCard()}
+  return `${roomCard()}${friendsCard()}
  <div class="stats" style="${coach() ? "" : "grid-template-columns:1fr 1fr"}"><div class="card"><div class="v"><span class="ico ic-star">${I.star}</span>${S.stars}</div><div class="k">${t("statsStars")}</div></div><div class="card"><div class="v"><span class="ico ic-coin">${I.coin}</span>${S.coins}</div><div class="k">${t("statsCoins")}</div></div>${coach() ? `<div class="card"><div class="v"><span class="ico ic-heart">${I.heart}</span>${+S.hearts || 0}</div><div class="k">${t("statsHearts")}</div></div>` : ""}</div>
  ${shopSection()}
  <div class="section"><h2>${t("last4")}</h2><div class="card stack"><div class="heat">${t("wd").map(w => `<div class="label" style="text-align:center">${w}</div>`).join("")}${cells.map(d => `<div class="c ${lv(byDay[d])} ${d === TK ? "t" : ""}">${d > TK || !byDay[d] ? "" : Math.max(1, Math.round(byDay[d] / 60))}</div>`).join("")}</div>
@@ -687,6 +688,7 @@ function settings() {
 /* ===== render & events ===== */
 function refresh() {
   if (!S) return; applySkin(); refreshTop(); const v = document.getElementById("view"); v.innerHTML = ({ home: vHome, pieces: vPieces, goals: vGoals, me: vMe })[tab](); hydrateMedia(v); hydratePlans(v);
+  if ((tab === "home" || tab === "me") && PROF?.teacher_id !== undefined) visitsLoad();
   document.getElementById("tabs").innerHTML = Object.entries(TABS).map(([k, ic]) => `<button data-act="tab" data-t="${k}" ${k === tab ? 'aria-current="page"' : ""}>${I[ic]}<span>${t("tab_" + k)}</span></button>`).join("");
 }
 function studentClick(b, e) {
