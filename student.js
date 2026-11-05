@@ -701,7 +701,7 @@ function studentClick(b, e) {
     case "planRec": case "planStop": case "planDone": case "planOpen": planAction(b.dataset.act, b); return;
     case "petCat": ROOM.cat = b.dataset.v; refresh(); return;
     case "petBuy": petBuy(b.dataset.id); return;
-    case "rmEdit": case "rmPlace": case "rmAway": case "rmFlip": case "rmFront": case "rmStyle": roomAction(b.dataset.act, b.dataset.id); return;
+    case "rmSing": case "rmGuitar": case "rmLights": case "rmEdit": case "rmPlace": case "rmAway": case "rmFlip": case "rmFront": case "rmStyle": roomAction(b.dataset.act, b.dataset.id); return;
     case "paddShow": A.addOpen = !A.addOpen; renderAct(); return;
     case "av": petSet(b.dataset.f, b.dataset.v); save(); OB ? onboarding() : avatarSheet(); refreshTop(); return;
     case "skin": S.skin = b.dataset.v; save(); applySkin(); OB ? onboarding() : settings(); refreshTop(); return;

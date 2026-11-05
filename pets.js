@@ -2,8 +2,11 @@
    Pictures live in assets/art/*.webp (all original, generated for Misosofi).
    Avatar data: { animal, outfit, shape, bg } */
 const ART = "assets/art/";
-const ANIMALS = ["bunny", "cat", "dog", "panda", "fox", "penguin", "hamster"];
+const ANIMALS = ["boy", "girl", "bunny", "cat", "dog", "panda", "fox", "penguin", "hamster"];
 const OUTFITS = ["tee", "dress", "hoodie"];
+/* the two kids have their own clothes */
+const KID_OUTFITS = { boy: ["hoodie", "jacket", "tee"], girl: ["jacket", "raincoat", "overalls"] };
+const outfitsOf = an => KID_OUTFITS[an] || OUTFITS;
 const SHAPES = { round: 1.1, normal: 1, slim: 0.9 };
 const AVBG = ["#EFEAFF", "#FFE6EF", "#E2F7EE", "#FFF0DC", "#E1F1FF", "#FFF7CC", "#2A2F45"];
 
@@ -12,11 +15,12 @@ function petOf(a) {
   a = a || {};
   const g = (typeof S !== "undefined" && S && S.profile && S.profile.gender) || "";
   const animal = ANIMALS.includes(a.animal) ? a.animal : g === "boy" ? "dog" : g === "girl" ? "bunny" : "cat";
-  const outfit = OUTFITS.includes(a.outfit) ? a.outfit : a.outfit === "overalls" || a.outfit === "sailor" ? "tee" : g === "girl" ? "dress" : "tee";
+  const list = outfitsOf(animal);
+  const outfit = list.includes(a.outfit) ? a.outfit : KID_OUTFITS[animal] ? list[0] : a.outfit === "overalls" || a.outfit === "sailor" ? "tee" : g === "girl" ? "dress" : "tee";
   return { animal, outfit, shape: SHAPES[a.shape] ? a.shape : "normal", bg: Math.min(+a.bg || 0, AVBG.length - 1) };
 }
 const petSrc = a => ART + a.animal + "_" + a.outfit + ".webp";
-const HEADCROP = { bunny: [128, 30], cat: [118, 8], dog: [104, 8], panda: [118, 6], fox: [118, 10], penguin: [122, 10], hamster: [118, 8] };
+const HEADCROP = { bunny: [128, 30], cat: [118, 8], dog: [104, 8], panda: [118, 6], fox: [118, 10], penguin: [122, 10], hamster: [118, 8], boy: [112, 4], girl: [118, 6] };
 
 /* the character: full body, or just the head for small round pictures */
 function avatarSVG(a, o = {}) {
@@ -41,9 +45,13 @@ const ITEMS = [
   { id: "h_shelf", cat: "home", n: "Bookshelf", p: 50, w: 17 }, { id: "h_sofa", cat: "home", n: "Sofa", p: 70, w: 32 }, { id: "h_bed", cat: "home", n: "Bed", p: 80, w: 34 },
   { id: "room_pink", cat: "room", n: "Pink room", p: 0 }, { id: "room_yellow", cat: "room", n: "Sunny room", p: 40 },
   { id: "room_mint", cat: "room", n: "Night room", p: 50 }, { id: "room_music", cat: "room", n: "Music room", p: 60 },
+  { id: "room_city", cat: "room", n: "City loft", p: 70 },
+  { id: "r_skate", cat: "ride", n: "Skateboard", p: 60, w: 18 }, { id: "h_futon", cat: "home", n: "Futon", p: 35, w: 30 },
+  { id: "t_robot", cat: "toy", n: "Robot", p: 45, w: 12 }, { id: "t_dino", cat: "toy", n: "Dino", p: 45, w: 13 },
+  { id: "t_rocket", cat: "toy", n: "Rocket", p: 55, w: 11 }, { id: "r_guitar", cat: "toy", n: "Guitar", p: 70, w: 11 },
 ];
 const itemOf = id => ITEMS.find(i => i.id === id);
-const SHOPCATS = ["food", "bag", "ride", "home", "room"];
+const SHOPCATS = ["food", "toy", "bag", "ride", "home", "room"];
 
 /* the piano grows with your stars */
 const INSTR = [
@@ -68,18 +76,32 @@ function roomOf() {
 }
 let ROOM = { edit: false, sel: null, drag: null, cat: "food" };
 
+/* night: 8 pm to 7 am, or when the student turns the lights off */
+const isNight = () => { if (ROOM.lights === "off") return true; if (ROOM.lights === "on") return false; const h = new Date().getHours(); return h >= 20 || h < 7; };
+/* where your friend sleeps: a bed, then a futon, otherwise on the floor */
+function sleepSpot(R) {
+  const on = id => R.items.find(i => i.placed && i.id === id);
+  const b = on("h_bed"), f = on("h_futon");
+  if (b) return { x: b.x + 1, y: b.y - 4, w: 15, where: "bed" };
+  if (f) return { x: f.x + 1, y: f.y + 0.5, w: 15, where: "futon" };
+  return { x: R.me.x, y: Math.min(99, R.me.y + 3), w: 15, where: "floor" };
+}
 function roomHTML(edit) {
-  const R = roomOf(), ins = INSTR[instrNow()];
+  const R = roomOf(), ins = INSTR[instrNow()], night = !edit && isNight(), sp = night ? sleepSpot(R) : null;
+  const meY = sp ? sp.y + 0.5 : R.me.y;
   const objs = R.items.filter(i => i.placed).map(i => ({ k: "i", i, y: i.y }))
-    .concat([{ k: "me", y: R.me.y }, { k: "inst", y: R.inst.y }]).sort((a, b) => a.y - b.y);
+    .concat([{ k: "me", y: meY }, { k: "inst", y: R.inst.y }]).sort((a, b) => a.y - b.y);
+  let toyN = 0;
   const el = o => {
-    if (o.k === "me") return `<div class="ri me ${ROOM.sel === "me" ? "sel" : ""}" data-ri="me" style="left:${R.me.x}%;top:${R.me.y}%;width:22%;z-index:${Math.round(R.me.y)}">${avatarSVG(S.avatar, { room: true })}<span class="hearts" id="hearts"></span></div>`;
+    if (o.k === "me" && sp) return `<div class="ri me sleep" data-ri="me" style="left:${sp.x}%;top:${sp.y}%;width:${sp.w}%;z-index:${Math.round(meY)}">${avatarSVG(S.avatar, { room: true })}<span class="zzz">z<b>z</b><i>Z</i></span></div>`;
+    if (o.k === "me") return `<div class="ri me ${ROOM.sel === "me" ? "sel" : ""}" data-ri="me" style="left:${R.me.x}%;top:${R.me.y}%;width:22%;z-index:${Math.round(R.me.y)}">${avatarSVG(S.avatar, { room: true })}<span class="hearts" id="hearts"></span><span class="notes" id="notes"></span></div>`;
     if (o.k === "inst") return `<div class="ri ${ROOM.sel === "inst" ? "sel" : ""}" data-ri="inst" style="left:${R.inst.x}%;top:${R.inst.y}%;width:${ins.w}%;z-index:${Math.round(R.inst.y)}">${itemImg(ins.id)}</div>`;
     const it = itemOf(o.i.id);
-    return `<div class="ri ${ROOM.sel === o.i.u ? "sel" : ""} ${o.i.flip ? "flip" : ""} ${it.cat === "food" && !edit ? "food" : ""}" data-ri="${o.i.u}" style="left:${o.i.x}%;top:${o.i.y}%;width:${it.w}%;z-index:${Math.round(o.i.y)}">${itemImg(o.i.id)}</div>`;
+    const alive = night && it.cat === "toy" && o.i.id !== "r_guitar";
+    return `<div class="ri ${ROOM.sel === o.i.u ? "sel" : ""} ${o.i.flip ? "flip" : ""} ${it.cat === "food" && !edit && !night ? "food" : ""} ${alive ? "alive" : ""}" data-ri="${o.i.u}" style="left:${o.i.x}%;top:${o.i.y}%;width:${it.w}%;z-index:${Math.round(o.i.y)}${alive ? `;--d:${(toyN++ * 0.37) % 1.5}s;--k:${toyN % 3}` : ""}">${itemImg(o.i.id)}</div>`;
   };
   const sel = ROOM.sel && ROOM.sel.length > 6 ? R.items.find(i => i.u === ROOM.sel) : null;
-  return `<div class="room ${edit ? "edit" : ""}" id="room" style="background-image:url('${ART}${R.bg}.webp')">${objs.map(el).join("")}</div>
+  return `<div class="room ${edit ? "edit" : ""} ${night ? "night" : ""}" id="room" style="background-image:url('${ART}${R.bg}.webp')">${objs.map(el).join("")}${night ? `<span class="moon" aria-hidden="true">☾</span>` : ""}</div>
   ${edit && sel ? `<div class="chips room-tools"><button class="btn sm soft" data-act="rmFlip">↔ ${t("rm_flip")}</button><button class="btn sm soft" data-act="rmFront">${t("rm_front")}</button><button class="btn sm soft" data-act="rmAway">${t("rm_away")}</button></div>` : edit ? `<div class="muted small">${t("rm_hint")}</div>` : ""}`;
 }
 function instrLine() {
@@ -89,8 +111,12 @@ function instrLine() {
 }
 function roomCard() {
   const R = roomOf();
+  const night = isNight(), sp = night ? sleepSpot(R) : null, hasG = R.items.some(i => i.id === "r_guitar");
+  const hint = night ? t("rm_nightHint") + (sp.where === "floor" ? " " + t("rm_floorHint") : "") : t("rm_feedHint");
   return `<div class="section"><div class="section-head"><h2>${t("rm_title", { name: esc(S.profile.name || "") })}</h2><span class="pill m">♥ ${R.happy}</span></div>${roomHTML(false)}
-  <div class="muted small">${t("rm_feedHint")}</div>
+  <div class="muted small">${hint}</div>
+  <div class="chips room-acts">${night ? "" : `<button class="btn sm soft" data-act="rmSing">🎤 ${t("rm_sing")} <span class="price">${I.coin}${SING_COST}</span></button><button class="btn sm soft ${hasG ? "" : "dim"}" data-act="rmGuitar">🎸 ${t("rm_guitar")} <span class="price">${I.coin}${GUITAR_COST}</span></button>`}
+   <button class="btn sm ghost" data-act="rmLights">${night ? "💡 " + t("rm_lightsOn") : "🌙 " + t("rm_lightsOff")}</button></div>
   <div class="chips"><button class="btn" data-act="rmEdit">${t("rm_decorate")}</button><button class="btn soft" data-act="avatar">${t("editAvatar")}</button></div>${instrLine()}</div>`;
 }
 function roomTray() {
@@ -133,8 +159,30 @@ function feed(u) {
   setTimeout(() => { refresh(); const h = document.getElementById("hearts"); if (h) { h.textContent = "♥ ♥ ♥"; h.classList.add("go"); } }, 350);
   toast(t("rm_yum")); return true;
 }
+/* ---------- coin actions: sing a song or play the guitar (sounds use the real piano) ---------- */
+const SING_COST = 2, GUITAR_COST = 3;
+const SONG_SING = [[72, 0, .4], [74, .4, .4], [76, .8, .4], [72, 1.2, .4], [79, 1.6, .8], [77, 2.4, .4], [76, 2.8, .4], [74, 3.2, .4], [72, 3.6, 1]];
+const SONG_GUITAR = [[[48, 55, 60, 64, 67], 0], [[48, 55, 60, 64, 67], .5], [[45, 52, 57, 60, 64], 1], [[45, 52, 57, 60, 64], 1.5], [[41, 48, 53, 57, 60], 2], [[43, 50, 55, 59, 62], 2.5], [[48, 55, 60, 64, 72], 3]];
+function perform(kind) {
+  if (isNight()) { toast(t("rm_sleeping")); return; }
+  const R = roomOf(), cost = kind === "sing" ? SING_COST : GUITAR_COST;
+  if (kind === "guitar" && !R.items.some(i => i.id === "r_guitar")) { toast(t("rm_needGuitar")); return; }
+  if ((S.coins || 0) < cost) { toast(t("notEnough")); return; }
+  if (ROOM.busy) return; ROOM.busy = true;
+  S.coins -= cost; R.happy++; save(); if (typeof refreshTop === "function") refreshTop();
+  if (kind === "sing") SONG_SING.forEach(([m, w, d]) => tone(m, w + .05, d * 1.4, .32));
+  else SONG_GUITAR.forEach(([ch, w]) => ch.forEach((m, k) => tone(m, w + .05 + k * .025, .9, .2)));
+  const me = document.querySelector('.room:not(.edit) [data-ri="me"]'), n = document.getElementById("notes");
+  if (me) me.classList.add(kind === "sing" ? "singing" : "strumming");
+  if (me && kind === "guitar") me.insertAdjacentHTML("beforeend", `<span class="held-guitar">${itemImg("r_guitar")}</span>`);
+  if (n) { n.innerHTML = "<i>♪</i><i>♫</i><i>♪</i><i>♬</i>"; n.classList.add("go"); }
+  setTimeout(() => { ROOM.busy = false; refresh(); }, 4300);
+}
 function roomAction(act, id) {
   const R = roomOf(), sel = R.items.find(i => i.u === ROOM.sel);
+  if (act === "rmSing") { perform("sing"); return true; }
+  if (act === "rmGuitar") { perform("guitar"); return true; }
+  if (act === "rmLights") { ROOM.lights = isNight() ? "on" : "off"; refresh(); return true; }
   if (act === "rmEdit") { ROOM.sel = null; roomSheet(); return true; }
   if (act === "rmPlace") { const i = R.items.find(x => x.u === id); if (i) { i.placed = true; i.x = 50; i.y = 85; ROOM.sel = i.u; save(); rerenderRoom(); } return true; }
   if (act === "rmAway") { if (sel) { sel.placed = false; ROOM.sel = null; save(); rerenderRoom(); } return true; }
@@ -174,14 +222,14 @@ function petEditor() {
   S.avatar = petOf(S.avatar); const a = S.avatar;
   return `<div class="ava-full">${avatarSVG(a)}</div>
   <div class="label">${t("pe_animal")}</div><div class="animals">${ANIMALS.map(n => `<button class="${a.animal === n ? "on" : ""}" data-act="av" data-f="animal" data-v="${n}" aria-label="${n}">${avatarSVG({ ...a, animal: n }, { head: true })}<span>${t("an_" + n)}</span></button>`).join("")}</div>
-  <div class="label">${t("pe_outfit")}</div><div class="animals three">${OUTFITS.map(o => `<button class="${a.outfit === o ? "on" : ""}" data-act="av" data-f="outfit" data-v="${o}">${avatarSVG({ ...a, outfit: o }, { bg: false })}<span>${t("of_" + o + (a.animal === "dog" && o === "tee" ? "_dog" : ""))}</span></button>`).join("")}</div>
+  <div class="label">${t("pe_outfit")}</div><div class="animals three">${outfitsOf(a.animal).map(o => `<button class="${a.outfit === o ? "on" : ""}" data-act="av" data-f="outfit" data-v="${o}">${avatarSVG({ ...a, outfit: o }, { bg: false })}<span>${t("of_" + o + (a.animal === "dog" && o === "tee" ? "_dog" : ""))}</span></button>`).join("")}</div>
   <div class="label">${t("pe_shape")}</div><div class="chips">${Object.keys(SHAPES).map(s => `<button class="chip ${a.shape === s ? "on" : ""}" data-act="av" data-f="shape" data-v="${s}">${t("sh_" + s)}</button>`).join("")}</div>
   <div class="label">${t("bgc")}</div><div class="swatches">${AVBG.map((c, i) => `<button class="sw ${a.bg === i ? "on" : ""}" style="background:${c}" data-act="av" data-f="bg" data-v="${i}" aria-label="background ${i + 1}"></button>`).join("")}</div>`;
 }
 function petSet(f, v) {
   S.avatar = petOf(S.avatar);
-  if (f === "animal" && ANIMALS.includes(v)) S.avatar.animal = v;
-  else if (f === "outfit" && OUTFITS.includes(v)) S.avatar.outfit = v;
+  if (f === "animal" && ANIMALS.includes(v)) { S.avatar.animal = v; if (!outfitsOf(v).includes(S.avatar.outfit)) S.avatar.outfit = outfitsOf(v)[0]; }
+  else if (f === "outfit" && outfitsOf(S.avatar.animal).includes(v)) S.avatar.outfit = v;
   else if (f === "shape" && SHAPES[v]) S.avatar.shape = v;
   else if (f === "bg") S.avatar.bg = +v;
 }
