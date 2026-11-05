@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" data-skin="studio">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Misosofi Practice</title>
+<meta name="description" content="Practice log, games and homework for piano students.">
+<meta name="theme-color" content="#5B4BDB">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Practice">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;700;800&family=Chakra+Petch:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Noto+Music&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="deco" aria-hidden="true"></div>
+<div class="banner" id="demo" hidden>Demo mode · nothing leaves this browser</div>
+<div class="banner off" id="net" hidden role="status">Offline · changes are saved on this device and sync when you're back online</div>
+<div class="boot" id="boot"><div class="boot-in"><div class="spin" aria-hidden="true"></div><div>Loading…</div></div></div>
+<div class="auth" id="auth" hidden></div>
+<div id="app" hidden>
+  <div class="wrap">
+    <header class="top" id="top"></header>
+    <main id="view"></main>
+  </div>
+  <nav class="tabs" aria-label="Sections"><div class="in" id="tabs"></div></nav>
+</div>
+<div class="sheet" id="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+<noscript><p style="padding:20px">This app needs JavaScript.</p></noscript>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="strings.js"></script>
+<script src="core.js"></script>
+<script src="data.js"></script>
+<script src="student.js"></script>
+<script src="teacher.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
