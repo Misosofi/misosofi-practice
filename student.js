@@ -6,7 +6,7 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift"];
+const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
@@ -310,7 +310,9 @@ function vHome() {
   const msg = starred ? t("m_star") : Q.piece ? t("m_greet2") : t("m_greet");
   return `${!teen() ? `<div class="section mascot">${mascotSVG()}<div class="bubble">${msg}</div></div>` : ""}
  ${!PROF.teacher_id ? `<div class="section"><div class="card muted small">${t("noTeacher")}</div></div>` : ""}
+ ${typeof ppPlead === "function" ? ppPlead() : ""}
  ${typeof ppHome === "function" ? ppHome() : ""}
+ ${typeof ppGrowth === "function" && ppMode() === "grown" ? ppGrowth() : ""}
  ${bellBanner()}
  ${ev ? `<div class="section">${countdownCard(ev)}</div>` : ""}
  ${openPlan() ? `<div class="section">${planCard("start")}</div>` : ""}
@@ -375,7 +377,7 @@ function vMe() {
   const start = monday(addDays(TODAY, -21)), cells = [...Array(28)].map((_, i) => key(addDays(start, i)));
   const byDay = {}; S.log.forEach(l => byDay[l.date] = (byDay[l.date] || 0) + (+l.sec || 0)); const lv = s => !s ? "" : s < 600 ? "l1" : s < 1500 ? "l2" : "l3"; const inR = S.log.filter(l => l.date >= cells[0] && l.date <= TK);
   const recs = allRecs();
-  return `${roomCard()}${friendsCard()}
+  return `${roomCard()}${friendsCard()}${typeof ppGrowth === "function" && ppMode() !== "grown" ? ppGrowth() : ""}
  <div class="stats" style="${coach() ? "" : "grid-template-columns:1fr 1fr"}"><div class="card"><div class="v"><span class="ico ic-star">${I.star}</span>${S.stars}</div><div class="k">${t("statsStars")}</div></div><div class="card"><div class="v"><span class="ico ic-coin">${I.coin}</span>${S.coins}</div><div class="k">${t("statsCoins")}</div></div>${coach() ? `<div class="card"><div class="v"><span class="ico ic-heart">${I.heart}</span>${+S.hearts || 0}</div><div class="k">${t("statsHearts")}</div></div>` : ""}</div>
  ${shopSection()}
  <div class="section"><h2>${t("last4")}</h2><div class="card stack"><div class="heat">${t("wd").map(w => `<div class="label" style="text-align:center">${w}</div>`).join("")}${cells.map(d => `<div class="c ${lv(byDay[d])} ${d === TK ? "t" : ""}">${d > TK || !byDay[d] ? "" : Math.max(1, Math.round(byDay[d] / 60))}</div>`).join("")}</div>
@@ -747,7 +749,7 @@ function studentClick(b, e) {
     case "bpm": MET.bpm = Math.max(40, Math.min(208, MET.bpm + +b.dataset.d)); if (MET.on) startMetro(); document.getElementById("bpm").textContent = MET.bpm; document.querySelectorAll(".setbest").forEach(x => x.textContent = "♩=" + MET.bpm); return;
     case "metro": ac(); MET.on ? stopMetro() : startMetro(); b.innerHTML = MET.on ? t("mStop") : I.play + " " + t("mStart"); return;
     case "drill": { const d = S.drills.find(x => x.id === id); if (!d) return; d.doneOn = d.doneOn || {}; d.doneOn[TK] = !d.doneOn[TK]; save(); if (d.doneOn[TK] && !d.paidOn?.[TK]) { d.paidOn = { ...(d.paidOn || {}), [TK]: 1 }; award("tech", ACT.tech.coins, 2); } renderAct(); refreshTop(); return; }
-    case "setBest": { const d = S.drills.find(x => x.id === id); if (!d) return; d.best = Math.max(+d.best || 0, MET.bpm); save(); toast(t("saved")); renderAct(); return; }
+    case "setBest": { const d = S.drills.find(x => x.id === id); if (!d) return; d.best = Math.max(+d.best || 0, MET.bpm); d.hist = (d.hist || []).filter(x => x.date !== TK).concat([{ date: TK, bpm: MET.bpm }]).slice(-60); save(); toast(t("saved")); renderAct(); return; }
     case "delDrill": S.drills = S.drills.filter(x => x.id !== id); if (!S.drillsDel.includes(id)) S.drillsDel.push(id); save(); renderAct(); return;
     case "dAns": { if (A.picked != null) return; const Q = A.daily; A.picked = b.dataset.o; const ok = A.picked === Q.ans; if (Q.midi) tone(Q.midi); else if (Q.midis) Q.midis.forEach((m, i) => tone(m, i * .55)); else ding(ok); award("theory", ACT.theory.coins, ok ? 2 : 0); renderAct(); refreshTop(); return; }
     case "theoryMore": A = { k: "theory", more: true }; renderAct(); return;

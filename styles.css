@@ -483,3 +483,14 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .th-list{display:flex;flex-direction:column;gap:6px;font-weight:700}
 .th-list img{width:34px;vertical-align:middle}
 .gf-scene{position:relative;height:200px}.gf-box{position:absolute;left:12%;bottom:0;height:160px;animation:dzBeg 1.2s ease-in-out infinite}.gf-cat{position:absolute;right:10%;bottom:0;height:190px}
+.pp-plead{display:flex;gap:12px;align-items:center;background:#FFF3F6;border:2px solid #FFB3C6;animation:bellShake 3s ease-in-out infinite}
+.pp-plead img{width:64px;height:80px;object-fit:contain}
+.pp-tap.spark{animation:spark .5s ease-out}
+@keyframes spark{0%{box-shadow:0 0 0 0 #FFE38A,0 10px 30px rgba(108,92,231,.35)}100%{box-shadow:0 0 0 26px #FFE38A00,0 10px 30px rgba(108,92,231,.35)}}
+.pp-timer{background:linear-gradient(160deg,#2BB673,#5FD39A);box-shadow:0 10px 30px rgba(43,182,115,.3)}
+.tech-pic{background:#fff;border-radius:16px;padding:10px}
+.tech-pics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tech-svg{width:100%;height:auto;display:block}
+.tech-how{line-height:1.55}
+.tech-pick{display:flex;flex-wrap:wrap;gap:6px}
+.chart{width:100%;height:auto;display:block}
