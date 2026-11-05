@@ -293,3 +293,29 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .instg-arrow{position:fixed;left:50%;bottom:calc(6px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:44px;font-weight:800;color:#fff;animation:instb 1s ease-in-out infinite}
 @keyframes instb{50%{transform:translate(-50%,8px)}}
 @media (prefers-reduced-motion:reduce){.instg-arrow{animation:none}}
+/* animal avatar + room */
+.ava-full{width:170px;height:226px;margin:0 auto;border-radius:24px;overflow:hidden;flex:none;border:3px solid var(--accent)}
+.ava-full svg{width:100%;height:100%;display:block}
+.animals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.animals button{border:0;background:var(--surface);box-shadow:inset 0 0 0 2px var(--line);border-radius:16px;padding:6px 4px;cursor:pointer;color:var(--ink);font-weight:700;font-size:.75rem;display:flex;flex-direction:column;align-items:center;gap:2px}
+.animals button.on{box-shadow:inset 0 0 0 3px var(--accent)}
+.animals svg{width:56px;height:56px;border-radius:50%}
+.room{position:relative;width:100%;aspect-ratio:6/5;border-radius:var(--r);overflow:hidden;border:3px solid #fff;box-shadow:0 0 0 1px var(--line),0 8px 24px rgba(30,20,60,.12);touch-action:none;user-select:none;-webkit-user-select:none}
+.room-bg{position:absolute;inset:0;width:100%;height:100%}
+.ri{position:absolute;transform:translate(-50%,-100%);line-height:0}
+.ri svg{width:100%;height:auto;display:block;overflow:visible}
+.ri.flip svg{transform:scaleX(-1)}
+.ri.me svg{filter:drop-shadow(0 2px 0 #0001)}
+.room.edit .ri{cursor:grab}
+.room.edit .ri.sel{outline:2px dashed var(--accent);outline-offset:3px;border-radius:6px}
+.room:not(.edit) .ri.me{animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translate(-50%,-102%)}}
+@media (prefers-reduced-motion:reduce){.room .ri.me{animation:none}}
+.room-tools{justify-content:center}
+.tray{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px}
+.tray button{flex:none;width:64px;height:64px;border:0;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 2px var(--line);padding:8px;cursor:pointer;display:grid;place-items:center}
+.tray button.on{box-shadow:inset 0 0 0 3px var(--accent)}
+.tray svg{max-width:100%;max-height:100%;border-radius:6px}
+.shop .face.sq{border-radius:14px;display:grid;place-items:center;background:var(--surface2);padding:6px}
+.shop .face.sq svg{max-width:100%;max-height:100%;width:auto;height:auto}
+.pshop button{text-transform:none}

@@ -6,13 +6,13 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc"];
+const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
   return {
     v: 6, onboarded: false, profile: { name: "", gender: "", age: 10 }, skin: "studio",
-    avatar: { skin: 1, hair: "short", hairColor: 0, eyes: "dots", acc: "none", shirt: 0, bg: 0 }, owned: ["none", "glasses"], cards: [],
+    avatar: { animal: "cat", fur: 3, outfit: "tee", oc: 0, acc: "none", bag: null, jewel: null, bg: 0 }, owned: ["none", "glasses"], cards: [], room: null,
     coins: 0, stars: 0, hearts: 0, starDays: {}, quest: {},
     drills: [{ id: "c-major-scale", name: "C major scale, hands together", target: 80, best: 0, doneOn: {} }], drillsDel: [],
     goals: [], events: [], nr: { sessions: [] }, ncBest: {}, ncNames: true, ncLvl: null,
@@ -290,7 +290,7 @@ async function showScore(libId) {
 
 /* ===== top & views ===== */
 function topBar() {
-  return `<button class="ava-mini" data-act="tab" data-t="me" aria-label="${t("meH")}">${avatarSVG(S.avatar, { noCheeks: teen() })}</button>
+  return `<button class="ava-mini" data-act="tab" data-t="me" aria-label="${t("meH")}">${avatarSVG(S.avatar, { head: true, noCheeks: teen() })}</button>
  <div class="who"><div class="n">${esc((teen() ? t("hi_teen", { name: S.profile.name || "…" }) : t("hi", { name: S.profile.name || "…" })))}</div><div class="lv">${gradeName(S.profile.grade)}${coach() ? " · " + t("plan_coach") : ""}</div></div>
  <div class="counters"><span class="ctr" title="${t("statsStars")}"><span class="ic-star">${I.star}</span>${S.stars}</span><span class="ctr" title="${t("statsCoins")}"><span class="ic-coin">${I.coin}</span>${S.coins}</span>${coach() ? `<span class="ctr" title="${t("statsHearts")}"><span class="ic-heart">${I.heart}</span>${+S.hearts || 0}</span>` : ""}</div>
  <button class="icon-btn" data-act="settings" aria-label="${t("settings")}">${I.gear}</button>`;
@@ -323,8 +323,9 @@ function vStudentLib() {
   return `<div class="section"><div class="section-head"><h2>${t("libStudentH")}</h2><span class="muted small">${t("libStudentSub")}</span></div>
  <div class="list">${L.map(l => `<div class="row"><div class="grow"><div class="title">${esc(l.title)}</div><div class="muted small">${esc(l.composer || "—")} · ${gradeName(+l.grade || 0)}${l.label ? " · " + esc(l.label) : ""}</div></div>${l.score_path ? `<button class="btn sm soft" data-act="score" data-id="${l.id}">${t("score")}</button>` : `<span class="muted small">${t("noScore")}</span>`}</div>`).join("")}</div></div>`;
 }
+function pieceForm() { return `<div class="card stack"><h2>${t("addPiece")}</h2><form class="add" data-form="piece"><input id="pTitle" placeholder="${t("piecePh")}" required maxlength="120" style="flex-basis:100%"><input id="pComp" placeholder="${t("composerPh")}" maxlength="80"><button class="btn" type="submit">${t("add")}</button></form></div>`; }
 function vPieces() {
-  return `<div class="section"><h2>${t("piecesH")}</h2>${S.pieces.length ? S.pieces.map(p => {
+  return `<div class="section">${pieceForm()}</div><div class="section"><h2>${t("piecesH")}</h2>${S.pieces.length ? S.pieces.map(p => {
     const dn = p.sections.filter(s => s.done).length, tot = p.sections.length || 1;
     return `<div class="card stack"><div style="display:flex;justify-content:space-between;gap:8px"><div class="grow"><div class="title" style="font-size:1.05rem">${esc(p.title)}</div><div class="muted small">${esc(p.composer || "")}</div></div><button class="x" data-act="delPiece" data-id="${p.id}" aria-label="Delete">×</button></div>
  <div class="timebox"><div><span class="muted small">${t("todayPiece")}</span><b>${fmtDur(p.days?.[TK] || 0)}</b></div><div><span class="muted small">${t("totalPiece")}</span><b>${fmtDur(p.sec || 0)}</b></div></div>
@@ -334,7 +335,6 @@ function vPieces() {
  <form class="add" data-form="sec" data-id="${p.id}"><input id="sec-${p.id}" placeholder="${t("sectionPh")}" required maxlength="80"><button class="btn sm soft" type="submit">${t("add")}</button></form>
  <div class="chips"><button class="btn" data-act="open" data-k="piece" data-p="${p.id}">${I.play} ${t("practise")}</button>${libOf(p)?.score_path ? `<button class="btn soft" data-act="score" data-id="${p.libId}">${t("score")}</button>` : ""}</div></div>`;
   }).join("") : `<div class="card empty">${t("noPieces")}</div>`}</div>
- <div class="section"><div class="card stack"><h2>${t("addPiece")}</h2><form class="add" data-form="piece"><input id="pTitle" placeholder="${t("piecePh")}" required maxlength="120" style="flex-basis:100%"><input id="pComp" placeholder="${t("composerPh")}" maxlength="80"><button class="btn" type="submit">${t("add")}</button></form></div></div>
  ${vStudentLib()}`;
 }
 function vGoals() {
@@ -351,7 +351,7 @@ function vGoals() {
 function shopSection() {
   const tabs = `<div class="chips">${["avatar", "cards", "rewards"].map(k => `<button class="chip ${shopTab === k ? "on" : ""}" data-act="shopTab" data-v="${k}">${t("sh_" + k)}</button>`).join("")}</div>`;
   let body = "";
-  if (shopTab === "avatar") body = `<div class="shop">${ACCS.map(a => { const own = S.owned.includes(a.id), on = S.avatar.acc === a.id; return `<button class="${on ? "on" : ""}" data-act="shop" data-id="${a.id}"><span class="face">${avatarSVG({ ...S.avatar, acc: a.id }, { noCheeks: teen() })}</span><span>${a.id === "none" ? "—" : a.id}</span>${own ? `<span class="muted">${on ? "✓" : t("wear")}</span>` : `<span class="price">${I.coin}${a.price}</span>`}</button>`; }).join("")}</div>`;
+  if (shopTab === "avatar") body = petShop();
   if (shopTab === "cards") body = `<div class="muted small">${t("cardsSub")} ${S.cards.length}/${CARDS.length}</div><div class="cards">${CARDS.map(c => {
     const own = S.cards.includes(c.id); const ini = c.n.split(/[ .]+/).filter(Boolean).map(w => w[0]).slice(-2).join("");
     return own ? `<div class="ccard pop" style="background:${c.c}"><span class="init">${ini}</span><span class="nm">${c.n}</span><span class="yr">${c.y}</span><span class="fact">${c.f}</span></div>` : `<button class="ccard locked" data-act="card" data-id="${c.id}"><span class="init">?</span><span class="nm">${c.n}</span><span class="price">${I.coin}${c.p}</span></button>`;
@@ -366,7 +366,7 @@ function vMe() {
   const start = monday(addDays(TODAY, -21)), cells = [...Array(28)].map((_, i) => key(addDays(start, i)));
   const byDay = {}; S.log.forEach(l => byDay[l.date] = (byDay[l.date] || 0) + (+l.sec || 0)); const lv = s => !s ? "" : s < 600 ? "l1" : s < 1500 ? "l2" : "l3"; const inR = S.log.filter(l => l.date >= cells[0] && l.date <= TK);
   const recs = allRecs();
-  return `<div class="section" style="text-align:center;align-items:center"><div class="ava-big pop">${avatarSVG(S.avatar, { noCheeks: teen() })}</div><h2>${esc(S.profile.name)}</h2><button class="btn sm ghost" data-act="avatar">${t("editAvatar")}</button></div>
+  return `${roomCard()}
  <div class="stats" style="${coach() ? "" : "grid-template-columns:1fr 1fr"}"><div class="card"><div class="v"><span class="ico ic-star">${I.star}</span>${S.stars}</div><div class="k">${t("statsStars")}</div></div><div class="card"><div class="v"><span class="ico ic-coin">${I.coin}</span>${S.coins}</div><div class="k">${t("statsCoins")}</div></div>${coach() ? `<div class="card"><div class="v"><span class="ico ic-heart">${I.heart}</span>${+S.hearts || 0}</div><div class="k">${t("statsHearts")}</div></div>` : ""}</div>
  ${shopSection()}
  <div class="section"><h2>${t("last4")}</h2><div class="card stack"><div class="heat">${t("wd").map(w => `<div class="label" style="text-align:center">${w}</div>`).join("")}${cells.map(d => `<div class="c ${lv(byDay[d])} ${d === TK ? "t" : ""}">${d > TK || !byDay[d] ? "" : Math.max(1, Math.round(byDay[d] / 60))}</div>`).join("")}</div>
@@ -383,11 +383,11 @@ function renderAct() { if (!A) return; const k = A.k; const b = k === "piece" ? 
 /* piece practice: exact seconds */
 const elapsed = () => A && A.start ? (Date.now() - A.start) / 1000 : 0;
 function actPiece() {
-  if (!S.pieces.length) return `<div class="card empty">${t("noPieces")}</div>`;
+  if (!S.pieces.length) return `<div class="stack"><div class="card empty">${t("noPieces")}</div>${pieceForm()}</div>`;
   if (!A.pid || !S.pieces.find(p => p.id === A.pid)) A.pid = S.pieces[0].id; A.goal ??= 10; const p = S.pieces.find(x => x.id === A.pid), el = elapsed();
   const c = coach();
   return `<div class="stack"><div class="label">${t("choosePiece")}</div>
- <div class="chips">${S.pieces.map(x => `<button class="chip ${x.id === A.pid ? "on" : ""}" data-act="ppick" data-id="${x.id}" ${A.start ? "disabled" : ""}>${esc(x.title)}</button>`).join("")}</div>
+ <div class="chips">${S.pieces.map(x => `<button class="chip ${x.id === A.pid ? "on" : ""}" data-act="ppick" data-id="${x.id}" ${A.start ? "disabled" : ""}>${esc(x.title)}</button>`).join("")}${A.start ? "" : `<button class="chip" data-act="paddShow">+ ${t("addPiece")}</button>`}</div>${A.addOpen && !A.start ? pieceForm() : ""}
  <div class="chips">${[5, 10, 15, 0].map(m => `<button class="chip ${A.goal === m ? "on" : ""}" data-act="pgoal" data-m="${m}" ${A.start ? "disabled" : ""}>${m ? t("minutes", { n: m }) : t("free")}</button>`).join("")}</div>
  <div class="card stack" style="align-items:center"><div class="bigclock" id="clock">${clockOf(A.goal ? A.goal * 60 - el : el)}</div>
  ${isRec ? `<span class="live">${t("recording")}</span>` : ""}<div class="muted small" id="keepMsg">${A.start ? (A.goal && el >= A.goal * 60 ? t("goalReached") : t("keep")) : ""}</div>
@@ -586,7 +586,8 @@ function guessArea(s) {
 }
 
 /* ===== avatar editor, onboarding, settings ===== */
-function avatarEditor() {
+function avatarEditor() { return petEditor(); }
+function avatarEditorOld() {
   const a = S.avatar;
   const sw = (arr, f) => `<div class="swatches">${arr.map((c, i) => `<button class="sw ${a[f] === i ? "on" : ""}" style="background:${c}" data-act="av" data-f="${f}" data-v="${i}" aria-label="${f} ${i + 1}"></button>`).join("")}</div>`;
   const ch = (arr, f) => `<div class="chips">${arr.map(v => `<button class="chip ${a[f] === v ? "on" : ""}" data-act="av" data-f="${f}" data-v="${v}">${v}</button>`).join("")}</div>`;
@@ -598,7 +599,7 @@ function avatarSheet() { openSheet(`<div class="stack"><div class="act-head"><h2
 function onboarding() {
   const s = OB.step; let b = "";
   if (s === 0) b = `<div class="mascot">${mascotSVG()}<div class="bubble">${t("ob0")}</div></div><h1>${t("ob1")}</h1><input id="obName" value="${esc(S.profile.name)}" autocomplete="off" maxlength="40" style="font-size:1.2rem;flex:none"><div class="muted small">${t("ob1b")}</div><button class="btn block" data-act="ob1">${t("cont")}</button>`;
-  if (s === 1) b = `<h1>${t("ob2")}</h1><div class="bigchoice"><button class="${S.profile.gender === "boy" ? "on" : ""}" data-act="obG" data-v="boy"><span class="face">${avatarSVG({ skin: 1, hair: "spiky", hairColor: 1, eyes: "happy", acc: "none", shirt: 4, bg: 4 }, { noCheeks: true })}</span>${t("boy")}</button><button class="${S.profile.gender === "girl" ? "on" : ""}" data-act="obG" data-v="girl"><span class="face">${avatarSVG({ skin: 1, hair: "pigtails", hairColor: 1, eyes: "sparkle", acc: "none", shirt: 1, bg: 1 })}</span>${t("girl")}</button></div><button class="btn soft block" data-act="obG" data-v="">${t("skip")}</button>`;
+  if (s === 1) b = `<h1>${t("ob2")}</h1><div class="bigchoice"><button class="${S.profile.gender === "boy" ? "on" : ""}" data-act="obG" data-v="boy"><span class="face">${avatarSVG({ animal: "dog", fur: 4, outfit: "tee", oc: 4, acc: "none", bg: 4 }, { head: true })}</span>${t("boy")}</button><button class="${S.profile.gender === "girl" ? "on" : ""}" data-act="obG" data-v="girl"><span class="face">${avatarSVG({ animal: "bunny", fur: 0, outfit: "dress", oc: 1, acc: "bow", bg: 1 }, { head: true })}</span>${t("girl")}</button></div><button class="btn soft block" data-act="obG" data-v="">${t("skip")}</button>`;
   if (s === 2) b = `<h1>${t("ob3")}</h1><div class="agepick">${Array.from({ length: 13 }, (_, i) => i + 6).map(n => `<button class="${S.profile.age === n ? "on" : ""}" data-act="obAge" data-v="${n}">${n}</button>`).join("")}</div><button class="btn block" data-act="obNext">${t("cont")}</button>`;
   if (s === 3) b = `<h1>${t("ob4")}</h1>${avatarEditor()}<button class="btn block" data-act="obNext">${t("cont")}</button>`;
   if (s === 4) b = `<h1>${t("ob5")}</h1><div class="muted">${t("ob5b")}</div>${skinPicker()}<button class="btn block" data-act="obDone">${t("letsgo")}</button>`;
@@ -629,7 +630,11 @@ function studentClick(b, e) {
     case "settings": settings(); return;
     case "signOut": signOutNow(); return;
     case "avatar": avatarSheet(); return;
-    case "av": S.avatar[b.dataset.f] = isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v; save(); OB ? onboarding() : avatarSheet(); refreshTop(); return;
+    case "petCat": ROOM.cat = b.dataset.v; refresh(); return;
+    case "petBuy": petBuy(b.dataset.id); return;
+    case "rmEdit": case "rmPlace": case "rmAway": case "rmFlip": case "rmFront": case "rmStyle": roomAction(b.dataset.act, b.dataset.id); return;
+    case "paddShow": A.addOpen = !A.addOpen; renderAct(); return;
+    case "av": petSet(b.dataset.f, b.dataset.v); save(); OB ? onboarding() : avatarSheet(); refreshTop(); return;
     case "skin": S.skin = b.dataset.v; save(); applySkin(); OB ? onboarding() : settings(); refreshTop(); return;
     case "redoOb": OB = { step: 0 }; onboarding(); return;
     case "ob1": {
@@ -637,7 +642,7 @@ function studentClick(b, e) {
       if (n !== PROF.display_name) { PROF.display_name = n; queue({ k: "prof", t: "profiles", a: "prof", row: { display_name: n } }); }
       save(); onboarding(); return;
     }
-    case "obG": S.profile.gender = b.dataset.v; if (b.dataset.v === "girl" && S.avatar.hair === "short") { S.avatar.hair = "long"; S.avatar.shirt = 1; S.avatar.bg = 1; } if (b.dataset.v === "boy" && S.avatar.hair === "short") { S.avatar.hair = "spiky"; S.avatar.shirt = 4; S.avatar.bg = 4; } OB.step = 2; save(); onboarding(); return;
+    case "obG": S.profile.gender = b.dataset.v; S.avatar = petOf(S.avatar); if (b.dataset.v === "girl") { petSet("animal", "bunny"); S.avatar.outfit = "dress"; S.avatar.oc = 1; S.avatar.bg = 1; } if (b.dataset.v === "boy") { petSet("animal", "dog"); S.avatar.outfit = "tee"; S.avatar.oc = 4; S.avatar.bg = 4; } OB.step = 2; save(); onboarding(); return;
     case "obAge": S.profile.age = +b.dataset.v; save(); applySkin(); onboarding(); return;
     case "obNext": OB.step++; if (OB.step === 4) S.skin = suggestSkin(); save(); applySkin(); onboarding(); return;
     case "obDone": S.onboarded = true; OB = null; save(); document.getElementById("sheet").hidden = true; refresh(); celebrate(); return;
@@ -717,7 +722,8 @@ function studentChange(e) {
 }
 function studentSubmit(e) {
   const f = e.target.dataset.form, v = id => (document.getElementById(id)?.value || "").trim();
-  if (f === "piece") { const title = v("pTitle"); if (!title) return; S.pieces.push({ id: uid(), title, composer: v("pComp"), status: "learning", sec: 0, days: {}, sections: [] }); }
+  if (f === "piece") { const title = v("pTitle"); if (!title) return; const np = { id: uid(), title, composer: v("pComp"), status: "learning", sec: 0, days: {}, sections: [] }; S.pieces.push(np);
+    if (A && A.k === "piece") { A.pid = np.id; A.addOpen = false; save(); toast(t("saved")); renderAct(); return; } }
   if (f === "sec") { const p = S.pieces.find(x => x.id === e.target.dataset.id), n = v("sec-" + p.id); if (!n) return; p.sections.push({ id: uid(), name: n, done: false }); }
   if (f === "own") { const title = v("ownT"); if (!title) return; S.items.push({ id: uid(), week: WK, area: guessArea(title), title, source: "me", done: {} }); }
   if (f === "goal") { const text = v("goalText"); if (!text) return; S.goals.push({ id: uid(), month: MK, text, done: false }); }

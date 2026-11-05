@@ -80,7 +80,7 @@ function TvStudents() {
   return `<div class="section"><h2>${t("t_students")}</h2>
  <div class="list">${L.length ? L.map(s => {
     const w = TweekSummary(s.id), st = TS.states[s.id] || {}, av = st.avatar;
-    return `<button class="row trow" data-act="tOpen" data-id="${s.id}"><span class="ava-mini" style="pointer-events:none">${av ? avatarSVG(av, { noCheeks: (st.profile?.age || 10) >= 13 }) : I.user}</span>
+    return `<button class="row trow" data-act="tOpen" data-id="${s.id}"><span class="ava-mini" style="pointer-events:none">${av ? avatarSVG(av, { head: true, noCheeks: (st.profile?.age || 10) >= 13 }) : I.user}</span>
    <span class="grow"><span class="title">${esc(s.display_name || "—")}</span> <span class="pill a">${gradeName(s.grade)}</span>${s.plan === "coach" ? ` <span class="pill y">${t("plan_coach")}</span>` : ""}
    <span class="muted small" style="display:block">${t("weekH")}: ${t("t_days", { n: w.days })} · ${t("t_min", { n: w.mins })} · ${t("t_tasks", { a: w.done, b: w.total })}</span>
    <span class="muted small" style="display:block">${w.last ? t("t_last", { d: fmt(w.last, { weekday: "short", month: "short", day: "numeric" }) }) : t("t_never")}</span></span></button>`;
@@ -136,7 +136,7 @@ function TopenSheet(html) { const sh = document.getElementById("sheet"); sh.clas
 function TcloseSheet() { const wasStudent = !!TS.cur; document.getElementById("sheet").hidden = true; TS.cur = null; TS.det = null; TS.plan = null; TS.giveLib = null; Trefresh(); if (wasStudent) TloadAll().then(Trefresh).catch(e => { if (e.net) setNet(false); }); }
 function TdetHead() {
   const s = tStu(TS.cur), st = TS.states[TS.cur] || {};
-  return `<div class="act-head">${st.avatar ? `<span class="ava-mini" style="cursor:default">${avatarSVG(st.avatar)}</span>` : ""}<h2>${esc(s?.display_name || "—")}</h2><button class="icon-btn" data-act="tClose" aria-label="Close">${I.close}</button></div>`;
+  return `<div class="act-head">${st.avatar ? `<span class="ava-mini" style="cursor:default">${avatarSVG(st.avatar, { head: true })}</span>` : ""}<h2>${esc(s?.display_name || "—")}</h2><button class="icon-btn" data-act="tClose" aria-label="Close">${I.close}</button></div>`;
 }
 function TrenderDetail() {
   if (!TS.det) return; const s = tStu(TS.cur), D = TS.det, st = D.state, wk = weekKey(TS.week);
@@ -169,6 +169,7 @@ function TrenderDetail() {
    <input id="taT" placeholder="${t("t_taskPh")}" required maxlength="140" style="flex-basis:100%"><button class="btn sm" type="submit">${t("t_addTask")}</button></form></div>
 
  <div class="section" style="margin-block:4px"><h2>${t("t_piecesH")}</h2><div class="list">${D.pieces.length ? D.pieces.map(p => `<div class="row"><div class="grow"><div class="title">${esc(p.title)}</div><div class="muted small">${t("st_" + p.status)} · ${fmtDur(+p.seconds || 0)} ${t("totalTime")}</div></div><button class="x" data-act="tPieceDel" data-id="${p.id}" aria-label="Delete">×</button></div>`).join("") : `<div class="empty">—</div>`}</div>
+  <form class="add" data-form="tPieceNew"><input id="tpT" placeholder="${t("piecePh")}" required maxlength="120"><button class="btn sm" type="submit">${t("add")}</button></form>
   ${TS.library.length ? `<form class="add" data-form="tGive"><select id="tgL" aria-label="${t("t_giveLib")}">${TS.library.map(l => `<option value="${l.id}" ${D.pieces.some(p => p.library_id === l.id) ? "disabled" : ""}>${esc(l.title)}</option>`).join("")}</select><button class="btn sm" type="submit">${t("libGive")}</button></form>` : ""}</div>
 
  <div class="section" style="margin-block:4px"><h2>${t("techH")}</h2><div class="list">${drills.length ? drills.map(d => `<div class="row"><div class="grow"><div class="title">${esc(d.name)}</div><div class="muted small">${t("targetBpm")} ♩=${+d.target || "—"} · ${t("bestBpm")} ♩=${+d.best || "—"}</div></div><button class="x" data-act="tDrillDel" data-id="${esc(d.id)}" aria-label="Delete">×</button></div>`).join("") : `<div class="empty">—</div>`}</div>
@@ -329,6 +330,7 @@ async function teacherSubmit(e) {
   if (f === "tReward") { const title = v("rT"); if (!title) return; const row = { id: uid(), teacher_id: me, title, price: Math.max(1, Math.round(+v("rP") || 100)) }; if (await Tdo(() => DB.ins("rewards", [row]), t("saved"))) { TS.rewards.push(row); TS.rewards.sort((a, b) => a.price - b.price); Trefresh(); } return; }
   if (f === "tName") { const n = v("tNm"); if (!n) return; if (await Tdo(() => DB.upd("profiles", { id: me }, { display_name: n }), t("saved"))) { TS.prof.display_name = n; Trefresh(); } return; }
   const sid = TS.cur; if (!sid) return;
+  if (f === "tPieceNew") { const title = v("tpT"); if (!title) return; await Tdo(() => DB.ins("pieces", [{ id: uid(), student_id: sid, title, composer: "" }]), t("saved")); return TreloadDetail(); }
   if (f === "tTaskAdd") { const title = v("taT"); if (!title) return; const row = { id: uid(), student_id: sid, week: weekKey(TS.week), area: v("taA") || "other", title, piece_id: v("taP") || null, source: "teacher" }; await Tdo(() => DB.ins("tasks", [row]), t("saved")); return TreloadDetail(); }
   if (f === "tTaskEdit") { const id = e.target.dataset.id, title = v("te-" + id); if (!title) return; TS.editTask = null; await Tdo(() => DB.upd("tasks", { id }, { title }), t("saved")); return TreloadDetail(); }
   if (f === "tGive") { const libId = v("tgL"); if (!libId) return; await Tdo(async () => { if (await TgiveLib(sid, libId)) toast(t("libGiven")); }); return TreloadDetail(); }

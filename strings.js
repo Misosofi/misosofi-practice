@@ -74,6 +74,12 @@ const STR={en:{
  in_ios_tip:"No \u201cAdd to Home Screen\u201d? You may be inside another app (WhatsApp, email). Tap the compass or \u201cOpen in Safari\u201d first, then try again.",in_and1:"Open the browser menu (the three dots).",in_and2:"Tap \u201cInstall app\u201d or \u201cAdd to Home screen\u201d.",
  in_inapp:"First open this page in Safari or Chrome: tap the menu and choose \u201cOpen in browser\u201d. Then come back to this step.",
  in_after:"Look for the Practice icon on your home screen. Sign in once and you stay signed in.",
+ sh_avatar:"Shop",pc_wear:"Hats",pc_bag:"Bags",pc_jewel:"Jewellery",pc_food:"Treats",pc_ride:"Rides",pc_home:"Furniture",pc_wall:"Walls & floors",
+ rm_title:"{name}'s room",rm_decorate:"Decorate my room",rm_hint:"Drag things to move them. Tap one for more.",rm_flip:"Flip",rm_front:"To front",rm_away:"Put away",
+ rm_tray:"Toy box",rm_trayEmpty:"Everything is in your room. Buy more in the shop!",rm_style:"Walls & floors",rm_use:"Use",rm_inRoom:"In room",rm_bought:"It's in your room!",
+ pe_animal:"Animal",pe_fur:"Colour",pe_outfit:"Clothes",pe_ocol:"Clothes colour",
+ an_bunny:"Bunny",an_cat:"Cat",an_dog:"Puppy",an_panda:"Panda",an_fox:"Fox",an_penguin:"Penguin",an_hamster:"Hamster",
+ of_tee:"T-shirt",of_dress:"Dress",of_overalls:"Overalls",of_hoodie:"Hoodie",of_sailor:"Sailor",editAvatar:"Dress up",
  wd:["Mo","Tu","We","Th","Fr","Sa","Su"]
 }};
 let LANG="en";
