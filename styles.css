@@ -449,3 +449,9 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .dz-ghostcat:not(.dz-peek) img{animation:dzHover 2.4s ease-in-out infinite}
 @keyframes dzHover{50%{transform:translateY(-5%)}}
 .dz-stage.night .room{filter:brightness(.6) saturate(.8)}
+/* microphone */
+.mic-live{display:flex;align-items:center;gap:10px;justify-content:center;padding:10px 14px;border-radius:999px;background:#F1ECFF;font-weight:800;font-size:18px}
+.mic-dot{width:12px;height:12px;border-radius:50%;background:#FF4D6D;animation:micPulse 1s ease-in-out infinite}
+@keyframes micPulse{50%{opacity:.3}}
+.mic-bar{width:90px;height:8px;border-radius:4px;background:#fff;overflow:hidden}
+.mic-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .1s}
