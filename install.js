@@ -62,10 +62,11 @@ function installGuide() {
   g.innerHTML = `<div class="instg-p" role="dialog" aria-modal="true" aria-labelledby="instg-h">
       <h2 id="instg-h">${esc(t("in_title"))}</h2>
       <ol>${steps.map((s, i) => `<li><span class="instg-i">${s[0]}</span><span><b>${i + 1}.</b> ${esc(s[1])}</span></li>`).join("")}</ol>
+      ${ios && !instInApp() ? `<p class="small">${esc(t("in_ios_tip"))}</p>` : ""}
       <p class="muted small">${esc(t("in_after"))}</p>
       <button class="btn block" data-g="ok">${esc(t("in_ok"))}</button>
     </div>
-    ${ios && !ipad && !instInApp() ? `<div class="instg-arrow" aria-hidden="true">↓</div>` : ""}`;
+`;
   g.hidden = false;
   g.onclick = e => { if (e.target === g || e.target.closest("[data-g]")) g.hidden = true; };
 }

@@ -71,7 +71,7 @@ const STR={en:{
  confirmDel:"Delete this?",changeTeacher:"This account is connected to another teacher. Connect it to the new teacher instead?",
  in_title:"Put Practice on your home screen",in_sub:"Then it opens like an app, with one tap.",in_add:"Add",in_later:"Later",in_ok:"Got it",
  in_ios1:"Tap the Share button at the bottom of Safari (on newer iPhones it is inside the \u2022\u2022\u2022 menu).",in_ios1_ipad:"Tap the Share button at the top right (or inside the \u2022\u2022\u2022 menu).",in_ios2:"Scroll down and tap \u201cAdd to Home Screen\u201d.",in_ios3:"Tap \u201cAdd\u201d at the top right.",
- in_and1:"Open the browser menu (the three dots).",in_and2:"Tap \u201cInstall app\u201d or \u201cAdd to Home screen\u201d.",
+ in_ios_tip:"No \u201cAdd to Home Screen\u201d? You may be inside another app (WhatsApp, email). Tap the compass or \u201cOpen in Safari\u201d first, then try again.",in_and1:"Open the browser menu (the three dots).",in_and2:"Tap \u201cInstall app\u201d or \u201cAdd to Home screen\u201d.",
  in_inapp:"First open this page in Safari or Chrome: tap the menu and choose \u201cOpen in browser\u201d. Then come back to this step.",
  in_after:"Look for the Practice icon on your home screen. Sign in once and you stay signed in.",
  wd:["Mo","Tu","We","Th","Fr","Sa","Su"]
