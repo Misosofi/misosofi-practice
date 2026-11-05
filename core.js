@@ -147,6 +147,11 @@ function accG(sym,x,y,g){const k=sym==="♯"?1:sym==="♭"?-1:sym==="♮"?0:null
  if(k===-1)return L(x-.32*g,y-2*g,x-.32*g,y+.55*g,.13*g)+`<path d="M${x-.32*g} ${y+.55*g} C${x+.2*g} ${y+.2*g} ${x+.75*g} ${y-.3*g} ${x+.45*g} ${y-.62*g} C${x+.2*g} ${y-.88*g} ${x-.12*g} ${y-.55*g} ${x-.32*g} ${y-.22*g}" fill="none" stroke="${INK}" stroke-width="${.22*g}" stroke-linejoin="round"/>`;
  if(k===0)return L(x-.25*g,y-1.4*g,x-.25*g,y+.6*g,.12*g)+L(x+.25*g,y-.6*g,x+.25*g,y+1.4*g,.12*g)+L(x-.25*g,y-.28*g,x+.25*g,y-.5*g,.3*g)+L(x-.25*g,y+.5*g,x+.25*g,y+.28*g,.3*g);
  return `<text x="${x}" y="${y+5}" font-size="${g*1.6}" font-weight="700" fill="${INK}" text-anchor="middle">${sym}</text>`}
+function restG(dur,cx,top,g){
+ if(dur>=4)return `<rect x="${cx-.6*g}" y="${top+g}" width="${1.2*g}" height="${.5*g}" fill="${INK}"/>`;
+ if(dur>=2)return `<rect x="${cx-.6*g}" y="${top+1.5*g}" width="${1.2*g}" height="${.5*g}" fill="${INK}"/>`;
+ if(dur>=1)return `<path d="M${cx-.25*g} ${top+.85*g} L${cx+.35*g} ${top+1.55*g} L${cx-.15*g} ${top+2.15*g} L${cx+.38*g} ${top+2.8*g} C${cx-.35*g} ${top+2.5*g} ${cx-.45*g} ${top+3.1*g} ${cx+.05*g} ${top+3.45*g}" fill="none" stroke="${INK}" stroke-width="${.3*g}" stroke-linejoin="round" stroke-linecap="round"/>`;
+ return `<circle cx="${cx-.15*g}" cy="${top+1.65*g}" r="${.22*g}" fill="${INK}"/><path d="M${cx-.25*g} ${top+1.8*g} Q${cx+.15*g} ${top+1.95*g} ${cx+.35*g} ${top+1.5*g} L${cx-.05*g} ${top+3*g}" fill="none" stroke="${INK}" stroke-width="${.14*g}" stroke-linecap="round"/>`}
 function keySig(keyAcc,x,yOf,base,shift,g){let s="";const n=Math.abs(keyAcc);for(let i=0;i<n;i++){const st=(keyAcc>0?SHARP_STEPS:FLAT_STEPS)[i]+shift;s+=accG(keyAcc>0?"♯":"♭",x+i*g*1.05,yOf(base+st),g)}return s}
 function timeSig(T,x,top,g){const f=`font-family="Georgia,'Times New Roman',serif" font-weight="900" font-size="${g*2.75}" fill="${INK}" text-anchor="middle"`;return `<text x="${x}" y="${top+2*g-.6}" ${f}>${T.n}</text><text x="${x}" y="${top+4*g-.6}" ${f}>${T.d}</text>`}
 function trebleClef(x,top,g){const X=x+g*.95,Y=top+3*g,P=(a,b)=>`${(X+a*g).toFixed(1)} ${(Y+b*g).toFixed(1)}`;
@@ -161,7 +166,7 @@ function noteHead(nt,nx,y,base,opt={}){let s="";const ny=y(nt.d),st=nt.d-base;
  if(nt.dur===3||nt.dur===1.5||nt.dur===.75)s+=`<circle cx="${nx+12}" cy="${ny-(st%2===0?3:0)}" r="2.2" fill="${INK}"/>`;
  return s}
 /* grand staff for sight-reading */
-const TSS={"2/4":{n:2,d:4,len:2,grp:1},"3/4":{n:3,d:4,len:3,grp:1},"4/4":{n:4,d:4,len:4,grp:1},"3/8":{n:3,d:8,len:1.5,grp:1.5},"6/8":{n:6,d:8,len:3,grp:1.5}};
+const TSS={"2/4":{n:2,d:4,len:2,grp:1},"3/4":{n:3,d:4,len:3,grp:1},"4/4":{n:4,d:4,len:4,grp:2},"3/8":{n:3,d:8,len:1.5,grp:1.5},"6/8":{n:6,d:8,len:3,grp:1.5}};
 const barsOf=(notes,len)=>Math.round(notes.reduce((a,n)=>a+n.dur,0)/len);
 const allD=nt=>nt.chord?[nt.d,...nt.chord]:[nt.d];
 function grand({keyAcc,ts,rh,lh,width,single,noTime,final=true}){
@@ -186,8 +191,9 @@ function grand({keyAcc,ts,rh,lh,width,single,noTime,final=true}){
   const P=notes.map(nt=>{const o={nt,pos,nx:x+pos*W+11};pos+=nt.dur;return o});const done=new Set();
   const heads=o=>allD(o.nt).forEach((dd,j)=>out+=noteHead({...o.nt,d:dd,sym:j===0?o.nt.sym:null},o.nx,yy,base));
   for(let i=0;i<P.length;i++){const o=P[i];if(done.has(i))continue;
-   if(o.nt.rest){const bx=x+(o.pos+o.nt.dur/2)*W-6;out+=`<rect x="${bx}" y="${top+gap}" width="12" height="5" fill="${INK}"/>`;continue}
-   heads(o);if(o.nt.dur>=4)continue;
+   if(o.nt.rest){const full=o.nt.dur>=T.len-1e-6,cx=full?x+(Math.floor(o.pos/T.len+1e-6)+.5)*T.len*W:o.nx;out+=restG(full&&T.len!==2?4:o.nt.dur,cx,top,gap);continue}
+   heads(o);
+   if(o.nt.f){const ny=yy(Math.max(...allD(o.nt))),ly=yy(Math.min(...allD(o.nt))),fy=clef==="treble"?Math.min(top-5,ny-14):Math.max(top+4*gap+15,ly+20);out+=`<text x="${o.nx}" y="${fy}" font-size="12" font-weight="700" fill="${INK}" text-anchor="middle" font-family="Georgia,serif">${o.nt.f}</text>`}if(o.nt.dur>=4)continue;
    if(o.nt.dur<1){const gi=Math.floor(o.pos/T.grp+1e-6),G=[];let j=i;while(j<P.length&&!P[j].nt.rest&&P[j].nt.dur<1&&Math.floor(P[j].pos/T.grp+1e-6)===gi){G.push(P[j]);j++}
     if(G.length>=2){G.slice(1).forEach((q,k)=>{heads(q);done.add(i+k+1)});
      const avg=G.reduce((a,q)=>a+q.nt.d,0)/G.length,up=(avg-base)<4;
