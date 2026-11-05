@@ -433,3 +433,19 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .dz-walk{height:120px;animation:dzWalk 2.5s ease-in forwards}
 @keyframes dzWalk{from{transform:translateX(-60%)}to{transform:translateX(160%)}}
 @media (prefers-reduced-motion:reduce){.dz-cat,.dz-cat img,.dz-walk{animation:none!important}}
+.dz-choice{display:flex;gap:12px;align-items:center}
+.dz-choice img{width:72px;height:90px;object-fit:contain}
+.dz-wish{display:block;width:44px;margin:4px auto 0}
+.dz-wish img{width:100%}
+.dz-boom{position:absolute;left:8%;top:30%;z-index:210;font-weight:900;font-size:clamp(28px,9vw,54px);color:#FF5C3A;-webkit-text-stroke:2px #fff;transform:rotate(-12deg);animation:dzBoom 1.2s ease-out both;pointer-events:none}
+@keyframes dzBoom{0%{transform:scale(.2) rotate(-12deg);opacity:0}25%{transform:scale(1.25) rotate(-12deg);opacity:1}100%{transform:scale(1) rotate(-12deg);opacity:0}}
+.dz-enter-bang .room{animation:dzShake .45s ease-in-out 2}
+@keyframes dzShake{25%{transform:translateX(-6px) rotate(-.6deg)}75%{transform:translateX(6px) rotate(.6deg)}}
+.dz-enter-bang .dz-peek{animation:dzJump 1.1s cubic-bezier(.2,1.4,.5,1) both}
+@keyframes dzJump{0%{transform:translateX(-160%) translateY(-30%) rotate(-20deg)}60%{transform:translateX(5%) translateY(-12%) rotate(6deg)}100%{transform:none}}
+.dz-ghostcat img{opacity:.55;filter:drop-shadow(0 0 12px #CFE4FF) saturate(.6)}
+.dz-enter-ghost .dz-peek{animation:dzFloat 3s ease-in-out both}
+@keyframes dzFloat{0%{transform:translateX(120%);opacity:0}60%{opacity:1}100%{transform:none}}
+.dz-ghostcat:not(.dz-peek) img{animation:dzHover 2.4s ease-in-out infinite}
+@keyframes dzHover{50%{transform:translateY(-5%)}}
+.dz-stage.night .room{filter:brightness(.6) saturate(.8)}

@@ -1,4 +1,4 @@
--- Patch 04: "Send Daizu" — a child spends coins to send Daizu the cat to a classmate (same rules as visits: same teacher,
+-- Patch 04: "Send a cat" — a child spends coins to send one of the Misosofi cats (Daizu, …) to a classmate (same rules as visits: same teacher,
 -- both parents switched visits on). Daizu sneaks in, sings a flamenco "I'm hungry" song and asks for food.
 -- Fed: a kiss and goodbye. Not fed: Daizu stomps off. One Daizu per sender per day. Needs patch 03 first.
 
@@ -7,11 +7,12 @@ create table if not exists public.daizu_trips (
   from_id uuid not null references public.profiles(id) on delete cascade,
   to_id uuid not null references public.profiles(id) on delete cascade,
   day date not null default current_date,
+  cat text not null default 'daizu' check (cat in ('daizu','kuriito','azuki','matcha','sakura')),
   status text not null default 'sent' check (status in ('sent','fed','angry')),
   food text not null default '' check (length(food) <= 30),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (from_id, day),
+  unique (from_id, day, cat),
   check (from_id <> to_id)
 );
 create index if not exists daizu_to on public.daizu_trips(to_id, status);
@@ -20,19 +21,19 @@ drop policy if exists "daizu read" on public.daizu_trips;
 create policy "daizu read" on public.daizu_trips for select
   using (from_id = auth.uid() or to_id = auth.uid() or public.is_teacher_of(from_id));
 
-create or replace function public.send_daizu(target uuid) returns uuid
+create or replace function public.send_daizu(target uuid, cat_ text) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare tid uuid;
 begin
   if not public.can_visit(auth.uid(), target) then raise exception 'Visits are not switched on'; end if;
-  insert into daizu_trips (from_id, to_id) values (auth.uid(), target) returning id into tid;
+  insert into daizu_trips (from_id, to_id, cat) values (auth.uid(), target, cat_) returning id into tid;
   return tid;
-exception when unique_violation then raise exception 'Daizu already went out today';
+exception when unique_violation then raise exception 'This cat already went out today';
 end $$;
 
-create or replace function public.daizu_mine() returns table (id uuid, day date, status text, food text, other_name text, other_avatar jsonb, mine boolean)
+create or replace function public.daizu_mine() returns table (id uuid, day date, cat text, status text, food text, other_name text, other_avatar jsonb, mine boolean)
 language sql stable security definer set search_path = public as $$
-  select t.id, t.day, t.status, t.food, p.display_name, coalesce(s.data->'avatar','{}'::jsonb), t.from_id = auth.uid()
+  select t.id, t.day, t.cat, t.status, t.food, p.display_name, coalesce(s.data->'avatar','{}'::jsonb), t.from_id = auth.uid()
   from daizu_trips t
   join profiles p on p.id = case when t.from_id = auth.uid() then t.to_id else t.from_id end
   left join student_state s on s.student_id = p.id
@@ -48,5 +49,5 @@ begin
   if not found then raise exception 'Daizu has already left'; end if;
 end $$;
 
-revoke all on function public.send_daizu(uuid), public.daizu_mine(), public.daizu_answer(uuid,boolean,text) from public, anon;
-grant execute on function public.send_daizu(uuid), public.daizu_mine(), public.daizu_answer(uuid,boolean,text) to authenticated;
+revoke all on function public.send_daizu(uuid,text), public.daizu_mine(), public.daizu_answer(uuid,boolean,text) from public, anon;
+grant execute on function public.send_daizu(uuid,text), public.daizu_mine(), public.daizu_answer(uuid,boolean,text) to authenticated;
