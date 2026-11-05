@@ -21,7 +21,7 @@ function installMaybe(force) {
   if (instStandalone()) return;
   if (!force) {
     if (!instMobile() && !INST.evt) { INST.want = true; return; } // computers: only when the browser can install
-    try { const l = +localStorage.getItem("mp-install-later") || 0; if (Date.now() < l) return; } catch (e) { }
+    if (INST.later) return; // "Later" hides it until the app is opened again
   }
   if (INST.shown) return; INST.shown = true;
   let el = document.getElementById("inst");
@@ -36,7 +36,7 @@ function installHide() { const el = document.getElementById("inst"); if (el) el.
 async function installClick(e) {
   const b = e.target.closest("[data-inst]"); if (!b) return;
   const a = b.dataset.inst;
-  if (a === "later") { try { localStorage.setItem("mp-install-later", String(Date.now() + 5 * 864e5)); } catch (_) { } installHide(); return; }
+  if (a === "later") { INST.later = true; installHide(); return; }
   if (a === "add") {
     if (INST.evt) {
       const ev = INST.evt; INST.evt = null;
@@ -69,3 +69,11 @@ function installGuide() {
   g.hidden = false;
   g.onclick = e => { if (e.target === g || e.target.closest("[data-g]")) g.hidden = true; };
 }
+
+/* a button for Settings, so it can be added any time */
+function instButton() { return instStandalone() ? "" : `<button class="btn soft block" data-inst-open="1">${IC_ADD} ${esc(t("in_title"))}</button>`; }
+document.addEventListener("click", async e => {
+  if (!e.target.closest("[data-inst-open]")) return;
+  if (INST.evt) { const ev = INST.evt; INST.evt = null; try { ev.prompt(); await ev.userChoice; } catch (_) { installGuide(); } return; }
+  installGuide();
+});

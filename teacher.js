@@ -106,7 +106,7 @@ function TvRewards() {
  <form class="add" data-form="tReward"><input id="rT" placeholder="${t("rTitlePh")}" required maxlength="100"><input id="rP" type="number" min="1" value="100" style="flex:0 1 90px" aria-label="Price"><button class="btn sm" type="submit">${t("add")}</button></form></div>`;
 }
 function TvSettings() {
-  return `<div class="section">${TinviteCard()}</div>
+  return `<div class="section">${TinviteCard()}</div>${instButton() ? `<div class="section">${instButton()}</div>` : ""}
  <div class="section"><div class="card stack"><h2>${t("t_name")}</h2><form class="add" data-form="tName"><input id="tNm" value="${esc(TS.prof.display_name || "")}" maxlength="60" required><button class="btn sm" type="submit">${t("save")}</button></form></div></div>
  <div class="section"><div class="card stack"><h2>${t("t_keepRecs")}</h2><div class="chips">${[7, 14, 30].map(n => `<button class="chip ${TS.keep === n ? "on" : ""}" data-act="tKeep" data-n="${n}">${t("t_daysN", { n })}</button>`).join("")}</div><div class="muted small">${t("t_keepD")}</div></div></div>
  <div class="section"><div class="card stack"><div class="label">${t("languageH")}</div><div class="chips"><button class="chip on">English</button><button class="chip" disabled>日本語 · ${t("soon")}</button><button class="chip" disabled>Español · ${t("soon")}</button></div>

@@ -606,7 +606,7 @@ function onboarding() {
 }
 function settings() {
   openSheet(`<div class="stack"><div class="act-head"><h2>${t("settings")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
- <div class="label">${t("themeH")}</div>${skinPicker()}<button class="btn soft" data-act="redoOb">${t("redoOb")}</button>
+ <div class="label">${t("themeH")}</div>${skinPicker()}<button class="btn soft" data-act="redoOb">${t("redoOb")}</button>${instButton()}
  <div class="label">${t("languageH")}</div><div class="chips"><button class="chip on">English</button><button class="chip" disabled>日本語 · ${t("soon")}</button><button class="chip" disabled>Español · ${t("soon")}</button></div>
  <div class="label">${t("account")}</div><div class="list">
   <div class="toggle"><span><strong>${t("myTeacher")}</strong><br><span class="muted small">${S.teacherName ? esc(S.teacherName) : t("noTeacher")}</span></span></div>
