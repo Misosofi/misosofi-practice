@@ -44,6 +44,7 @@ async function visitsLoad(force) {
     if (VIS.set.allowed && !VIS.set.teacher_off) {
       const [m, l] = await Promise.all([vrpc("classmates"), vrpc("my_visits")]);
       VIS.mates = m || []; VIS.list = l || [];
+      if (typeof daizuLoad === "function") await daizuLoad();
     } else { VIS.mates = []; VIS.list = []; }
     VIS.at = Date.now();
     VIS.err = false;
@@ -51,6 +52,7 @@ async function visitsLoad(force) {
   VIS.busy = false;
   const c = document.getElementById("friendsCard"); if (c) c.outerHTML = friendsCard();
   const b = document.getElementById("bellBanner"); if (b) b.outerHTML = bellBanner();
+  if (typeof daizuArrive === "function") daizuArrive();
 }
 
 /* someone is at my door (shown on Today and in Me) */
@@ -79,12 +81,15 @@ function friendsCard() {
   };
   const stamps = toMe.filter(v => v.stamp).slice(0, 4);
   return `<div class="section" id="friendsCard">${head}
+  ${typeof daizuNews === "function" ? daizuNews() : ""}
   ${stamps.length ? `<div class="card stamps-in">${stamps.map(v => `<span>${STAMPS[v.stamp] || ""} ${t("vi_gotStamp", { name: esc(v.other_name) })}</span>`).join("")}</div>` : ""}
   ${mine.length ? `<div class="list">${mine.map(myRow).join("")}</div>` : ""}
   <div class="label">${t("vi_classmates")}</div>
   ${VIS.mates.length ? `<div class="mates">${VIS.mates.map(m => {
     const off = failed(m.id) || rangToday(m.id);
-    return `<button class="mate ${off ? "dim" : ""}" data-vact="visit" data-id="${esc(m.id)}" ${off ? "disabled" : ""}><span class="mate-ava">${avatarSVG(m.avatar, { head: true })}</span><span>${esc(m.name)}</span><span class="muted small">${failed(m.id) ? t("vi_tomorrow") : rangToday(m.id) ? "✓" : "🔔 " + t("vi_ring")}</span></button>`;
+    return `<div class="mate"><span class="mate-ava">${avatarSVG(m.avatar, { head: true })}</span><span>${esc(m.name)}</span>
+     <button class="btn sm soft ${off ? "dim" : ""}" data-vact="visit" data-id="${esc(m.id)}" ${off ? "disabled" : ""}>${failed(m.id) ? t("vi_tomorrow") : rangToday(m.id) ? "✓" : "🔔 " + t("vi_ring")}</button>
+     ${typeof daizuBtn === "function" ? daizuBtn(m) : ""}</div>`;
   }).join("")}</div>` : `<div class="card muted small">${t("vi_noMates")}</div>`}
   <div class="muted small">${t("vi_rules")}</div>
   <button class="btn ghost sm" data-vact="parentOff">${t("vi_parentOff")}</button></div>`;
