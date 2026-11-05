@@ -82,6 +82,9 @@ const STR={en:{
  of_tee:"T-shirt",of_dress:"Dress",of_overalls:"Overalls",of_hoodie:"Hoodie",of_sailor:"Sailor",editAvatar:"Dress up",
  songbookH:"Songbook",songNew:"New",songHow:"Look first: the key, the time signature and the dynamics. Then play it through without stopping.",playAlong:"Play along",alongHow:"You hear one bar of clicks to count in. Then play while the line moves.",
  pianoCredit:"Piano sound: Salamander Grand Piano by Alexander Holm (CC BY 3.0).",
+ pc_food:"Treats",pc_bag:"Bags & jewels",pc_ride:"Rides",pc_home:"Furniture",pc_room:"Rooms",pe_shape:"Shape",sh_round:"Round",sh_normal:"Normal",sh_slim:"Slim",
+ of_hoodie:"Hoodie",of_tee:"T-shirt",of_tee_dog:"Overalls",of_dress:"Dress",rm_feedHint:"Tap a treat in your room to give it to your friend.",rm_yum:"Yum! Your friend is happy.",
+ in_next:"{n} more ★ to get a {name}",in_top:"The best piano of all!",
  wd:["Mo","Tu","We","Th","Fr","Sa","Su"]
 }};
 let LANG="en";

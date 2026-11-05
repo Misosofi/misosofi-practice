@@ -325,3 +325,32 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .songcard{display:flex;align-items:center;gap:12px;border:0;text-align:left;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;color:var(--ink);font:inherit}
 .songcard .grow{display:flex;flex-direction:column}
 .songno{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;font-weight:800;flex:none}
+/* 3D pictures */
+.pet-full{display:block;width:100%;height:100%;line-height:0;text-align:center}
+.pet-full img{width:100%;height:100%;object-fit:contain;object-position:50% 100%;display:block;transform-origin:50% 100%}
+.pet-head{display:block;width:100%;height:100%;border-radius:inherit;background-size:118% auto;background-position:50% 6%;background-repeat:no-repeat}
+.ava-mini .pet-head,.ava-big .pet-head{border-radius:50%}
+.ava-full{background:none;border:0;width:180px;height:220px}
+.ava-full .pet-full{border-radius:24px;padding:10px}
+.animals .pet-head{width:56px;height:56px;border-radius:50%}
+.animals.three{grid-template-columns:repeat(3,1fr)}
+.animals.three .pet-full{height:110px}
+.room{aspect-ratio:9/7;background-size:cover;background-position:center}
+.room-bg{display:none}
+.ri img{width:100%;height:auto;display:block;pointer-events:none;-webkit-user-drag:none}
+.ri.me .pet-full{height:auto}
+.ri.me .pet-full img{height:auto}
+.ri::after{content:"";position:absolute;left:12%;right:12%;bottom:-2%;height:6%;background:radial-gradient(closest-side,rgba(40,20,30,.22),transparent);z-index:-1}
+.ri.flip img{transform:scaleX(-1)}
+.ri.food{cursor:pointer}
+.ri.eaten{transition:transform .35s,opacity .35s;transform:translate(-50%,-100%) scale(.2);opacity:0}
+.hearts{position:absolute;left:50%;top:-6%;transform:translateX(-50%);color:#FF5C8A;font-weight:900;font-size:clamp(12px,3vw,20px);opacity:0;pointer-events:none;white-space:nowrap}
+.hearts.go{animation:hearts 1.6s ease-out}
+@keyframes hearts{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}
+.tray img{max-width:100%;max-height:100%;object-fit:contain}
+.tray.wide button{width:96px}
+.tray.wide img{border-radius:8px}
+.shop .face.sq img{max-width:100%;max-height:100%;object-fit:contain}
+.instr{display:flex;align-items:center;gap:12px}
+.instr-pic{width:72px;height:56px;flex:none;display:grid;place-items:center}
+.instr-pic img{max-width:100%;max-height:100%;object-fit:contain}
