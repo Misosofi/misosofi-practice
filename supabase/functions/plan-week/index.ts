@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
-      "Authorization": "Bearer " + (Deno.env.get("ANTHROPIC_API_KEY") ?? "").trim(),
+      "Authorization": "Bearer " + (Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("ANTHROPIC_API_KEYANTHROPIC_API_KEY") || "").trim(),
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
