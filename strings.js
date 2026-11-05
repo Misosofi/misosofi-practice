@@ -49,7 +49,7 @@ const STR={en:{
  skin_garden:"Melody Garden",skin_space:"Rocket Space",skin_studio:"Studio",skin_arcade:"Arcade",
  /* ---- added for the production app ---- */
  appName:"Misosofi Practice",loading:"Loading…",retry:"Try again",wait:"Please wait…",
- au_signIn:"Sign in",au_signUp:"Create account",au_email:"Email",au_pw:"Password",au_pwNew:"Password (at least 8 characters)",au_childName:"Student's first name",au_childNameD:"Parents usually make the account for their child. Use the child's name — the teacher sees it.",
+ au_signIn:"Sign in",au_signUp:"Create account",au_email:"Email",au_pw:"Password",au_pwNew:"Password (at least 8 characters)",au_childName:"First name",au_childNameD:"Students: the child's first name (parents usually make the account). Teachers: your own name.",
  au_forgot:"Forgot password?",au_sendReset:"Send reset email",au_resetH:"Reset your password",au_resetD:"We'll email you a link to set a new password.",au_resetSent:"If this email has an account, a reset link is on its way. Check your inbox.",au_back:"Back to sign in",
  au_toSignIn:"Already have an account? Sign in",au_toSignUp:"New here? Create an account",au_confirm:"Almost done! Open the email we just sent and tap the link to confirm. Then sign in here.",
  au_setPw:"Set a new password",au_pwSaved:"Password changed.",au_join:"This invite link connects the account to your teacher.",au_joined:"Connected to your teacher!",au_signOut:"Sign out",au_signedInAs:"Signed in as {e}",au_tagline:"Practice log, games and homework for piano students.",
