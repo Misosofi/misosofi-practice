@@ -6,7 +6,7 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room"];
+const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
@@ -134,7 +134,7 @@ async function loadStudent() {
   const pr = await DB.sel("profiles", { eq: { id: ME } });
   if (pr[0]) PROF = pr[0];
   const tid = PROF.teacher_id, since = key(addDays(TODAY, -70)), wk0 = key(addDays(monday(TODAY), -7));
-  const [st, pieces, days, tasks, lib, rew, reds, recs, tp] = await Promise.all([
+  const [st, pieces, days, tasks, lib, rew, reds, recs, tp, songs] = await Promise.all([
     DB.sel("student_state", { eq: { student_id: ME } }),
     DB.sel("pieces", { eq: { student_id: ME }, order: ["created_at", true] }),
     DB.sel("practice_days", { eq: { student_id: ME }, gte: { day: since } }),
@@ -143,7 +143,8 @@ async function loadStudent() {
     tid ? DB.sel("rewards", { eq: { teacher_id: tid }, order: ["price", true] }) : [],
     DB.sel("redemptions", { eq: { student_id: ME }, order: ["created_at", false], limit: 60 }),
     DB.sel("recordings", { eq: { student_id: ME }, order: ["created_at", false], limit: 60 }),
-    tid ? DB.sel("profiles", { eq: { id: tid }, cols: "id,display_name" }) : []
+    tid ? DB.sel("profiles", { eq: { id: tid }, cols: "id,display_name" }) : [],
+    DB.sel("songs", { order: ["sort", true] }).catch(() => [])
   ]);
   const server = st[0]?.data || {};
   let base = Object.assign(defaultData(), clone(server));
@@ -157,7 +158,7 @@ async function loadStudent() {
   days.forEach(d => { for (const pid in d.piece_seconds || {}) { const p = S.pieces.find(x => x.id === pid); if (p) p.days[d.day] = +d.piece_seconds[pid] || 0; } });
   S.log = days.map(d => ({ date: d.day, sec: +d.seconds || 0, feel: d.feel, note: d.note || "" }));
   S.items = tasks.map(mapTask);
-  S.library = lib; S.rewards = rew;
+  S.library = lib; S.rewards = rew; SONGS = (songs || []).map(r => r.data).filter(Boolean);
   S.redeemed = reds.map(r => ({ id: r.id, title: r.title, price: r.price, date: key(new Date(r.created_at)), given: r.given }));
   const pend = (cache?.remoteRecs || []).filter(r => r.pending && OUT.some(o => o.k === "rec:" + r.id));
   S.remoteRecs = [...pend, ...recs.map(mapRec)];
@@ -324,8 +325,12 @@ function vStudentLib() {
  <div class="list">${L.map(l => `<div class="row"><div class="grow"><div class="title">${esc(l.title)}</div><div class="muted small">${esc(l.composer || "—")} · ${gradeName(+l.grade || 0)}${l.label ? " · " + esc(l.label) : ""}</div></div>${l.score_path ? `<button class="btn sm soft" data-act="score" data-id="${l.id}">${t("score")}</button>` : `<span class="muted small">${t("noScore")}</span>`}</div>`).join("")}</div></div>`;
 }
 function pieceForm() { return `<div class="card stack"><h2>${t("addPiece")}</h2><form class="add" data-form="piece"><input id="pTitle" placeholder="${t("piecePh")}" required maxlength="120" style="flex-basis:100%"><input id="pComp" placeholder="${t("composerPh")}" maxlength="80"><button class="btn" type="submit">${t("add")}</button></form></div>`; }
+function songbook() {
+  if (!SONGS.length) return "";
+  return `<div class="section"><div class="section-head"><h2>${t("songbookH")}</h2></div><div class="songs">${SONGS.map((s, i) => { const n = (S.songsPlayed || {})[s.id]; return `<button class="songcard" data-act="songOpen" data-id="${esc(s.id)}"><span class="songno">${i + 1}</span><span class="grow"><b>${esc(s.title)}</b><span class="muted small">${gradeName(s.grade)}</span></span>${n ? `<span class="pill g">⭐ ${n}</span>` : `<span class="pill m">${t("songNew")}</span>`}</button>`; }).join("")}</div></div>`;
+}
 function vPieces() {
-  return `<div class="section">${pieceForm()}</div><div class="section"><h2>${t("piecesH")}</h2>${S.pieces.length ? S.pieces.map(p => {
+  return `${songbook()}<div class="section">${pieceForm()}</div><div class="section"><h2>${t("piecesH")}</h2>${S.pieces.length ? S.pieces.map(p => {
     const dn = p.sections.filter(s => s.done).length, tot = p.sections.length || 1;
     return `<div class="card stack"><div style="display:flex;justify-content:space-between;gap:8px"><div class="grow"><div class="title" style="font-size:1.05rem">${esc(p.title)}</div><div class="muted small">${esc(p.composer || "")}</div></div><button class="x" data-act="delPiece" data-id="${p.id}" aria-label="Delete">×</button></div>
  <div class="timebox"><div><span class="muted small">${t("todayPiece")}</span><b>${fmtDur(p.days?.[TK] || 0)}</b></div><div><span class="muted small">${t("totalPiece")}</span><b>${fmtDur(p.sec || 0)}</b></div></div>
@@ -376,7 +381,7 @@ function vMe() {
 
 /* ===== activities ===== */
 function openSheet(html, full) { const sh = document.getElementById("sheet"); sh.classList.toggle("full", !!full); const p = document.getElementById("panel"); p.innerHTML = html; sh.hidden = false; if (S) hydrateMedia(p); }
-function closeSheet() { stopMetro(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
+function closeSheet() { stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
 function actHead(k) { return `<div class="act-head"><span class="ic" style="background:${ACT[k].col}">${I[ACT[k].ic]}</span><h2>${t("a_" + k)}</h2>${q()[k] ? `<span class="pill g">✓</span>` : `<span class="price">${I.coin}${ACT[k].coins}</span>`}<button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>`; }
 function openAct(k, opt = {}) { A = { k, ...opt }; renderAct(); if (k === "ear") setTimeout(() => A && A.qs && tone(A.qs[0].midi), 300); }
 function renderAct() { if (!A) return; const k = A.k; const b = k === "piece" ? actPiece() : k === "sight" ? actSight() : k === "nr" ? actNR() : k === "tech" ? actTech() : k === "theory" ? actTheory() : actQuiz(); openSheet(actHead(k) + b, true); }
@@ -414,23 +419,84 @@ function savePieceTime() {
 }
 /* sight-reading */
 function actSight() {
+  if (A.song) return actSong();
   const g = gG(); A.nb ??= 2; if (!A.ex) A.ex = genSight(g, g === 0 ? 2 : A.nb);
   const E = A.ex, w = Math.min(540, Math.max(320, window.innerWidth - 56));
   const hands = E.mode === "single" ? (E.single === "bass" ? t("sightLH") : t("sightRH")) : E.mode === "pass" ? t("sightPass") : t("sightTog");
   return `<div class="stack"><h2>${t("sightH")}</h2><div class="muted small">${t("sightHow")}</div>
  <div class="chips"><span class="pill a">${gradeName(S.profile.grade)}</span><span class="pill m">${keyName(E.key)}</span><span class="pill m">${E.ts}</span><span class="pill y">${hands}</span></div>
- <div class="staffbox stack" style="gap:4px">${sightLines(E, w)}</div>
+ <div class="staffbox stack" id="scoreBox" style="gap:4px;position:relative">${sightLines(E, w)}</div>
+ ${alongBar()}
  ${g > 0 ? `<div class="chips">${[2, 4].map(n => `<button class="chip ${A.nb === n ? "on" : ""}" data-act="sightBars" data-n="${n}">${t("bars", { n })}</button>`).join("")}</div>` : ""}
  ${A.rated ? `<div class="card" style="text-align:center;font-weight:800">${t("sightSaved")}</div><div class="opts"><button class="btn" data-act="sightHear">${I.play} ${t("hearIt")}</button><button class="btn soft" data-act="sightNew">${t("newOne")}</button></div>`
       : `<div class="opts" style="grid-template-columns:1fr 1fr 1fr">${["smooth", "some", "hard"].map(r => `<button class="opt" data-act="sightRate" data-r="${r}">${t("r_" + r)}</button>`).join("")}</div>`}</div>`;
 }
+/* Songbook: Atsuko's own pieces, read like sight-reading but with titles */
+function actSong() {
+  const song = SONGS.find(x => x.id === A.song); if (!song) return `<div class="empty">—</div>`;
+  if (!A.ex) A.ex = songExercise(song); A.bpm ??= Math.min(song.tempo || 80, 72);
+  const w = Math.min(760, Math.max(320, window.innerWidth - 56)), done = (S.songsPlayed || {})[song.id];
+  return `<div class="stack"><div style="text-align:center"><h2 style="margin:0">${esc(song.title)}</h2><div class="muted small">${esc(song.by || "")} · ${gradeName(song.grade)}${done ? " · ⭐" + done : ""}</div></div>
+ <div class="muted small">${t("songHow")}</div>
+ <div class="staffbox stack" id="scoreBox" style="gap:4px;position:relative">${sightLines(A.ex, w)}</div>
+ ${alongBar()}
+ ${A.rated ? `<div class="card" style="text-align:center;font-weight:800">${t("sightSaved")}</div>` : `<div class="opts" style="grid-template-columns:1fr 1fr 1fr">${["smooth", "some", "hard"].map(r => `<button class="opt" data-act="sightRate" data-r="${r}">${t("r_" + r)}</button>`).join("")}</div>`}</div>`;
+}
+function alongBar() {
+  A.bpm ??= 72;
+  return `<div class="card stack"><div class="metro" style="justify-content:center"><button class="btn soft sm" data-act="aBpm" data-d="-4" aria-label="Slower">−</button><span class="bpm" id="aBpm">♩=${A.bpm}</span><button class="btn soft sm" data-act="aBpm" data-d="4" aria-label="Faster">+</button></div>
+ <div class="opts"><button class="btn" data-act="along">${ALONG.on ? "■ " + t("mStop") : "▶ " + t("playAlong")}</button><button class="btn soft" data-act="sightHear">${I.play} ${t("hearIt")}</button></div>
+ <div class="muted small" style="text-align:center">${t("alongHow")}</div></div>`;
+}
+/* play along: one bar to count in, then the metronome clicks while a line moves through the music */
+let ALONG = { on: false, raf: 0, end: 0 };
+function stopAlong() { ALONG.on = false; cancelAnimationFrame(ALONG.raf); document.querySelectorAll(".along-cur").forEach(x => x.remove()); }
+function startAlong() {
+  stopAlong(); const c = ac(); if (!c || !A?.ex) return;
+  const T = TSS[A.ex.ts], eighthBeat = T.d === 8, spq = 60 / A.bpm, beatQ = eighthBeat ? .5 : 1, perBar = T.len / beatQ;
+  const svgs = [...document.querySelectorAll("#scoreBox svg")]; if (!svgs.length) return;
+  const segs = []; let acc = 0; svgs.forEach(sv => { const beats = +sv.dataset.beats; segs.push({ sv, a: acc, b: acc + beats }); acc += beats; });
+  const t0 = c.currentTime + .15, startQ = T.len, totalQ = acc;
+  for (let i = 0; i * beatQ < startQ + totalQ; i++) clickAt(t0 + i * beatQ * spq, i % perBar === 0);
+  const box = document.getElementById("scoreBox"), cur = document.createElement("div"); cur.className = "along-cur"; box.appendChild(cur);
+  ALONG.on = true;
+  const tick = () => {
+    if (!ALONG.on || !A) return stopAlong();
+    const q = (c.currentTime - t0) / spq - startQ;
+    if (q > totalQ) { stopAlong(); renderAct(); return; }
+    if (q < 0) { cur.style.opacity = .35; } else cur.style.opacity = 1;
+    const sg = segs.find(s => q < s.b) || segs[segs.length - 1], sv = sg.sv, vb = sv.viewBox.baseVal, sc = sv.getBoundingClientRect().width / vb.width;
+    const r = sv.getBoundingClientRect(), br = box.getBoundingClientRect();
+    const xq = Math.max(0, q) - sg.a, x = (+sv.dataset.x0 - 8 + xq * +sv.dataset.w) * sc;
+    cur.style.left = (r.left - br.left + box.scrollLeft + x) + "px"; cur.style.top = (r.top - br.top + +sv.dataset.y0 * sc) + "px"; cur.style.height = ((+sv.dataset.y1 - +sv.dataset.y0) * sc) + "px";
+    if (q >= 0 && sg.sv !== ALONG.lastSv) { ALONG.lastSv = sg.sv; sv.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    ALONG.raf = requestAnimationFrame(tick);
+  };
+  tick();
+}
 function splitBars(notes, L) { const out = []; let cur = [], pos = 0; notes.forEach(n => { cur.push(n); pos += n.dur; if (Math.abs(pos - L) < 1e-6) { out.push(cur); cur = []; pos = 0; } }); if (cur.length) out.push(cur); return out; }
 function sightLines(E, w) {
   const L = TSS[E.ts].len, R = splitBars(E.rh, L), Lh = splitBars(E.lh, L), nb = Math.max(R.length, Lh.length);
-  if (nb <= 2) return grand({ keyAcc: E.keyAcc, ts: E.ts, rh: E.rh, lh: E.lh, width: w, single: E.single });
-  let html = ""; for (let i = 0; i < nb; i += 2) html += grand({ keyAcc: E.keyAcc, ts: E.ts, rh: R.slice(i, i + 2).flat(), lh: Lh.slice(i, i + 2).flat(), width: w, single: E.single, noTime: i > 0, final: i + 2 >= nb }); return html;
+  const per = E.perLine || 2, cut = (m, i) => { if (!m) return null; const a = i * L, b = (i + per) * L, f = arr => (arr || []).filter(x => (x.p ?? x.a) >= a - 1e-6 && (x.p ?? x.a) < b - 1e-6).map(x => x.p != null ? { ...x, p: x.p - a } : { ...x, a: x.a - a, b: Math.min(x.b, b) - a }); return { dyn: f(m.dyn), hair: f(m.hair), slur: f(m.slur) }; };
+  if (nb <= per) return grand({ keyAcc: E.keyAcc, ts: E.ts, rh: E.rh, lh: E.lh, width: w, single: E.single, marks: E.marks });
+  let html = ""; for (let i = 0; i < nb; i += per) html += grand({ keyAcc: E.keyAcc, ts: E.ts, rh: R.slice(i, i + per).flat(), lh: Lh.slice(i, i + per).flat(), width: w, single: E.single, noTime: i > 0, final: i + per >= nb, marks: E.marks ? { rh: cut(E.marks.rh, i), lh: cut(E.marks.lh, i) } : null }); return html;
 }
-function playSight() { const E = A.ex, spb = .6;[E.rh, E.lh].forEach(v => { let pos = 0; v.forEach(n => { if (!n.rest) { tone(midiOf(n.d, n.alt), pos * spb, Math.max(.35, n.dur * spb), .26); (n.chord || []).forEach(c => tone(midiOf(c, keyAlt(m7(c), E.keyAcc)), pos * spb, n.dur * spb, .2)); } pos += n.dur; }); }); }
+const DYNV = { pp: .1, p: .15, mp: .2, mf: .26, f: .33, ff: .4 };
+function playSight() {
+  const E = A.ex, spb = 60 / (A.bpm || 100);
+  [["rh", E.rh], ["lh", E.lh]].forEach(([h, v]) => {
+    const dyn = (E.marks?.[h]?.dyn || []).slice().sort((a, b) => a.p - b.p); let pos = 0;
+    v.forEach(n => {
+      if (!n.rest) {
+        let vol = .26; dyn.forEach(d => { if (d.p <= pos + 1e-6) vol = DYNV[d.t] || vol; });
+        const short = (n.art || []).includes("st") || (n.art || []).includes("ss"), acc = (n.art || []).includes("ac") ? 1.3 : 1;
+        const len = short ? Math.min(.25, n.dur * spb * .5) : Math.max(.35, n.dur * spb);
+        tone(midiOf(n.d, n.alt), pos * spb, len, vol * acc); (n.chord || []).forEach(c => tone(midiOf(c, keyAlt(m7(c), E.keyAcc)), pos * spb, len, vol * .8));
+      }
+      pos += n.dur;
+    });
+  });
+}
 /* Note Catcher: our own note-reading game (tap mode) */
 const NC_LEVELS = [
   { id: "t1", name: "Treble: Middle C to G", clef: "treble", lo: dia(0, 4), hi: dia(4, 4) },
@@ -650,8 +716,11 @@ function studentClick(b, e) {
     case "pgoal": A.goal = +b.dataset.m; renderAct(); return;
     case "pstart": ac(); A.start = Date.now(); A.goalHit = 0; A.timer = setInterval(tickPiece, 250); if (S.recOn) startRec(A.pid); renderAct(); return;
     case "pstop": savePieceTime(); renderAct(); refreshTop(); return;
-    case "sightRate": A.rated = b.dataset.r; award("sight", ACT.sight.coins, 3); renderAct(); refreshTop(); return;
-    case "sightHear": playSight(); return;
+    case "sightRate": A.rated = b.dataset.r; if (A.song) { S.songsPlayed ||= {}; S.songsPlayed[A.song] = (S.songsPlayed[A.song] || 0) + 1; save(); } award("sight", ACT.sight.coins, 3); renderAct(); refreshTop(); return;
+    case "sightHear": ac(); playSight(); return;
+    case "along": ac(); ALONG.on ? (stopAlong(), renderAct()) : (startAlong(), b.innerHTML = "■ " + t("mStop")); return;
+    case "aBpm": A.bpm = Math.max(40, Math.min(160, (A.bpm || 72) + +b.dataset.d)); { const e = document.getElementById("aBpm"); if (e) e.textContent = "♩=" + A.bpm; } return;
+    case "songOpen": openAct("sight", { song: id }); return;
     case "sightNew": A.ex = null; A.rated = null; renderAct(); return;
     case "sightBars": A.nb = +b.dataset.n; A.ex = null; A.rated = null; renderAct(); return;
     case "ncLvl": A.lvl = id; S.ncLvl = id; save(); renderAct(); return;

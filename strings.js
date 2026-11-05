@@ -80,6 +80,7 @@ const STR={en:{
  pe_animal:"Animal",pe_fur:"Colour",pe_outfit:"Clothes",pe_ocol:"Clothes colour",
  an_bunny:"Bunny",an_cat:"Cat",an_dog:"Puppy",an_panda:"Panda",an_fox:"Fox",an_penguin:"Penguin",an_hamster:"Hamster",
  of_tee:"T-shirt",of_dress:"Dress",of_overalls:"Overalls",of_hoodie:"Hoodie",of_sailor:"Sailor",editAvatar:"Dress up",
+ songbookH:"Songbook",songNew:"New",songHow:"Look first: the key, the time signature and the dynamics. Then play it through without stopping.",playAlong:"Play along",alongHow:"You hear one bar of clicks to count in. Then play while the line moves.",
  wd:["Mo","Tu","We","Th","Fr","Sa","Su"]
 }};
 let LANG="en";

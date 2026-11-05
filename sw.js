@@ -1,9 +1,9 @@
 /* Service worker: caches the app shell so the app opens offline.
    Supabase API/Auth/Storage/Functions requests are never cached (they are not intercepted at all).
    Bump VERSION on every deploy so phones pick up the new files. */
-const VERSION = "misosofi-practice-v1.1.1";
+const VERSION = "misosofi-practice-v1.2.0";
 const SHELL = [
-  "./", "./index.html", "./styles.css", "./config.js", "./strings.js", "./core.js", "./data.js", "./pets.js", "./student.js", "./teacher.js", "./install.js", "./app.js",
+  "./", "./index.html", "./styles.css", "./config.js", "./strings.js", "./core.js", "./data.js", "./songs.js", "./pitch.js", "./pets.js", "./student.js", "./teacher.js", "./install.js", "./app.js",
   "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png"
 ];
 const CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";

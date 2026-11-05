@@ -127,6 +127,7 @@ function tone(midi,when=0,dur=1.1,vol=.3){const c=ac();if(!c)return;const t0=c.c
  const g=c.createGain();g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(vol,t0+.01);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);g.connect(c.destination);
  [[1,"triangle",1],[2,"sine",.35],[3,"sine",.12]].forEach(([m,ty,v])=>{const o=c.createOscillator(),gg=c.createGain();o.type=ty;o.frequency.value=f*m;gg.gain.value=v;o.connect(gg);gg.connect(g);o.start(t0);o.stop(t0+dur+.05)})}
 function click(acc){const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.frequency.value=acc?1500:1000;g.gain.setValueAtTime(.3,c.currentTime);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.06);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.07)}
+function clickAt(t,acc){const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.frequency.value=acc?1500:1000;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.002);g.gain.exponentialRampToValueAtTime(.0001,t+.06);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+.07)}
 function ding(ok){if(ok){tone(84,0,.25,.14);tone(88,.09,.35,.14)}else tone(57,0,.35,.12)}
 const MUSICFONT=`'Noto Music','Bravura','Apple Symbols',serif`,INK="#2A2438";
 const SHARP_STEPS=[8,5,9,6,3,7,4],FLAT_STEPS=[4,7,3,6,2,5,1];
@@ -169,7 +170,7 @@ function noteHead(nt,nx,y,base,opt={}){let s="";const ny=y(nt.d),st=nt.d-base;
 const TSS={"2/4":{n:2,d:4,len:2,grp:1},"3/4":{n:3,d:4,len:3,grp:1},"4/4":{n:4,d:4,len:4,grp:2},"3/8":{n:3,d:8,len:1.5,grp:1.5},"6/8":{n:6,d:8,len:3,grp:1.5}};
 const barsOf=(notes,len)=>Math.round(notes.reduce((a,n)=>a+n.dur,0)/len);
 const allD=nt=>nt.chord?[nt.d,...nt.chord]:[nt.d];
-function grand({keyAcc,ts,rh,lh,width,single,noTime,final=true}){
+function grand({keyAcc,ts,rh,lh,width,single,noTime,final=true,marks=null}){
  const T=TSS[ts],gap=11,tT=30,bT=tT+4*gap+52,H=single?tT+4*gap+40:bT+4*gap+34;
  const yAt=(top,base)=>d=>top+4*gap-(d-base)*gap/2;
  const staves=single?[[tT,single]]:[[tT,"treble"],[bT,"bass"]],lastTop=staves[staves.length-1][0];
@@ -187,9 +188,18 @@ function grand({keyAcc,ts,rh,lh,width,single,noTime,final=true}){
  for(let b=1;b<=total;b++){const last=b===total,bx=last?endX:Math.round(x+b*T.len*W)+.5;
   if(last&&final)s+=`<line x1="${bx-7}" x2="${bx-7}" y1="${tT}" y2="${sb(lastTop)}" stroke="${INK}" stroke-width="1.3"/><line x1="${bx-2}" x2="${bx-2}" y1="${tT}" y2="${sb(lastTop)}" stroke="${INK}" stroke-width="4"/>`;
   else s+=`<line x1="${last?bx-.65:bx}" x2="${last?bx-.65:bx}" y1="${tT}" y2="${sb(lastTop)}" stroke="${INK}" stroke-width="1.3"/>`}
+ const GEO={treble:[],bass:[]};
  const voice=(notes,top,clef)=>{const base=clef==="treble"?30:18,yy=yAt(top,base);let pos=0,out="";
   const P=notes.map(nt=>{const o={nt,pos,nx:x+pos*W+11};pos+=nt.dur;return o});const done=new Set();
-  const heads=o=>allD(o.nt).forEach((dd,j)=>out+=noteHead({...o.nt,d:dd,sym:j===0?o.nt.sym:null},o.nx,yy,base));
+  const decor=o=>{const ds=allD(o.nt),hiY=yy(Math.max(...ds)),loY=yy(Math.min(...ds)),mid=(Math.max(...ds)+Math.min(...ds))/2-base,up=mid<4;GEO[clef].push({pos:o.pos,end:o.pos+o.nt.dur,nx:o.nx,hiY,loY,up});
+    (o.nt.art||[]).forEach((a,k)=>{const ay=up?loY+gap*1.1+k*gap*.8:hiY-gap*1.1-k*gap*.8;
+     if(a==="st")out+=`<circle cx="${o.nx}" cy="${ay}" r="${gap*.17}" fill="${INK}"/>`;
+     else if(a==="ss")out+=`<path d="M${o.nx} ${ay-gap*.35} L${o.nx-gap*.18} ${ay+gap*.3} L${o.nx+gap*.18} ${ay+gap*.3}Z" fill="${INK}"/>`;
+     else if(a==="te")out+=`<line x1="${o.nx-gap*.55}" x2="${o.nx+gap*.55}" y1="${ay}" y2="${ay}" stroke="${INK}" stroke-width="${gap*.16}"/>`;
+     else if(a==="ac")out+=`<path d="M${o.nx-gap*.6} ${ay-gap*.35} L${o.nx+gap*.6} ${ay} L${o.nx-gap*.6} ${ay+gap*.35}" fill="none" stroke="${INK}" stroke-width="${gap*.13}"/>`;
+     else if(a==="ma")out+=`<path d="M${o.nx-gap*.45} ${ay+gap*.3} L${o.nx} ${ay-gap*.45} L${o.nx+gap*.45} ${ay+gap*.3}" fill="none" stroke="${INK}" stroke-width="${gap*.16}"/>`;
+     else if(a==="fe")out+=`<path d="M${o.nx-gap*.8} ${ay+gap*.2} Q${o.nx} ${ay-gap*1.1} ${o.nx+gap*.8} ${ay+gap*.2}" fill="none" stroke="${INK}" stroke-width="${gap*.14}"/><circle cx="${o.nx}" cy="${ay}" r="${gap*.14}" fill="${INK}"/>`;})};
+  const heads=o=>{allD(o.nt).forEach((dd,j)=>out+=noteHead({...o.nt,d:dd,sym:j===0?o.nt.sym:null},o.nx,yy,base));decor(o)};
   for(let i=0;i<P.length;i++){const o=P[i];if(done.has(i))continue;
    if(o.nt.rest){const full=o.nt.dur>=T.len-1e-6,cx=full?x+(Math.floor(o.pos/T.len+1e-6)+.5)*T.len*W:o.nx;out+=restG(full&&T.len!==2?4:o.nt.dur,cx,top,gap);continue}
    heads(o);
@@ -208,7 +218,16 @@ function grand({keyAcc,ts,rh,lh,width,single,noTime,final=true}){
    const fl=o.nt.dur<=.25?2:o.nt.dur<1?1:0;for(let f=0;f<fl;f++){const yy0=y2+(up?f*7:-f*7);out+=up?`<path d="M${sx} ${yy0} q9 7 7 18" stroke="${INK}" stroke-width="2.4" fill="none"/>`:`<path d="M${sx} ${yy0} q9 -7 7 -18" stroke="${INK}" stroke-width="2.4" fill="none"/>`}}
   return out};
  if(single)s+=voice(single==="bass"?lh:rh,tT,single);else{s+=voice(rh,tT,"treble");s+=voice(lh,bT,"bass")}
- return s+"</svg>";
+ if(marks){const xAt=p=>x+p*W+11,lineEnd=x+total*T.len*W-4;
+  [["rh","treble",tT],["lh","bass",bT]].forEach(([h,clef,top])=>{const M=marks[h];if(!M||(single&&single!==clef))return;const G=GEO[clef],dy=top+4*gap+gap*2.6;
+   (M.dyn||[]).forEach(d=>{s+=`<text x="${xAt(d.p)-4}" y="${dy+4}" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-weight="700" font-size="${gap*1.45}" fill="${INK}">${esc(d.t)}</text>`});
+   (M.hair||[]).forEach(hp=>{const a=xAt(hp.a)+(M.dyn||[]).some(d=>Math.abs(d.p-hp.a)<.01)*gap*1.8,b=Math.min(lineEnd,hp.b>=total*T.len-.01?lineEnd:xAt(hp.b)-6),o=gap*.45,c=dy;if(b-a<8)return;
+    s+=hp.k==="cresc"?`<path d="M${b} ${c-o} L${a} ${c} L${b} ${c+o}" fill="none" stroke="${INK}" stroke-width="1.2"/>`:`<path d="M${a} ${c-o} L${b} ${c} L${a} ${c+o}" fill="none" stroke="${INK}" stroke-width="1.2"/>`});
+   (M.slur||[]).forEach(sl=>{const A=G.find(g=>Math.abs(g.pos-sl.a)<.01),B=G.find(g=>Math.abs(g.pos-sl.b)<.01)||G.filter(g=>g.pos<=sl.b+.01).slice(-1)[0];if(!A||!B||B===A)return;
+    const inner=G.filter(g=>g.pos>=A.pos&&g.pos<=B.pos),above=A.up===false&&B.up===false;
+    const y0=above?A.hiY-gap*.9:A.loY+gap*.9,y1=above?B.hiY-gap*.9:B.loY+gap*.9,ext=above?Math.min(...inner.map(g=>g.hiY)):Math.max(...inner.map(g=>g.loY)),cy=above?Math.min(y0,y1,ext-gap*.6)-gap*1.2:Math.max(y0,y1,ext+gap*.6)+gap*1.2;
+    const xa=A.nx+2,xb=B.nx-2,mx=(xa+xb)/2;s+=`<path d="M${xa} ${y0} Q${mx} ${cy} ${xb} ${y1} Q${mx} ${cy+(above?2.2:-2.2)} ${xa} ${y0}Z" fill="${INK}" stroke="${INK}" stroke-width=".6"/>`})})}
+ return s.replace("<svg ",`<svg data-x0="${x+11}" data-w="${W}" data-beats="${total*T.len}" data-y0="${tT-8}" data-y1="${(single?tT:bT)+4*gap+8}" `)+"</svg>";
 }
 
 /* Sight-reading generator, following ABRSM's published piano sight-reading parameters (2025–26 syllabus; the app never shows the ABRSM name).
