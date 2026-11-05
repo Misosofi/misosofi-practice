@@ -494,3 +494,11 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .tech-how{line-height:1.55}
 .tech-pick{display:flex;flex-wrap:wrap;gap:6px}
 .chart{width:100%;height:auto;display:block}
+.wz h2{font-size:20px;line-height:1.35}
+.wz-opts{display:flex;flex-direction:column;gap:8px}
+.wz-opt{padding:14px 16px;border-radius:16px;border:2px solid var(--line);background:#fff;font:inherit;font-weight:700;text-align:left;color:inherit;cursor:pointer}
+.wz-opt.on{border-color:var(--accent);background:#F1ECFF}
+.wz-yn{display:grid;grid-template-columns:1fr 1fr;gap:10px}.big-choice{padding:18px;font-size:18px}
+.wz-nav{display:flex;justify-content:space-between;gap:10px;margin-top:6px}
+.pp-tips{color:#6C5CE7;font-weight:700}
+.pp-remember{background:#F1ECFF;line-height:1.5}
