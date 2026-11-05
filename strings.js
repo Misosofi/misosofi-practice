@@ -69,6 +69,11 @@ const STR={en:{
  t_open:"Open",t_week:"Week of {d}",t_notesH:"Student settings",t_lastSeen:"Last practice",t_none:"—",t_coinsN:"{n} coins",t_age:"Age {n}",t_starsN:"{n} stars",t_givenTo:"Given to {name}",
  t_noPending:"Nothing to give right now.",t_rewardsH:"Rewards your students can buy",t_pendingH:"Rewards to give",t_libCount:"{n} pieces",t_alreadyHas:"Already has it",
  confirmDel:"Delete this?",changeTeacher:"This account is connected to another teacher. Connect it to the new teacher instead?",
+ in_title:"Put Practice on your home screen",in_sub:"Then it opens like an app, with one tap.",in_add:"Add",in_later:"Later",in_ok:"Got it",
+ in_ios1:"Tap the Share button at the bottom of Safari (on newer iPhones it is inside the \u2022\u2022\u2022 menu).",in_ios1_ipad:"Tap the Share button at the top right (or inside the \u2022\u2022\u2022 menu).",in_ios2:"Scroll down and tap \u201cAdd to Home Screen\u201d.",in_ios3:"Tap \u201cAdd\u201d at the top right.",
+ in_and1:"Open the browser menu (the three dots).",in_and2:"Tap \u201cInstall app\u201d or \u201cAdd to Home screen\u201d.",
+ in_inapp:"First open this page in Safari or Chrome: tap the menu and choose \u201cOpen in browser\u201d. Then come back to this step.",
+ in_after:"Look for the Practice icon on your home screen. Sign in once and you stay signed in.",
  wd:["Mo","Tu","We","Th","Fr","Sa","Su"]
 }};
 let LANG="en";

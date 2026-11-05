@@ -65,6 +65,7 @@ async function enter(user) {
     if (prof.role === "teacher") { MODE = "teacher"; await teacherBoot(user, prof); }
     else { MODE = "student"; await studentBoot(user, prof); }
     hideBoot();
+    setTimeout(() => { try { installMaybe(); } catch (e) { } }, 1500);
   } catch (e) { console.error(e); MODE = "boot"; showBoot(e.net ? t("err_load") : t("err_generic") + " (" + e.message + ")", true); }
 }
 async function signOutNow() {
