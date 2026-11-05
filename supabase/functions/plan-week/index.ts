@@ -44,13 +44,17 @@ Deno.serve(async (req) => {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
-      "x-api-key": Deno.env.get("ANTHROPIC_API_KEY")!,
+      "Authorization": "Bearer " + (Deno.env.get("ANTHROPIC_API_KEY") ?? "").trim(),
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
     body: JSON.stringify({ model: "claude-sonnet-5-5", max_tokens: 1500, messages: [{ role: "user", content: prompt }] }),
   });
-  if (!r.ok) return json({ error: "Claude is not available right now.", status: r.status }, 502);
+  if (!r.ok) {
+    let detail = "";
+    try { const e = await r.json(); detail = (e && e.error && (e.error.type + ": " + e.error.message)) || ""; } catch { /* ignore */ }
+    return json({ error: "Claude is not available right now.", status: r.status, detail: detail.slice(0, 300) }, 502);
+  }
   const out = await r.json();
   const text: string = (out.content ?? []).map((c: { text?: string }) => c.text ?? "").join("");
   const start = text.indexOf("{"), end = text.lastIndexOf("}");
