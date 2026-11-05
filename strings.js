@@ -85,6 +85,10 @@ const STR={en:{
  pc_food:"Treats",pc_bag:"Bags & jewels",pc_ride:"Rides",pc_home:"Furniture",pc_room:"Rooms",pe_shape:"Shape",sh_round:"Round",sh_normal:"Normal",sh_slim:"Slim",
  of_hoodie:"Hoodie",of_tee:"T-shirt",of_tee_dog:"Overalls",of_dress:"Dress",rm_feedHint:"Tap a treat in your room to give it to your friend.",rm_yum:"Yum! Your friend is happy.",
  in_next:"{n} more ★ to get a {name}",in_top:"The best piano of all!",
+ pl_title:"My plan for next time",pl_how:"You are your own teacher now! Film your music and point to what you will practise next time. Say how you will practise it.",pl_example:"“Lonely Road, bar 1: the staccato notes. Hands separately, slowly, 5 times.”",
+ pl_video:"Film it",pl_voice:"Say it",pl_writePh:"Or write it here…",pl_save:"Save my plan",pl_skip:"Not now",pl_stop:"Stop",pl_saved:"Plan saved! It will open your next practice.",
+ pl_yours:"Your plan from last time",pl_done:"I did my plan",pl_doneMsg:"Great! +2 coins",pl_cta:"Film your score and point to what you'll practise next.",pl_camBlocked:"The camera is blocked. Allow it in the browser settings, or say or write your plan.",
+ t_planH:"Student's plan for next practice",
  wd:["Mo","Tu","We","Th","Fr","Sa","Su"]
 }};
 let LANG="en";

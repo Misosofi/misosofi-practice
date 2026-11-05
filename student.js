@@ -6,7 +6,7 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed"];
+const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
@@ -311,6 +311,8 @@ function vHome() {
   return `${!teen() ? `<div class="section mascot">${mascotSVG()}<div class="bubble">${msg}</div></div>` : ""}
  ${!PROF.teacher_id ? `<div class="section"><div class="card muted small">${t("noTeacher")}</div></div>` : ""}
  ${ev ? `<div class="section">${countdownCard(ev)}</div>` : ""}
+ ${openPlan() ? `<div class="section">${planCard("start")}</div>` : ""}
+ ${Q.piece && lastPlan()?.date !== TK ? `<div class="section"><button class="card plan-cta" data-act="planOpen"><b>${t("pl_title")}</b><span class="muted small">${t("pl_cta")}</span></button></div>` : ""}
  <div class="section"><div class="card quest-head">${ring(done, 7)}<div class="grow"><h2>${t("questH")}</h2><div class="muted small">${starred ? ico("star", "ic-star") + " " + t("starGot") : t("questSub")}</div></div></div>
  <div class="tiles">${ORDER.map(k => { const a = ACT[k]; return `<button class="tile ${k === "piece" ? "hero" : ""} ${Q[k] ? "done" : ""}" data-act="open" data-k="${k}"><span class="ic" style="background:${a.col}">${I[a.ic]}</span><span><span class="nm">${t("a_" + k)}</span><br><span class="sub">${k === "piece" ? t("a_piece_s") : t("s_" + k)}</span>${k === "piece" && pt > 0 ? `<br><span class="today">${t("todayTime", { t: fmtDur(pt) })}</span>` : ""}</span><span class="rw price">${I.coin}${a.coins}</span><span class="tick">✓</span></button>`; }).join("")}</div></div>
  <div class="section"><div class="section-head"><h2>${t("weekH")}</h2><span class="muted small">${t("weekSub")}</span></div><div class="list">${items.length ? items.map(i => `<div class="row"><button class="chk ${i.done?.[TK] ? "on" : ""}" data-act="toggleItem" data-id="${i.id}" aria-label="${esc(i.title)}">✓</button>${areaIc(i.area || "other")}<div class="grow"><div class="title">${esc(i.title)}</div><div class="muted small">${i.pieceId && S.pieces.find(p => p.id === i.pieceId) ? `<strong>${esc(S.pieces.find(p => p.id === i.pieceId).title)}</strong> · ` : ""}${i.source === "teacher" ? t("fromTeacher") : t("mine")}</div></div>${i.source === "teacher" ? `<span class="lock" title="${t("fromTeacher")}">${I.lock}</span>` : `<button class="x" data-act="delItem" data-id="${i.id}" aria-label="Delete">×</button>`}</div>`).join("") : `<div class="empty">${t("weekEmpty")}</div>`}</div>
@@ -380,18 +382,18 @@ function vMe() {
 }
 
 /* ===== activities ===== */
-function openSheet(html, full) { const sh = document.getElementById("sheet"); sh.classList.toggle("full", !!full); const p = document.getElementById("panel"); p.innerHTML = html; sh.hidden = false; if (S) hydrateMedia(p); }
+function openSheet(html, full) { const sh = document.getElementById("sheet"); sh.classList.toggle("full", !!full); const p = document.getElementById("panel"); p.innerHTML = html; sh.hidden = false; if (S) { hydrateMedia(p); hydratePlans(p); } }
 function closeSheet() { stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
 function actHead(k) { return `<div class="act-head"><span class="ic" style="background:${ACT[k].col}">${I[ACT[k].ic]}</span><h2>${t("a_" + k)}</h2>${q()[k] ? `<span class="pill g">✓</span>` : `<span class="price">${I.coin}${ACT[k].coins}</span>`}<button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>`; }
 function openAct(k, opt = {}) { A = { k, ...opt }; renderAct(); if (k === "ear") setTimeout(() => A && A.qs && tone(A.qs[0].midi), 300); }
-function renderAct() { if (!A) return; const k = A.k; const b = k === "piece" ? actPiece() : k === "sight" ? actSight() : k === "nr" ? actNR() : k === "tech" ? actTech() : k === "theory" ? actTheory() : actQuiz(); openSheet(actHead(k) + b, true); }
+function renderAct() { if (!A) return; const k = A.k; if (k === "plan") { openSheet(`<div class="act-head"><span class="ic" style="background:#5C6BC0">${I.book}</span><h2>${t("pl_title")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>` + actPlan(), true); return; } const b = k === "piece" ? actPiece() : k === "sight" ? actSight() : k === "nr" ? actNR() : k === "tech" ? actTech() : k === "theory" ? actTheory() : actQuiz(); openSheet(actHead(k) + b, true); }
 /* piece practice: exact seconds */
 const elapsed = () => A && A.start ? (Date.now() - A.start) / 1000 : 0;
 function actPiece() {
   if (!S.pieces.length) return `<div class="stack"><div class="card empty">${t("noPieces")}</div>${pieceForm()}</div>`;
   if (!A.pid || !S.pieces.find(p => p.id === A.pid)) A.pid = S.pieces[0].id; A.goal ??= 10; const p = S.pieces.find(x => x.id === A.pid), el = elapsed();
   const c = coach();
-  return `<div class="stack"><div class="label">${t("choosePiece")}</div>
+  return `<div class="stack">${A.start ? "" : planCard("start")}<div class="label">${t("choosePiece")}</div>
  <div class="chips">${S.pieces.map(x => `<button class="chip ${x.id === A.pid ? "on" : ""}" data-act="ppick" data-id="${x.id}" ${A.start ? "disabled" : ""}>${esc(x.title)}</button>`).join("")}${A.start ? "" : `<button class="chip" data-act="paddShow">+ ${t("addPiece")}</button>`}</div>${A.addOpen && !A.start ? pieceForm() : ""}
  <div class="chips">${[5, 10, 15, 0].map(m => `<button class="chip ${A.goal === m ? "on" : ""}" data-act="pgoal" data-m="${m}" ${A.start ? "disabled" : ""}>${m ? t("minutes", { n: m }) : t("free")}</button>`).join("")}</div>
  <div class="card stack" style="align-items:center"><div class="bigclock" id="clock">${clockOf(A.goal ? A.goal * 60 - el : el)}</div>
@@ -684,7 +686,7 @@ function settings() {
 
 /* ===== render & events ===== */
 function refresh() {
-  if (!S) return; applySkin(); refreshTop(); const v = document.getElementById("view"); v.innerHTML = ({ home: vHome, pieces: vPieces, goals: vGoals, me: vMe })[tab](); hydrateMedia(v);
+  if (!S) return; applySkin(); refreshTop(); const v = document.getElementById("view"); v.innerHTML = ({ home: vHome, pieces: vPieces, goals: vGoals, me: vMe })[tab](); hydrateMedia(v); hydratePlans(v);
   document.getElementById("tabs").innerHTML = Object.entries(TABS).map(([k, ic]) => `<button data-act="tab" data-t="${k}" ${k === tab ? 'aria-current="page"' : ""}>${I[ic]}<span>${t("tab_" + k)}</span></button>`).join("");
 }
 function studentClick(b, e) {
@@ -696,6 +698,7 @@ function studentClick(b, e) {
     case "settings": settings(); return;
     case "signOut": signOutNow(); return;
     case "avatar": avatarSheet(); return;
+    case "planRec": case "planStop": case "planDone": case "planOpen": planAction(b.dataset.act, b); return;
     case "petCat": ROOM.cat = b.dataset.v; refresh(); return;
     case "petBuy": petBuy(b.dataset.id); return;
     case "rmEdit": case "rmPlace": case "rmAway": case "rmFlip": case "rmFront": case "rmStyle": roomAction(b.dataset.act, b.dataset.id); return;
@@ -715,7 +718,7 @@ function studentClick(b, e) {
     case "ppick": A.pid = id; renderAct(); return;
     case "pgoal": A.goal = +b.dataset.m; renderAct(); return;
     case "pstart": ac(); A.start = Date.now(); A.goalHit = 0; A.timer = setInterval(tickPiece, 250); if (S.recOn) startRec(A.pid); renderAct(); return;
-    case "pstop": savePieceTime(); renderAct(); refreshTop(); return;
+    case "pstop": { const el0 = elapsed(); savePieceTime(); renderAct(); refreshTop(); if (el0 >= 60 && lastPlan()?.date !== TK) setTimeout(() => openAct("plan"), 1200); return; }
     case "sightRate": A.rated = b.dataset.r; if (A.song) { S.songsPlayed ||= {}; S.songsPlayed[A.song] = (S.songsPlayed[A.song] || 0) + 1; save(); } award("sight", ACT.sight.coins, 3); renderAct(); refreshTop(); return;
     case "sightHear": ac(); playSight(); return;
     case "along": ac(); ALONG.on ? (stopAlong(), renderAct()) : (startAlong(), b.innerHTML = "■ " + t("mStop")); return;
@@ -791,6 +794,7 @@ function studentChange(e) {
 }
 function studentSubmit(e) {
   const f = e.target.dataset.form, v = id => (document.getElementById(id)?.value || "").trim();
+  if (f === "planText") { const tx = v("planT"); if (tx) planSave("text", null, tx); return; }
   if (f === "piece") { const title = v("pTitle"); if (!title) return; const np = { id: uid(), title, composer: v("pComp"), status: "learning", sec: 0, days: {}, sections: [] }; S.pieces.push(np);
     if (A && A.k === "piece") { A.pid = np.id; A.addOpen = false; save(); toast(t("saved")); renderAct(); return; } }
   if (f === "sec") { const p = S.pieces.find(x => x.id === e.target.dataset.id), n = v("sec-" + p.id); if (!n) return; p.sections.push({ id: uid(), name: n, done: false }); }
