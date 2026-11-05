@@ -117,7 +117,7 @@ function instrLine() {
 function roomCard() {
   const R = roomOf();
   const night = isNight(), sp = night && !S.thief?.boxed ? sleepSpot(R) : null, hasG = R.items.some(i => i.id === "r_guitar");
-  const hint = night ? t("rm_nightHint") + (sp.where === "floor" ? " " + t("rm_floorHint") : "") : t("rm_feedHint");
+  const hint = night ? t("rm_nightHint") + (sp?.where === "floor" ? " " + t("rm_floorHint") : "") : t("rm_feedHint");
   return `<div class="section"><div class="section-head"><h2>${t("rm_title", { name: esc(S.profile.name || "") })}</h2><span class="pill m">♥ ${R.happy}</span></div>${roomHTML(false)}
   <div class="muted small">${hint}</div>
   <div class="chips room-acts">${night ? "" : `<button class="btn sm soft" data-act="rmSing">🎤 ${t("rm_sing")} <span class="price">${I.coin}${SING_COST}</span></button><button class="btn sm soft ${hasG ? "" : "dim"}" data-act="rmGuitar">🎸 ${t("rm_guitar")} <span class="price">${I.coin}${GUITAR_COST}</span></button>`}
