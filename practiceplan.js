@@ -258,7 +258,9 @@ function ppWizard() {
   let body = "";
   if (st === "teacher") body = hwStepHTML(W);
   if (st === "pieces") body = `<h2>${t("wz_q_pieces")}</h2><div class="wz-opts">${titles.map(n => `<button class="wz-opt ${W.pieces.includes(n) ? "on" : ""}" data-pp="wTog" data-f="pieces" data-v="${esc(n)}">🎵 ${esc(n)}</button>`).join("")}</div>
-    <input id="wzNewPiece" maxlength="60" placeholder="${t("wz_otherPiece")}"><button class="btn ghost sm" data-pp="wAddPiece">＋ ${t("add")}</button>`;
+    ${(S.library || []).length ? `<button class="btn soft" data-pp="wLib">📚 ${t("lb_choose")}</button>` : ""}
+    <div class="add"><input id="wzNewPiece" maxlength="60" placeholder="${t("wz_otherPiece")}"><button class="btn ghost sm" data-pp="wAddPiece">＋ ${t("add")}</button></div>`;
+  if (st === "pieces" && W.lib) body = libPicker(W);
   if (st === "bars") body = `<h2>${t("wz_q_bars")}</h2>${W.pieces.map(n => { const b = W.bars[n] || {}; return `<div class="card stack"><b>🎵 ${esc(n)}</b>
     <div class="pp-bars"><label class="label">${t("pp_bars")}</label><input type="number" min="1" inputmode="numeric" data-wbar="${esc(n)}" data-k="from" value="${esc(b.from || "")}" placeholder="7"><span>–</span><input type="number" min="1" inputmode="numeric" data-wbar="${esc(n)}" data-k="to" value="${esc(b.to || "")}" placeholder="8"></div>
     <button class="chip ${b.whole ? "on" : ""}" data-pp="wWhole" data-v="${esc(n)}">${t("wz_whole")}</button></div>`; }).join("")}`;
@@ -309,8 +311,41 @@ document.addEventListener("click", e => {
   else if (a === "w") { wzRead(); W[b.dataset.f] = b.dataset.v === "true"; ppWizard(); }
   else if (a === "wWhole") { wzRead(); const bb = W.bars[b.dataset.v] ||= {}; bb.whole = !bb.whole; if (bb.whole) bb.from = bb.to = ""; ppWizard(); }
   else if (a === "wAddPiece") { const i = document.getElementById("wzNewPiece"), v = (i?.value || "").trim().slice(0, 60); if (v && !W.pieces.includes(v)) W.pieces.push(v); wzRead(); ppWizard(); }
+  else if (a === "wLib") { wzRead(); W.lib = { g: libDefaultGrade(), b: "", q: "" }; ppWizard(); }
+  else if (a === "wLibBack") { W.lib = null; ppWizard(); }
+  else if (a === "wLibG") { W.lib.g = b.dataset.v; W.lib.b = ""; ppWizard(); }
+  else if (a === "wLibB") { W.lib.b = W.lib.b === b.dataset.v ? "" : b.dataset.v; ppWizard(); }
+  else if (a === "wLibAdd") { const l = (S.library || []).find(x => x.id === b.dataset.id); if (!l) return; const i = W.pieces.indexOf(l.title);
+    if (i < 0) { W.pieces.push(l.title); if (!S.pieces.some(p => p.libId === l.id || p.title === l.title)) { S.pieces.push({ id: uid(), libId: l.id, title: l.title, composer: l.composer || "", status: "learning", sec: 0, days: {}, sections: [] }); save(); } }
+    else W.pieces.splice(i, 1);
+    ppWizard(); }
   else if (a === "wHelp") { wzRead(); hwApply(W, wzSteps()[W.step]); ppWizard(); }
   else if (a === "wFix") { ["pieces", "bars", "said", "scales", "tech", "extras"].forEach(st => hwApply(W, st)); ppWizard(); }
   else if (a === "wVid") { wzRead(); const v = (W.hwVids || []).find(x => x.id === b.dataset.v), i = W.vids.findIndex(x => x.id === b.dataset.v); i < 0 ? v && W.vids.push(v) : W.vids.splice(i, 1); ppWizard(); }
   else if (a === "wSave") { const cards = wzCards(); if (!cards.length) { toast(t("wz_empty")); return; } S.pplan = { date: TK, cards }; if (W.hw) S.thwSeen = W.hw.id; save(); PPW = null; closeSheet(); toast(t("pp_helpDone")); }
 });
+
+/* ---------- choosing pieces from the teacher's library: by grade, by book, search, and listen with one tap ---------- */
+const listenUrl = l => /^https?:\/\//.test(l.yt_url || "") ? l.yt_url : "https://www.youtube.com/results?search_query=" + encodeURIComponent([l.title, l.composer, "piano"].filter(Boolean).join(" "));
+function libDefaultGrade() {
+  const L = S.library || [], g = +(PROF?.grade ?? -1);
+  return L.some(l => +l.grade === g) ? String(g) : "all";
+}
+function libPicker(W) {
+  const L = S.library || [], P = W.lib;
+  const grades = [...new Set(L.map(l => +l.grade || 0))].sort((a, b) => a - b);
+  const inG = L.filter(l => P.g === "all" || String(+l.grade || 0) === P.g);
+  const books = [...new Set(inG.map(l => l.label).filter(Boolean))].sort();
+  const rows = inG.filter(l => !P.b || l.label === P.b);
+  return `<div class="row" style="gap:8px;align-items:center"><button class="btn ghost sm" data-pp="wLibBack">← ${t("lb_back")}</button><h2 style="margin:0">📚 ${t("lb_h")}</h2></div>
+   <div class="chips">${["all"].concat(grades.map(String)).map(g => `<button class="chip ${P.g === g ? "on" : ""}" data-pp="wLibG" data-v="${g}">${g === "all" ? t("allGrades") : gradeName(+g)}</button>`).join("")}</div>
+   ${books.length > 1 ? `<div class="chips">${books.map(x => `<button class="chip ${P.b === x ? "on" : ""}" data-pp="wLibB" data-v="${esc(x)}">📘 ${esc(x)}</button>`).join("")}</div>` : ""}
+   <input id="wzLibQ" style="flex:none;min-height:0;height:46px" placeholder="🔍 ${t("libSearch")}" value="${esc(P.q)}" oninput="libFilter(this.value)">
+   <div class="list lib-pick">${rows.length ? rows.map(l => { const on = W.pieces.includes(l.title);
+     return `<div class="row" data-q="${esc((l.title + " " + l.composer + " " + l.label).toLowerCase())}" ${P.q && !(l.title + " " + l.composer + " " + l.label).toLowerCase().includes(P.q.toLowerCase()) ? "hidden" : ""}>
+      <div class="grow"><div class="title">${esc(l.title)}</div><div class="muted small">${esc(l.composer || "")}${l.label ? " · " + esc(l.label) : ""}</div></div>
+      <a class="btn sm soft" href="${esc(listenUrl(l))}" target="_blank" rel="noopener">▶ ${t("lb_listen")}</a>
+      <button class="btn sm ${on ? "" : "ghost"}" data-pp="wLibAdd" data-id="${esc(l.id)}">${on ? "✓" : "＋"}</button></div>`; }).join("") : `<div class="empty">${t("lb_none")}</div>`}</div>
+   <div class="muted small">${t("lb_hint")}</div>`;
+}
+function libFilter(q) { if (PPW?.lib) PPW.lib.q = q; const s = q.toLowerCase(); document.querySelectorAll(".lib-pick [data-q]").forEach(r => r.hidden = !!s && !r.dataset.q.includes(s)); }
