@@ -44,8 +44,8 @@ async function visitsLoad(force) {
     if (VIS.set.allowed && !VIS.set.teacher_off) {
       const [m, l] = await Promise.all([vrpc("classmates"), vrpc("my_visits")]);
       VIS.mates = m || []; VIS.list = l || [];
-      if (typeof daizuLoad === "function") await daizuLoad();
     } else { VIS.mates = []; VIS.list = []; }
+    if (typeof daizuLoad === "function") await daizuLoad();   /* cats from/to the teacher come even when visits are off */
     VIS.at = Date.now();
     VIS.err = false;
   } catch (e) { VIS.err = true; }
@@ -69,8 +69,9 @@ function friendsCard() {
   const s = VIS.set;
   const head = `<div class="section-head"><h2>👫 ${t("vi_title")}</h2></div>`;
   if (!s) return `<div class="section" id="friendsCard">${head}<div class="card muted small">${t("vi_loading")}</div></div>`;
-  if (s.teacher_off) return `<div class="section" id="friendsCard">${head}<div class="card muted small">${t("vi_teacherOff")}</div></div>`;
-  if (!s.allowed) return `<div class="section" id="friendsCard">${head}<div class="card stack"><div class="muted">${t("vi_intro")}</div><button class="btn" data-vact="parent">${t("vi_parentOn")}</button></div></div>`;
+  const tc = typeof teacherCatCard === "function" ? teacherCatCard() : "", news = typeof daizuNews === "function" ? daizuNews() : "";
+  if (s.teacher_off) return `<div class="section" id="friendsCard">${head}${news}${tc}<div class="card muted small">${t("vi_teacherOff")}</div></div>`;
+  if (!s.allowed) return `<div class="section" id="friendsCard">${head}${news}${tc}<div class="card stack"><div class="muted">${t("vi_intro")}</div><button class="btn" data-vact="parent">${t("vi_parentOn")}</button></div></div>`;
   const today = VIS.list.filter(v => v.day >= key(addDays(TODAY, -1)));
   const mine = today.filter(v => v.mine), toMe = VIS.list.filter(v => !v.mine);
   const failed = id => (S.bellFail || {})[id] === TK, rangToday = id => mine.some(v => v.to_id === id && v.day === TK);
@@ -81,7 +82,7 @@ function friendsCard() {
   };
   const stamps = toMe.filter(v => v.stamp).slice(0, 4);
   return `<div class="section" id="friendsCard">${head}
-  ${typeof daizuNews === "function" ? daizuNews() : ""}
+  ${news}${tc}
   ${stamps.length ? `<div class="card stamps-in">${stamps.map(v => `<span>${STAMPS[v.stamp] || ""} ${t("vi_gotStamp", { name: esc(v.other_name) })}</span>`).join("")}</div>` : ""}
   ${mine.length ? `<div class="list">${mine.map(myRow).join("")}</div>` : ""}
   <div class="label">${t("vi_classmates")}</div>

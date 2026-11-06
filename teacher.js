@@ -36,6 +36,7 @@ async function TloadAll() {
     DB.sel("teacher_settings", { eq: { teacher_id: me } })
   ]);
   TS.students = students; TS.states = {}; states.forEach(s => TS.states[s.student_id] = s.data || {});
+  if (typeof TcatLoad === "function") await TcatLoad();
   TS.days = days; TS.tasks = tasks; TS.library = library; TS.rewards = rewards; TS.reds = reds; TS.keep = settings[0]?.keep_recordings_days || 30;
 }
 /* delete recordings older than the teacher's setting (files + rows) */
@@ -77,7 +78,7 @@ function TweekSummary(sid) {
 }
 function TvStudents() {
   const L = TS.students;
-  return `<div class="section"><h2>${t("t_students")}</h2>
+  return `${typeof TcatInbox === "function" ? TcatInbox() : ""}<div class="section"><h2>${t("t_students")}</h2>
  <div class="list">${L.length ? L.map(s => {
     const w = TweekSummary(s.id), st = TS.states[s.id] || {}, av = st.avatar;
     return `<button class="row trow" data-act="tOpen" data-id="${s.id}"><span class="ava-mini" style="pointer-events:none">${av ? avatarSVG(av, { head: true, noCheeks: (st.profile?.age || 10) >= 13 }) : I.user}</span>
@@ -159,6 +160,7 @@ function TrenderDetail() {
   ${P?.tasks?.length ? `<div class="list">${P.tasks.map((x, i) => `<div class="row">${areaIc(x.area)}<div class="grow"><div class="title">${esc(x.title)}</div><div class="muted small">${t("a_" + x.area)}${x.piece ? ` · <strong>${esc(x.piece)}</strong>${x.newPiece ? ` <span class="pill y">${t("newPiece")}</span>` : ""}` : ""}${x.tempo ? ` · ♩=${+x.tempo}` : ""}</div></div><button class="x" data-act="tPlanDrop" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}</div>${P.ear?.length ? `<div class="muted small">${t("earLabel")}: ${P.ear.map(i => CHROM[i]).join(" ")}</div>` : ""}<button class="btn block" data-act="tPlanAdd" ${TS.busy ? "disabled" : ""}>${t("planAddAll")} · ${esc(t("t_week", { d: fmt(wk) }))}</button>` : ""}
  </div>
  ${THwCard(st, D)}
+ ${typeof TcatSendCard === "function" ? TcatSendCard(sid) : ""}
 
  <div class="section" style="margin-block:4px"><div class="section-head"><h2>${t("t_tasksH")}</h2></div>
   <div class="chips">${[-1, 0, 1].map(o => `<button class="chip ${TS.week === o ? "on" : ""}" data-act="tWeek" data-o="${o}">${t(o < 0 ? "t_weekPrev" : o > 0 ? "t_weekNext" : "t_weekThis")}</button>`).join("")}<span class="muted small" style="align-self:center">${esc(t("t_week", { d: fmt(wk) }))}</span></div>
