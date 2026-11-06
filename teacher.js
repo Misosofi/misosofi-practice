@@ -139,7 +139,7 @@ function TdetHead() {
   return `<div class="act-head">${st.avatar ? `<span class="ava-mini" style="cursor:default">${avatarSVG(st.avatar, { head: true })}</span>` : ""}<h2>${esc(s?.display_name || "—")}</h2><button class="icon-btn" data-act="tClose" aria-label="Close">${I.close}</button></div>`;
 }
 function TrenderDetail() {
-  if (!TS.det) return; const s = tStu(TS.cur), D = TS.det, st = D.state, wk = weekKey(TS.week);
+  if (!TS.det) return; const sid = TS.cur, s = tStu(TS.cur), D = TS.det, st = D.state, wk = weekKey(TS.week);
   const tasks = D.tasks.filter(x => x.week === wk), pieceT = id => D.pieces.find(p => p.id === id)?.title;
   const ear = Array.isArray(st.earSet) ? st.earSet : [0, 2, 4, 5, 7], drillsDel = new Set(st.drillsDel || []), drills = (st.drills || []).filter(d => !drillsDel.has(d.id));
   const start = monday(addDays(TODAY, -21)), cells = [...Array(28)].map((_, i) => key(addDays(start, i))), byDay = {}; D.days.forEach(d => byDay[d.day] = +d.seconds || 0);
@@ -184,6 +184,7 @@ function TrenderDetail() {
  <div class="section" style="margin-block:4px"><h2>${t("t_history")}</h2><div class="card stack"><div class="heat">${t("wd").map(w => `<div class="label" style="text-align:center">${w}</div>`).join("")}${cells.map(d => `<div class="c ${lv(byDay[d])} ${d === TK ? "t" : ""}">${d > TK || !byDay[d] ? "" : Math.max(1, Math.round(byDay[d] / 60))}</div>`).join("")}</div></div>
   <div class="list">${hist.length ? hist.map(d => `<div class="row" style="align-items:flex-start"><div class="grow"><div class="title">${fmt(d.day, { weekday: "short", month: "short", day: "numeric" })} · ${fmtDur(+d.seconds || 0)}${d.feel ? ` <span class="pill m">${t("feel_" + d.feel)}</span>` : ""}</div>${d.note ? `<div class="muted small">${esc(d.note)}</div>` : ""}</div></div>`).join("") : `<div class="empty">${t("t_noHistory")}</div>`}</div></div>
 
+ ${TplanProgress(st, D)}
  <div class="section" style="margin-block:4px" id="tVisit" data-sid="${esc(sid)}"></div>
 ${(() => { const p = (Array.isArray(st.plans) ? st.plans : [])[0]; if (!p) return ""; return `<div class="section" style="margin-block:4px"><h2>${t("t_planH")}</h2><div class="card stack"><div class="muted small">${esc(fmt(p.date))}${p.done ? " · ✓" : ""}</div>${p.path ? (p.kind === "video" ? `<video class="plan-video" data-tplan="${esc(p.path)}" controls playsinline preload="metadata"></video>` : `<audio data-tplan="${esc(p.path)}" controls preload="none"></audio>`) : ""}${p.text ? `<div class="plan-text">${esc(p.text)}</div>` : ""}</div></div>`; })()}
  <div class="section" style="margin-block:4px"><h2>${t("t_recs")}</h2><div class="list">${D.recs.length ? D.recs.map(r => `<div class="row" style="align-items:flex-start"><div class="grow">
@@ -198,6 +199,25 @@ ${(() => { const p = (Array.isArray(st.plans) ? st.plans : [])[0]; if (!p) retur
   tVisitFill(sid);
   panel.querySelectorAll("[data-tplan]").forEach(async a => { try { a.src = await signed("recordings", a.dataset.tplan); } catch (e) { } });
   panel.querySelectorAll("[data-trec]").forEach(async a => { const r = D.recs.find(x => x.id === a.dataset.trec); try { a.src = await signed("recordings", r.path); } catch (e) { const m = document.createElement("div"); m.className = "muted small"; m.textContent = t("err_net"); a.replaceWith(m); } });
+}
+/* the student's own practice plan (made with the question wizard), how far they got, and growth lines */
+function TplanProgress(st, D) {
+  const P = st.pplan, H = st.ppHist || {}, days = Array.from({ length: 28 }, (_, i) => key(addDays(TODAY, i - 27)));
+  const byDay = {}; D.days.forEach(d => byDay[d.day] = +d.seconds || 0);
+  const mins = days.map(d => Math.round((byDay[d] || 0) / 60));
+  const acc = days.map(d => H[d]?.tries ? Math.round(H[d].rights / H[d].tries * 100) : null);
+  const cards = days.map(d => H[d]?.done || 0);
+  const f = d => fmt(d, { month: "short", day: "numeric" });
+  const cs = P?.cards || [], done = cs.filter(c => c.done).length;
+  const tips = c => (c.tips || []).map(k => (SAID.find(x => x[0] === k) || [0, ""])[1]).join("");
+  const plan = cs.length ? `<div class="muted small">${esc(fmt(P.date, { weekday: "short", month: "short", day: "numeric" }))}${P.date === TK ? ` · ${t("t_pp_today")}` : ""} · ${t("t_pp_done", { a: done, b: cs.length })}</div>
+   <div class="pp-list">${cs.map(c => `<div class="pp-item ${c.done ? "done" : ""}"><span class="pp-chk">${c.done ? "✓" : ""}</span><span class="grow"><b>${esc(ppTitle(c))}</b><span class="muted small">${ppHow(c)}${!c.kind && c.tries ? ` · ${t("t_pp_tries", { n: c.tries })}` : ""}${!c.kind && !c.done && c.streak ? ` · ${t("t_pp_streak", { n: c.streak })}` : ""}${c.note ? ` · ${esc(c.note)}` : ""} ${tips(c)}</span></span></div>`).join("")}</div>` : `<div class="empty">${t("t_pp_none")}</div>`;
+  const th = st.thief || {}, thiefOn = (th.stolen || []).length || th.boxed;
+  return `<div class="section" style="margin-block:4px"><div class="section-head"><h2>📝 ${t("t_pp_h")}</h2></div><div class="card stack">${plan}${thiefOn ? `<div class="muted small">🦹 ${t("t_pp_thief")}</div>` : ""}</div></div>
+  <div class="section" style="margin-block:4px"><div class="section-head"><h2>📈 ${t("t_gr_h")}</h2><span class="muted small">${t("gr_sub")}</span></div>
+   <div class="card stack"><b>${t("gr_min")}</b>${lineChart(mins, { top: t("gr_minAxis"), start: f(days[0]), end: f(TK), col: "#6C5CE7" })}</div>
+   <div class="card stack"><b>${t("gr_acc")}</b>${acc.some(v => v != null) ? lineChart(acc, { max: 100, top: "%", start: f(days[0]), end: f(TK), col: "#2BB673" }) : `<div class="muted small">${t("gr_none")}</div>`}</div>
+   <div class="card stack"><b>${t("gr_cards")}</b>${lineChart(cards, { start: f(days[0]), end: f(TK), col: "#F5A623" })}</div></div>`;
 }
 function TfindLib(title) { return TS.library.find(l => normT(l.title) === normT(title)); }
 function TfindPiece(title) { return TS.det.pieces.find(p => normT(p.title) === normT(title)); }

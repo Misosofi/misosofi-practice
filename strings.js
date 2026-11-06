@@ -148,7 +148,7 @@ const STR={en:{
  tc_thumb_how:"Play with the side corner of your thumb, not the flat pad. Play C a few times, softly and clearly.",
  tc_wrist_how:"Play one note and let your wrist drop softly down and float up again, like a spring. Shoulders relaxed!",
  tc_lift_how:"Put fingers 1–5 on C–G. Keep them all down, lift only finger 3 and tap 4 times. Then try 4, 2, 5.",
- gr_h:"My progress",gr_sub:"last 4 weeks",gr_min:"Minutes practised",gr_minAxis:"min",gr_acc:"Right first time (%)",gr_cards:"Plan cards finished",gr_none:"Use the counter to see this.",
+ gr_h:"My progress",t_gr_h:"Progress",t_pp_h:"Their own plan",t_pp_today:"today",t_pp_done:"{a} of {b} done",t_pp_tries:"{n} tries",t_pp_streak:"now {n} in a row",t_pp_none:"No plan made yet.",t_pp_thief:"The thief has visited (no practice for a few days).",gr_sub:"last 4 weeks",gr_min:"Minutes practised",gr_minAxis:"min",gr_acc:"Right first time (%)",gr_cards:"Plan cards finished",gr_none:"Use the counter to see this.",
  th_h:"The thief came!",th_took:"took your {what}",th_n_boxed:"📦 took your clothes! Your friend is hiding in a box…",th_n_dark:"🌑 painted your walls dark!",th_n_broken:"💥 broke your window!",th_n_webs:"🕸️ Now there are cobwebs everywhere…",
  th_how:"Practise to get everything back: every card you finish brings something back, and a whole plan brings back everything!",
  th_back:"You got it back: {what}!",th_k_boxed:"your clothes",th_k_dark:"your bright walls",th_k_broken:"a new window",th_k_webs:"a clean room",
