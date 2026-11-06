@@ -133,7 +133,7 @@ async function TloadDetail() {
   TS.states[sid] = TS.det.state;
 }
 function TopenSheet(html) { const sh = document.getElementById("sheet"); sh.classList.add("full"); document.getElementById("panel").innerHTML = html; sh.hidden = false; }
-function TcloseSheet() { const wasStudent = !!TS.cur; document.getElementById("sheet").hidden = true; TS.cur = null; TS.det = null; TS.plan = null; TS.giveLib = null; Trefresh(); if (wasStudent) TloadAll().then(Trefresh).catch(e => { if (e.net) setNet(false); }); }
+function TcloseSheet() { const wasStudent = !!TS.cur; document.getElementById("sheet").hidden = true; TS.cur = null; TS.det = null; TS.plan = null; TS.hw = null; THwStop(); TS.giveLib = null; Trefresh(); if (wasStudent) TloadAll().then(Trefresh).catch(e => { if (e.net) setNet(false); }); }
 function TdetHead() {
   const s = tStu(TS.cur), st = TS.states[TS.cur] || {};
   return `<div class="act-head">${st.avatar ? `<span class="ava-mini" style="cursor:default">${avatarSVG(st.avatar, { head: true })}</span>` : ""}<h2>${esc(s?.display_name || "—")}</h2><button class="icon-btn" data-act="tClose" aria-label="Close">${I.close}</button></div>`;
@@ -158,6 +158,7 @@ function TrenderDetail() {
   ${P?.note ? `<div class="muted small">${esc(P.note)}</div>` : ""}
   ${P?.tasks?.length ? `<div class="list">${P.tasks.map((x, i) => `<div class="row">${areaIc(x.area)}<div class="grow"><div class="title">${esc(x.title)}</div><div class="muted small">${t("a_" + x.area)}${x.piece ? ` · <strong>${esc(x.piece)}</strong>${x.newPiece ? ` <span class="pill y">${t("newPiece")}</span>` : ""}` : ""}${x.tempo ? ` · ♩=${+x.tempo}` : ""}</div></div><button class="x" data-act="tPlanDrop" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}</div>${P.ear?.length ? `<div class="muted small">${t("earLabel")}: ${P.ear.map(i => CHROM[i]).join(" ")}</div>` : ""}<button class="btn block" data-act="tPlanAdd" ${TS.busy ? "disabled" : ""}>${t("planAddAll")} · ${esc(t("t_week", { d: fmt(wk) }))}</button>` : ""}
  </div>
+ ${THwCard(st, D)}
 
  <div class="section" style="margin-block:4px"><div class="section-head"><h2>${t("t_tasksH")}</h2></div>
   <div class="chips">${[-1, 0, 1].map(o => `<button class="chip ${TS.week === o ? "on" : ""}" data-act="tWeek" data-o="${o}">${t(o < 0 ? "t_weekPrev" : o > 0 ? "t_weekNext" : "t_weekThis")}</button>`).join("")}<span class="muted small" style="align-self:center">${esc(t("t_week", { d: fmt(wk) }))}</span></div>
@@ -196,7 +197,7 @@ ${(() => { const p = (Array.isArray(st.plans) ? st.plans : [])[0]; if (!p) retur
  </div>`;
   const panel = document.getElementById("panel"), y = panel.scrollTop;
   TopenSheet(html); panel.scrollTop = y;
-  tVisitFill(sid);
+  tVisitFill(sid); THwAfter();
   panel.querySelectorAll("[data-tplan]").forEach(async a => { try { a.src = await signed("recordings", a.dataset.tplan); } catch (e) { } });
   panel.querySelectorAll("[data-trec]").forEach(async a => { const r = D.recs.find(x => x.id === a.dataset.trec); try { a.src = await signed("recordings", r.path); } catch (e) { const m = document.createElement("div"); m.className = "muted small"; m.textContent = t("err_net"); a.replaceWith(m); } });
 }

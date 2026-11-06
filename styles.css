@@ -502,3 +502,9 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .wz-nav{display:flex;justify-content:space-between;gap:10px;margin-top:6px}
 .pp-tips{color:#6C5CE7;font-weight:700}
 .pp-remember{background:#F1ECFF;line-height:1.5}
+/* teacher homework message */
+.hw-banner{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:linear-gradient(135deg,#FFF4D6,#FFE3EC);border:2px solid #F5A623;cursor:pointer;font:inherit;color:inherit}
+.hw-banner .hw-ic{font-size:1.8rem}
+.hw-banner .grow{display:flex;flex-direction:column}
+.hw-note{text-align:center}
+.hw-sent{background:var(--bg,#f6f4fb)}
