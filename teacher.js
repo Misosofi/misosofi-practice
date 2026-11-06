@@ -98,7 +98,7 @@ function TcatalogCard() {
 }
 function TvLibrary() {
   const L = TS.library.filter(l => (TS.libG === "all" || String(l.grade) === String(TS.libG)));
-  return `<div class="section"><div class="card teacher stack"><div class="section-head"><h2>${t("libH")}</h2><span class="muted small">${t("t_libCount", { n: TS.library.length })}</span></div><div class="muted small">${t("libSub")} ${t("scoreOnly")}</div>
+  return `<div class="section">${TcatalogCard()}</div><div class="section"><div class="card teacher stack"><div class="section-head"><h2>${t("libH")}</h2><span class="muted small">${t("t_libCount", { n: TS.library.length })}</span></div><div class="muted small">${t("libSub")} ${t("scoreOnly")}</div>
  <input id="tLibQ" placeholder="${t("libSearch")}" value="${esc(TS.libQ)}" style="flex:none">
  <div class="chips">${["all", 0, 1, 2, 3, 4, 5, 6, 7, 8].map(g => `<button class="chip ${String(TS.libG) === String(g) ? "on" : ""}" data-act="tLibG" data-g="${g}">${g === "all" ? t("allGrades") : gradeName(g)}</button>`).join("")}</div>
  <div class="list">${L.length ? L.map(l => `<div class="row lib-row" data-q="${esc((l.title + " " + l.composer).toLowerCase())}" ${TS.libQ && !(l.title + " " + l.composer).toLowerCase().includes(TS.libQ) ? "hidden" : ""} style="align-items:flex-start"><div class="grow"><div class="title">${esc(l.title)}</div><div class="muted small">${esc(l.composer || "—")} · ${gradeName(+l.grade || 0)}${l.label ? " · " + esc(l.label) : ""}</div>
@@ -106,7 +106,6 @@ function TvLibrary() {
    ${l.score_path ? `<button class="btn sm soft" data-act="tScore" data-id="${l.id}">${t("score")}</button>` : ""}<span class="btn sm soft filebtn">${t("attachScore")}<input type="file" class="tScoreFile" data-id="${l.id}" accept="application/pdf,image/*"></span></div>
    <form class="add" data-form="tLibYt" data-id="${l.id}" style="margin-top:6px"><input id="ly-${l.id}" type="url" maxlength="300" value="${esc(l.yt_url || "")}" placeholder="${t("lb_ytPh")}"><button class="btn sm ghost" type="submit">${t("save")}</button></form></div>
    <button class="x" data-act="tLibDel" data-id="${l.id}" aria-label="Delete">×</button></div>`).join("") : `<div class="empty">${t("libEmpty")}</div>`}</div>
- ${TcatalogCard()}
  <h3 style="font-size:1rem">${t("libAdd")}</h3><form class="add" data-form="tLib"><input id="lT" placeholder="${t("libTitle")}" required maxlength="140" style="flex-basis:100%"><input id="lC" placeholder="${t("libComposer")}" maxlength="80"><select id="lG" style="flex:0 1 120px">${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(g => `<option value="${g}">${gradeName(g)}</option>`).join("")}</select><input id="lL" placeholder="${t("libLabel")}" maxlength="60"><input id="lY" type="url" placeholder="${t("lb_ytPh")}" maxlength="300" style="flex-basis:100%"><button class="btn sm" type="submit">${t("add")}</button></form>
  <h3 style="font-size:1rem">${t("libPaste")}</h3><div class="muted small">${t("libPasteHow")}</div><form class="add" data-form="tLibPaste"><textarea id="lP" placeholder="Fireworks Minuet | Handel | 1 | ABRSM Grade 1 2025–26 | https://youtu.be/…&#10;Song without Words | Spindler | 1 | ABRSM Grade 1 2025–26"></textarea><button class="btn sm" type="submit">${t("libPasteBtn")}</button></form>
  </div></div>`;
