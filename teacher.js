@@ -88,6 +88,14 @@ function TvStudents() {
   }).join("") : `<div class="empty">${t("t_noStudents")}</div>`}</div></div>
  <div class="section">${TinviteCard()}</div>`;
 }
+/* ready-made exam lists: add one grade at a time to the library (pieces already there are skipped) */
+function TcatalogCard() {
+  if (typeof CATALOGS === "undefined") return "";
+  return CATALOGS.map(c => { const grades = [...new Set(c.rows.map(r => r[0]))];
+    const has = g => c.rows.filter(r => r[0] === g).every(r => TS.library.some(l => l.title === r[3] && +l.grade === g));
+    return `<div class="card stack" style="background:var(--soft,#F6F4FF)"><b>📚 ${esc(c.name)}</b><div class="muted small">${t("cat_d")}</div>
+     <div class="chips">${grades.map(g => `<button class="chip ${has(g) ? "on" : ""}" data-act="tCatAdd" data-c="${c.id}" data-g="${g}" ${has(g) ? "disabled" : ""}>${has(g) ? "✓ " : "＋ "}${gradeName(g)}</button>`).join("")}</div></div>`; }).join("");
+}
 function TvLibrary() {
   const L = TS.library.filter(l => (TS.libG === "all" || String(l.grade) === String(TS.libG)));
   return `<div class="section"><div class="card teacher stack"><div class="section-head"><h2>${t("libH")}</h2><span class="muted small">${t("t_libCount", { n: TS.library.length })}</span></div><div class="muted small">${t("libSub")} ${t("scoreOnly")}</div>
@@ -98,6 +106,7 @@ function TvLibrary() {
    ${l.score_path ? `<button class="btn sm soft" data-act="tScore" data-id="${l.id}">${t("score")}</button>` : ""}<span class="btn sm soft filebtn">${t("attachScore")}<input type="file" class="tScoreFile" data-id="${l.id}" accept="application/pdf,image/*"></span></div>
    <form class="add" data-form="tLibYt" data-id="${l.id}" style="margin-top:6px"><input id="ly-${l.id}" type="url" maxlength="300" value="${esc(l.yt_url || "")}" placeholder="${t("lb_ytPh")}"><button class="btn sm ghost" type="submit">${t("save")}</button></form></div>
    <button class="x" data-act="tLibDel" data-id="${l.id}" aria-label="Delete">×</button></div>`).join("") : `<div class="empty">${t("libEmpty")}</div>`}</div>
+ ${TcatalogCard()}
  <h3 style="font-size:1rem">${t("libAdd")}</h3><form class="add" data-form="tLib"><input id="lT" placeholder="${t("libTitle")}" required maxlength="140" style="flex-basis:100%"><input id="lC" placeholder="${t("libComposer")}" maxlength="80"><select id="lG" style="flex:0 1 120px">${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(g => `<option value="${g}">${gradeName(g)}</option>`).join("")}</select><input id="lL" placeholder="${t("libLabel")}" maxlength="60"><input id="lY" type="url" placeholder="${t("lb_ytPh")}" maxlength="300" style="flex-basis:100%"><button class="btn sm" type="submit">${t("add")}</button></form>
  <h3 style="font-size:1rem">${t("libPaste")}</h3><div class="muted small">${t("libPasteHow")}</div><form class="add" data-form="tLibPaste"><textarea id="lP" placeholder="Fireworks Minuet | Handel | 1 | ABRSM Grade 1 2025–26 | https://youtu.be/…&#10;Song without Words | Spindler | 1 | ABRSM Grade 1 2025–26"></textarea><button class="btn sm" type="submit">${t("libPasteBtn")}</button></form>
  </div></div>`;
@@ -332,6 +341,10 @@ function teacherClick(b) {
     case "tScore": TshowScore(id); return;
     case "tRewardDel": Tdo(async () => { await DB.del("rewards", { eq: { id } }); TS.rewards = TS.rewards.filter(x => x.id !== id); }, t("deleted")).then(Trefresh); return;
     case "tGiven": Tdo(async () => { await DB.upd("redemptions", { id }, { given: true }); TS.reds = TS.reds.filter(x => x.id !== id); }, t("saved")).then(Trefresh); return;
+    case "tCatAdd": { const c = CATALOGS.find(x => x.id === b.dataset.c), g = +b.dataset.g; if (!c) return;
+      const rows = c.rows.filter(r => r[0] === g && !TS.library.some(l => l.title === r[3] && +l.grade === g)).map(r => ({ id: uid(), teacher_id: TS.me.id, title: r[3].slice(0, 140), composer: r[2].slice(0, 80), grade: g, label: `${c.short} · List ${r[1]}${r[4] ? " 📘" : ""}`.slice(0, 60) }));
+      if (!rows.length) return; b.disabled = true;
+      Tdo(() => DB.ins("library", rows), t("libAdded", { n: rows.length })).then(ok => { if (ok) { TS.library.push(...rows.map(r => ({ ...r, score_path: null, yt_url: "" }))); TS.library.sort((a, b) => a.title.localeCompare(b.title)); } Trefresh(); }); return; }
     case "tRules": { const c = document.getElementById("tCatsOn").checked, txt = document.getElementById("tTerms").value.slice(0, 2000);
       Tdo(async () => { await DB.ups("teacher_settings", [{ teacher_id: TS.me.id, keep_recordings_days: TS.keep, cats_from_students: c, visit_terms: txt }], "teacher_id"); TS.tset = { ...TS.tset, cats_from_students: c, visit_terms: txt }; }, t("saved")); return; }
     case "tKeep": { const n = +b.dataset.n; Tdo(async () => { await DB.ups("teacher_settings", [{ teacher_id: TS.me.id, keep_recordings_days: n, cats_from_students: !!TS.tset?.cats_from_students, visit_terms: TS.tset?.visit_terms || "" }], "teacher_id"); TS.keep = n; }, t("saved")).then(() => { Trefresh(); Tcleanup().catch(() => { }); }); return; }

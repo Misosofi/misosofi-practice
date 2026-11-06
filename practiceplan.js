@@ -335,8 +335,9 @@ function libPicker(W) {
   const L = S.library || [], P = W.lib;
   const grades = [...new Set(L.map(l => +l.grade || 0))].sort((a, b) => a - b);
   const inG = L.filter(l => P.g === "all" || String(+l.grade || 0) === P.g);
-  const books = [...new Set(inG.map(l => l.label).filter(Boolean))].sort();
-  const rows = inG.filter(l => !P.b || l.label === P.b);
+  const bk = l => (l.label || "").replace(/\s*📘$/, "");
+  const books = [...new Set(inG.map(bk).filter(Boolean))].sort();
+  const rows = inG.filter(l => !P.b || bk(l) === P.b);
   return `<div class="row" style="gap:8px;align-items:center"><button class="btn ghost sm" data-pp="wLibBack">← ${t("lb_back")}</button><h2 style="margin:0">📚 ${t("lb_h")}</h2></div>
    <div class="chips">${["all"].concat(grades.map(String)).map(g => `<button class="chip ${P.g === g ? "on" : ""}" data-pp="wLibG" data-v="${g}">${g === "all" ? t("allGrades") : gradeName(+g)}</button>`).join("")}</div>
    ${books.length > 1 ? `<div class="chips">${books.map(x => `<button class="chip ${P.b === x ? "on" : ""}" data-pp="wLibB" data-v="${esc(x)}">📘 ${esc(x)}</button>`).join("")}</div>` : ""}
