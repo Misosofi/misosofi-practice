@@ -21,7 +21,11 @@ function demoRpc(fn, a) {
   const row = v => { const o = mates.find(m => m.id === (v.from === "me" ? v.to : v.from)); return { id: v.id, day: v.day, status: v.status, stamp: v.stamp, other_name: o.name, other_avatar: o.avatar, mine: v.from === "me", to_id: v.to, from_id: v.from }; };
   const find = id => st.v.find(v => v.id === id);
   let out = null;
-  if (fn === "set_visiting") st.on = !!a.on_;
+  if (fn === "set_visiting") { if (a.on_ && !st.agreed) throw new Error("A parent must agree to the rules first"); st.on = !!a.on_; }
+  else if (fn === "agree_visits") st.agreed = TK;
+  else if (fn === "my_teacher_info") out = [{ takes_cats: localStorage.getItem("misosofi-demo-takescats") !== "0", terms: "" }];
+  else if (fn === "family_log") out = st.v.map(v => { const r = row(v); return { kind: "visit", at: v.day + "T12:00:00", mine: r.mine, other_name: r.other_name, other_role: "student", status: v.status, detail: v.stamp, msg: "" }; })
+    .concat((typeof demoDaizu === "function" ? demoDaizu("cats_mine") : []).map(x => ({ kind: "cat", at: x.day + "T12:00:00", mine: x.mine, other_name: x.other_name, other_role: x.other_role, status: x.status, detail: x.cat + (x.food ? ":" + x.food : ""), msg: x.msg || "" })));
   else if (fn === "classmates") out = st.on ? mates.map(m => ({ id: m.id, name: m.name, avatar: m.avatar })) : [];
   else if (fn === "my_visits") out = st.v.map(row);
   else if (fn === "ring_bell") { if (st.v.some(v => v.from === "me" && v.to === a.target && v.day === TK)) throw new Error("You already rang today"); st.v.unshift({ id: "dv-" + uid(), from: "me", to: a.target, day: TK, status: "open", stamp: "" }); }
@@ -46,6 +50,7 @@ async function visitsLoad(force) {
       VIS.mates = m || []; VIS.list = l || [];
     } else { VIS.mates = []; VIS.list = []; }
     if (typeof daizuLoad === "function") await daizuLoad();   /* cats from/to the teacher come even when visits are off */
+    try { VIS.tinfo = (await vrpc("my_teacher_info"))?.[0] || { takes_cats: false, terms: "" }; } catch (e) { VIS.tinfo = { takes_cats: false, terms: "" }; }
     VIS.at = Date.now();
     VIS.err = false;
   } catch (e) { VIS.err = true; }
@@ -69,7 +74,7 @@ function friendsCard() {
   const s = VIS.set;
   const head = `<div class="section-head"><h2>👫 ${t("vi_title")}</h2></div>`;
   if (!s) return `<div class="section" id="friendsCard">${head}<div class="card muted small">${t("vi_loading")}</div></div>`;
-  const tc = typeof teacherCatCard === "function" ? teacherCatCard() : "", news = typeof daizuNews === "function" ? daizuNews() : "";
+  const tc = (typeof teacherCatCard === "function" && VIS.tinfo?.takes_cats ? teacherCatCard() : "") + `<button class="btn ghost sm" data-vact="log">👪 ${t("fl_btn")}</button>`, news = typeof daizuNews === "function" ? daizuNews() : "";
   if (s.teacher_off) return `<div class="section" id="friendsCard">${head}${news}${tc}<div class="card muted small">${t("vi_teacherOff")}</div></div>`;
   if (!s.allowed) return `<div class="section" id="friendsCard">${head}${news}${tc}<div class="card stack"><div class="muted">${t("vi_intro")}</div><button class="btn" data-vact="parent">${t("vi_parentOn")}</button></div></div>`;
   const today = VIS.list.filter(v => v.day >= key(addDays(TODAY, -1)));
@@ -155,8 +160,9 @@ function friendRoomHTML(f) {
 /* the parent's switch: the password of this account must be typed again */
 function parentSheet(on) {
   openSheet(`<div class="stack"><div class="act-head"><h2>${on ? t("vi_parentOn") : t("vi_parentOff")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
-  ${on ? `<div class="card stack small">${t("vi_parentInfo")}</div>` : ""}
-  <form class="stack" data-vform="parent" data-on="${on ? 1 : 0}"><label class="label" for="vpw">${t("vi_parentPw")}</label>
+  ${on ? `<div class="card stack small">${t("vi_parentInfo")}</div>
+  <div class="card stack small terms-card"><b>📜 ${t("fl_termsH")}</b><div class="terms-text">${esc(termsText()).replace(/\n/g, "<br>")}</div></div>` : ""}
+  <form class="stack" data-vform="parent" data-on="${on ? 1 : 0}">${on ? `<label class="toggle" style="border:0;padding:0"><input type="checkbox" id="vagree" required> <span>${t("fl_agreeBox")}</span></label>` : ""}<label class="label" for="vpw">${t("vi_parentPw")}</label>
   <input id="vpw" type="password" autocomplete="current-password" required>
   <button class="btn" type="submit">${on ? t("vi_agree") : t("vi_parentOff")}</button></form></div>`);
 }
@@ -165,6 +171,7 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-vact]"); if (!b || !S) return;
   const act = b.dataset.vact, id = b.dataset.id;
   if (act === "parent") parentSheet(true);
+  else if (act === "log") familyLog();
   else if (act === "parentOff") parentSheet(false);
   else if (act === "ans") vAnswer(b.dataset.v);
   else if (act === "bell") bellPlay();
@@ -197,6 +204,7 @@ document.addEventListener("submit", async e => {
   const on = f.dataset.on === "1", pw = f.querySelector("#vpw").value;
   try {
     if (!DB.demo) await DB.signIn(MYEMAIL, pw);   /* proves a grown-up who knows the password is here */
+    if (on) { if (!f.querySelector("#vagree")?.checked) { toast(t("fl_mustAgree")); return; } await vrpc("agree_visits", { terms_: termsText() }); }
     await vrpc("set_visiting", { on_: on });
     toast(on ? t("vi_onDone") : t("vi_offDone")); VIS.at = 0; closeSheet(); visitsLoad(true);
   } catch (er) { toast(/invalid|credentials/i.test(er.message) ? t("vi_badPw") : er.message); }
@@ -213,3 +221,24 @@ document.addEventListener("click", async e => {
   const b = e.target.closest("[data-tvact]"); if (!b) return;
   try { await DB.rpc("teacher_set_visiting", { student: b.dataset.id, off_: b.dataset.tvact === "off" }); tVisitFill(b.dataset.id); } catch (er) { toast(er.message); }
 });
+
+/* the teacher's note for parents (or the standard one) */
+const termsText = () => (VIS.tinfo?.terms || "").trim() || t("fl_termsDefault");
+/* ---------- for parents: everything the child did with classmates and the teacher (last 90 days) ---------- */
+async function familyLog() {
+  openSheet(`<div class="stack"><div class="act-head"><h2>👪 ${t("fl_h")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div><div class="card muted small">${t("loading")}</div></div>`);
+  let L = []; try { L = (await vrpc("family_log")) || []; } catch (e) { L = null; }
+  const who = x => x.other_role === "teacher" ? t("fl_teacher") : esc(x.other_name);
+  const line = x => {
+    if (x.kind === "visit") { const st = { rung: t("fl_v_rung"), open: t("fl_v_open"), closed: t("fl_v_closed"), inside: t("fl_v_inside"), stuck: t("fl_v_stuck") }[x.status] || x.status;
+      return `${x.mine ? t("fl_vOut", { name: who(x) }) : t("fl_vIn", { name: who(x) })} · ${st}${x.detail ? " · " + (STAMPS[x.detail] || "") : ""}`; }
+    const [cat, food] = String(x.detail || "").split(":"), C = (typeof CATS !== "undefined" && CATS[cat]) ? CATS[cat].n : cat;
+    const st = { sent: t("fl_c_sent"), fed: x.other_role === "teacher" || (!x.mine && x.other_role === "teacher") ? t("fl_c_thanked") : t("fl_c_fed", { food: esc((food && itemOf(food)?.n) || "") }), angry: t("fl_c_angry") }[x.status] || x.status;
+    return `🐱 ${x.mine ? t("fl_cOut", { cat: C, name: who(x) }) : t("fl_cIn", { cat: C, name: who(x) })} · ${st}${x.msg ? `<br><span class="muted">“${esc(x.msg)}”</span>` : ""}`;
+  };
+  const agreed = VIS.set?.agreed_at ? t("fl_agreedOn", { d: esc(fmt(String(VIS.set.agreed_at).slice(0, 10))) }) : "";
+  openSheet(`<div class="stack"><div class="act-head"><h2>👪 ${t("fl_h")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
+   <div class="muted small">${t("fl_d")}</div>
+   ${L === null ? `<div class="card muted small">${t("err_load")}</div>` : L.length ? `<div class="list">${L.map(x => `<div class="row"><div class="grow small"><div class="muted">${esc(fmt(String(x.at).slice(0, 10), { weekday: "short", month: "short", day: "numeric" }))}</div>${line(x)}</div></div>`).join("")}</div>` : `<div class="card muted small">${t("fl_empty")}</div>`}
+   <div class="card stack small terms-card"><b>📜 ${t("fl_termsH")}</b><div class="terms-text">${esc(termsText()).replace(/\n/g, "<br>")}</div>${agreed ? `<div class="muted">${agreed}</div>` : ""}</div></div>`);
+}

@@ -521,3 +521,6 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .tcat-pick.on{border-color:var(--accent,#5B4BDB);background:color-mix(in srgb,var(--accent,#5B4BDB) 10%,transparent)}
 .tcat-pick:disabled{opacity:.5;cursor:default}
 .tcat-in{align-items:center}
+.terms-card{background:#F6F4FF;border:1px solid #DCD6FA}
+.terms-text{line-height:1.5}
+@media (prefers-color-scheme:dark){.terms-card{background:#24213A;border-color:#3D3766}}

@@ -37,7 +37,7 @@ async function TloadAll() {
   ]);
   TS.students = students; TS.states = {}; states.forEach(s => TS.states[s.student_id] = s.data || {});
   if (typeof TcatLoad === "function") await TcatLoad();
-  TS.days = days; TS.tasks = tasks; TS.library = library; TS.rewards = rewards; TS.reds = reds; TS.keep = settings[0]?.keep_recordings_days || 30;
+  TS.days = days; TS.tasks = tasks; TS.library = library; TS.rewards = rewards; TS.reds = reds; TS.keep = settings[0]?.keep_recordings_days || 30; TS.tset = settings[0] || {};
 }
 /* delete recordings older than the teacher's setting (files + rows) */
 async function Tcleanup() {
@@ -109,6 +109,11 @@ function TvRewards() {
 function TvSettings() {
   return `<div class="section">${TinviteCard()}</div>${instButton() ? `<div class="section">${instButton()}</div>` : ""}
  <div class="section"><div class="card stack"><h2>${t("t_name")}</h2><form class="add" data-form="tName"><input id="tNm" value="${esc(TS.prof.display_name || "")}" maxlength="60" required><button class="btn sm" type="submit">${t("save")}</button></form></div></div>
+ <div class="section"><div class="card stack teacher"><h2>👫 ${t("tr_h")}</h2>
+  <label class="toggle" style="border:0;padding:0"><span><strong>${t("tr_cats")}</strong><br><span class="muted small">${t("tr_catsD")}</span></span><input type="checkbox" id="tCatsOn" ${TS.tset?.cats_from_students ? "checked" : ""}></label>
+  <div><strong>${t("tr_terms")}</strong><div class="muted small">${t("tr_termsD")}</div></div>
+  <textarea id="tTerms" maxlength="2000" style="min-height:130px">${esc(TS.tset?.visit_terms || t("fl_termsDefault"))}</textarea>
+  <button class="btn" data-act="tRules">${t("save")}</button></div></div>
  <div class="section"><div class="card stack"><h2>${t("t_keepRecs")}</h2><div class="chips">${[7, 14, 30].map(n => `<button class="chip ${TS.keep === n ? "on" : ""}" data-act="tKeep" data-n="${n}">${t("t_daysN", { n })}</button>`).join("")}</div><div class="muted small">${t("t_keepD")}</div></div></div>
  <div class="section"><div class="card stack"><div class="label">${t("languageH")}</div><div class="chips"><button class="chip on">English</button><button class="chip" disabled>日本語 · ${t("soon")}</button><button class="chip" disabled>Español · ${t("soon")}</button></div>
  <div class="muted small">${t("au_signedInAs", { e: esc(MYEMAIL) })}</div><button class="btn ghost" data-act="signOut">${t("au_signOut")}</button></div></div>`;
@@ -326,7 +331,9 @@ function teacherClick(b) {
     case "tScore": TshowScore(id); return;
     case "tRewardDel": Tdo(async () => { await DB.del("rewards", { eq: { id } }); TS.rewards = TS.rewards.filter(x => x.id !== id); }, t("deleted")).then(Trefresh); return;
     case "tGiven": Tdo(async () => { await DB.upd("redemptions", { id }, { given: true }); TS.reds = TS.reds.filter(x => x.id !== id); }, t("saved")).then(Trefresh); return;
-    case "tKeep": { const n = +b.dataset.n; Tdo(async () => { await DB.ups("teacher_settings", [{ teacher_id: TS.me.id, keep_recordings_days: n }], "teacher_id"); TS.keep = n; }, t("saved")).then(() => { Trefresh(); Tcleanup().catch(() => { }); }); return; }
+    case "tRules": { const c = document.getElementById("tCatsOn").checked, txt = document.getElementById("tTerms").value.slice(0, 2000);
+      Tdo(async () => { await DB.ups("teacher_settings", [{ teacher_id: TS.me.id, keep_recordings_days: TS.keep, cats_from_students: c, visit_terms: txt }], "teacher_id"); TS.tset = { ...TS.tset, cats_from_students: c, visit_terms: txt }; }, t("saved")); return; }
+    case "tKeep": { const n = +b.dataset.n; Tdo(async () => { await DB.ups("teacher_settings", [{ teacher_id: TS.me.id, keep_recordings_days: n, cats_from_students: !!TS.tset?.cats_from_students, visit_terms: TS.tset?.visit_terms || "" }], "teacher_id"); TS.keep = n; }, t("saved")).then(() => { Trefresh(); Tcleanup().catch(() => { }); }); return; }
   }
 }
 function teacherInput(e) {
