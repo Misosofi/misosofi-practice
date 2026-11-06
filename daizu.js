@@ -9,10 +9,10 @@ let DZ = { list: [], shown: {}, scene: null };
    when: "dark" = can only be sent at dusk/night (rare). arrive: "night" = only appears when it is night at the friend's house */
 const CATS = {
   daizu: { n: "Daizu", ready: true, enter: "bang", cost: 10 },
-  kuriito: { n: "Kuriito", ready: false, enter: "bang", cost: 10 },
-  matcha: { n: "Matcha", ready: false, enter: "bang", cost: 10 },
-  azuki: { n: "Azuki", ready: false, enter: "bang", cost: 15, when: "dark" },
-  sakura: { n: "Sakura", ready: false, enter: "ghost", cost: 15, arrive: "night" },
+  kuriito: { n: "Kuriito", ready: true, enter: "bang", cost: 10 },
+  matcha: { n: "Matcha", ready: true, enter: "bang", cost: 10 },
+  azuki: { n: "Azuki", ready: true, enter: "bang", cost: 15, when: "dark" },
+  sakura: { n: "Sakura", ready: true, enter: "ghost", cost: 15, arrive: "night" },
 };
 const catOf = x => CATS[x?.cat] ? x.cat : "daizu";
 const isDusk = () => { const h = new Date().getHours(); return h >= 18 || h < 7; };

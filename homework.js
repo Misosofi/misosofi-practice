@@ -111,16 +111,45 @@ function hwBanner() {
   return `<button class="card hw-banner" data-pp="help"><span class="hw-ic">🎧</span><span class="grow"><b>${t("hw_kidNew")}</b><span class="muted small">${t("hw_kidNewSub")}</span></span><span>→</span></button>`;
 }
 /* fill the plan questions with what the teacher set */
+/* The child makes the plan themselves: the teacher's homework is shown as a hint on every question (nothing is pre-filled).
+   Young children get a "put it in for me" button; at the end the app checks that nothing the teacher asked for is missing. */
 function hwPrefill(W) {
   const h = S.thw; if (!hwFresh(h)) return W;
   W.hw = h;
-  (h.pieces || []).forEach(p => { if (!W.pieces.includes(p.title)) W.pieces.push(p.title); if (p.from) W.bars[p.title] = { from: p.from, to: p.to || "" }; });
-  W.said = [...new Set(W.said.concat(h.said || []))];
-  if (h.scales) { W.scales = true; W.scaleTxt = h.scales; }
-  if ((h.tech || []).length) { W.tech = true; W.techIds = h.tech.slice(); }
-  W.extras = [...new Set(W.extras.concat(h.extras || []))];
-  W.vids = (h.vids || []).map(id => (S.videos || []).find(v => v.id === id)).filter(Boolean).map(v => ({ id: v.id, title: v.title, url: v.url || "" }));
+  W.hwVids = (h.vids || []).map(id => (S.videos || []).find(v => v.id === id)).filter(Boolean).map(v => ({ id: v.id, title: v.title, url: v.url || "" }));
   return W;
+}
+/* the teacher's items for one question, as plain labels */
+function hwItems(W, st) {
+  const h = W.hw; if (!h) return [];
+  if (st === "pieces") return (h.pieces || []).map(p => ({ k: p.title, l: "🎵 " + p.title, ok: W.pieces.includes(p.title) }));
+  if (st === "bars") return (h.pieces || []).filter(p => p.from).map(p => { const b = W.bars[p.title] || {}; return { k: p.title, l: `🎵 ${p.title}: ${p.from}${p.to ? "–" + p.to : ""}`, ok: !W.pieces.includes(p.title) || String(b.from || "") === String(p.from) }; });
+  if (st === "said") return (h.said || []).map(k => ({ k, l: ((SAID.find(x => x[0] === k) || [0, "💬"])[1]) + " " + t("wz_s_" + k), ok: W.said.includes(k) }));
+  if (st === "scales") return h.scales ? [{ k: "sc", l: "🎼 " + h.scales, ok: !!W.scales && !!W.scaleTxt }] : [];
+  if (st === "tech") return (h.tech || []).map(id => { const x = TECH.find(y => y.id === id); return { k: id, l: (x ? x.em + " " : "") + t("tc_" + id), ok: !!W.tech && W.techIds.includes(id) }; });
+  if (st === "extras") return (h.extras || []).map(k => ({ k, l: t("wz_x_" + k), ok: W.extras.includes(k) })).concat((W.hwVids || []).map(v => ({ k: "v:" + v.id, l: "📺 " + v.title, ok: (W.vids || []).some(x => x.id === v.id) })));
+  return [];
+}
+function hwApply(W, st) {
+  const h = W.hw; if (!h) return;
+  if (st === "pieces" || st === "bars") (h.pieces || []).forEach(p => { if (!W.pieces.includes(p.title)) W.pieces.push(p.title); if (st === "bars" && p.from) W.bars[p.title] = { from: p.from, to: p.to || "" }; });
+  if (st === "said") W.said = [...new Set(W.said.concat(h.said || []))];
+  if (st === "scales" && h.scales) { W.scales = true; W.scaleTxt = W.scaleTxt || h.scales; }
+  if (st === "tech" && (h.tech || []).length) { W.tech = true; W.techIds = [...new Set(W.techIds.concat(h.tech))]; }
+  if (st === "extras") { W.extras = [...new Set(W.extras.concat(h.extras || []))]; (W.hwVids || []).forEach(v => { if (!W.vids.some(x => x.id === v.id)) W.vids.push(v); }); }
+}
+function hwHint(W, st) {
+  const it = hwItems(W, st); if (!it.length) return "";
+  const all = it.every(x => x.ok);
+  return `<div class="card hw-hint"><div class="small"><b>👩‍🏫 ${t("hw_hint")}</b></div><div class="small">${it.map(x => `<span class="hw-it ${x.ok ? "ok" : ""}">${x.ok ? "✓ " : ""}${esc(x.l)}</span>`).join(" ")}</div>
+   ${!all && ppMode() === "young" ? `<button class="btn sm soft" data-pp="wHelp">🪄 ${t("hw_helpIn")}</button>` : ""}</div>`;
+}
+/* at the end: anything the teacher asked for that is not in the plan */
+function hwMissing(W) {
+  if (!W.hw) return "";
+  const miss = ["pieces", "bars", "said", "scales", "tech", "extras"].flatMap(st => hwItems(W, st).filter(x => !x.ok).map(x => ({ st, l: x.l })));
+  if (!miss.length) return `<div class="card hw-hint ok">🎉 ${t("hw_allIn")}</div>`;
+  return `<div class="card hw-hint"><b class="small">👩‍🏫 ${t("hw_missing")}</b><div class="small">${miss.map(x => `<span class="hw-it">${esc(x.l)}</span>`).join(" ")}</div><button class="btn sm soft" data-pp="wFix">＋ ${t("hw_addMissing")}</button></div>`;
 }
 function hwStepHTML(W) {
   const h = W.hw, vids = W.vids || [];
