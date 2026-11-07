@@ -25,7 +25,17 @@ const pendingJoin = () => { try { return localStorage.getItem("mp-join"); } catc
 
 async function boot() {
   applyBase();
-  if ("serviceWorker" in navigator && !DEMO && location.protocol === "https:") navigator.serviceWorker.register("./sw.js").catch(e => console.warn("sw", e));
+  if ("serviceWorker" in navigator && !DEMO && location.protocol === "https:") {
+    /* new version: check whenever the app comes back to the front, and reload once it is installed (not in the middle of an activity) */
+    const had = !!navigator.serviceWorker.controller; let reloaded = false;
+    navigator.serviceWorker.register("./sw.js").then(reg => {
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => { }); });
+    }).catch(e => console.warn("sw", e));
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!had || reloaded) return; const busy = () => (typeof A !== "undefined" && A) || (typeof isRec !== "undefined" && isRec);
+      const go = () => { if (busy()) return setTimeout(go, 5000); reloaded = true; location.reload(); }; go();
+    });
+  }
   if (DEMO) document.getElementById("demo").hidden = false;
   window.addEventListener("online", () => setNet(true));
   window.addEventListener("offline", () => setNet(false));
