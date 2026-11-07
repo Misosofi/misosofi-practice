@@ -53,8 +53,16 @@ function ppPlead() {
   if (!today && last && (off >= 2 || comebackToday())) { if (!comebackToday()) { S.comeback = { day: TK }; save(); } offer = `<div class="small dz-offer">${t("pl_pleadOffer")}</div>`; }
   return `<div class="section"><div class="card pp-plead dz-${mood}"><div class="dz-pic"><img src="${ART}daizu_${pic}.webp" alt="Daizu">${ghost ? `<img class="dz-ghost-orbit" src="${ART}sakura_guitar.webp" alt="Sakura">` : ""}</div><div class="grow"><b>${lines[0]}</b>${lines.slice(1).map(l => `<div class="small">${l}</div>`).join("")}${offer}</div></div></div>`;
 }
+/* technique items that were changed: soft wrist → straight line, finger lifts removed */
+function techMigrate() {
+  const fix = arr => (arr || []).map(id => id === "wrist" ? "line" : id).filter(id => id !== "lift");
+  let ch = false;
+  if (S.pplan?.cards) { const n = S.pplan.cards.length; S.pplan.cards = S.pplan.cards.filter(c => !(c.kind === "tech" && c.tech === "lift")); S.pplan.cards.forEach(c => { if (c.kind === "tech" && c.tech === "wrist") { c.tech = "line"; ch = true; } }); ch ||= n !== S.pplan.cards.length; }
+  if (S.thw?.tech?.some(id => id === "wrist" || id === "lift")) S.thw.tech = fix(S.thw.tech);
+  if (ch) save();
+}
 function ppHome() {
-  ppSyncActs();
+  techMigrate(); ppSyncActs();
   const P = ppToday(), y = S.pplan && S.pplan.date !== TK && S.pplan.cards?.length ? S.pplan : null, M = ppMode();
   if (!P || !P.cards.length) return `<div class="section"><div class="card pp-card stack"><div class="section-head"><h2>📝 ${t("pp_title")}</h2></div>${hwBanner()}
    <div class="muted">${t("pp_why")}</div>

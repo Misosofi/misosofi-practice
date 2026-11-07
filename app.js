@@ -177,3 +177,7 @@ document.getElementById("sheet").addEventListener("click", e => {
 });
 window.addEventListener("error", e => console.error("page error", e.message));
 boot();
+
+/* show unexpected errors briefly, so a frozen button can be reported (and the app keeps working) */
+(() => { let last = 0; const show = m => { if (Date.now() - last < 4000 || typeof toast !== "function") return; last = Date.now(); try { toast("⚠️ " + String(m).slice(0, 80)); } catch (e) { } };
+  window.addEventListener("error", e => show(e.message)); window.addEventListener("unhandledrejection", e => show(e.reason?.message || e.reason)); })();

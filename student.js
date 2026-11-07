@@ -390,7 +390,7 @@ function vMe() {
 
 /* ===== activities ===== */
 function openSheet(html, full) { const sh = document.getElementById("sheet"); sh.classList.toggle("full", !!full); const p = document.getElementById("panel"); p.innerHTML = html; sh.hidden = false; if (S) { hydrateMedia(p); hydratePlans(p); } }
-function closeSheet() { if (typeof micStop === "function") micStop(); if (typeof FOLLOW !== "undefined") FOLLOW = null; if (isRec) stopRec(); stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
+function closeSheet() { silenceAll(); if (typeof micStop === "function") micStop(); if (typeof FOLLOW !== "undefined") FOLLOW = null; if (isRec) stopRec(); stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
 function actHead(k) { return `<div class="act-head"><span class="ic" style="background:${ACT[k].col}">${I[ACT[k].ic]}</span><h2>${t("a_" + k)}</h2>${q()[k] ? `<span class="pill g">✓</span>` : `<span class="price">${I.coin}${ACT[k].coins}</span>`}<button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>`; }
 function openAct(k, opt = {}) { A = { k, ...opt }; renderAct(); if (k === "ear") setTimeout(() => A && A.qs && tone(A.qs[0].midi), 300); }
 function renderAct() { if (!A) return; const k = A.k; if (k === "plan") { openSheet(`<div class="act-head"><span class="ic" style="background:#5C6BC0">${I.book}</span><h2>${t("pl_title")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>` + actPlan(), true); return; } const b = k === "piece" ? actPiece() : k === "sight" ? actSight() : k === "nr" ? actNR() : k === "tech" ? actTech() : k === "theory" ? actTheory() : actQuiz(); openSheet(actHead(k) + b, true); }
@@ -464,9 +464,9 @@ function alongBar() {
 }
 /* play along: one bar to count in, then the metronome clicks while a line moves through the music */
 let ALONG = { on: false, raf: 0, end: 0 };
-function stopAlong() { ALONG.on = false; cancelAnimationFrame(ALONG.raf); document.querySelectorAll(".along-cur").forEach(x => x.remove()); }
-function startAlong() {
-  stopAlong(); const c = ac(); if (!c || !A?.ex) return;
+function stopAlong() { if (ALONG.on) silenceAll(); ALONG.on = false; cancelAnimationFrame(ALONG.raf); document.querySelectorAll(".along-cur").forEach(x => x.remove()); }
+async function startAlong() {
+  stopAlong(); const c = await acReady(); if (!c) { toast(t("soundPaused")); renderAct(); return; } if (!A?.ex) return;
   const T = TSS[A.ex.ts], eighthBeat = T.d === 8, spq = 60 / A.bpm, beatQ = eighthBeat ? .5 : 1, perBar = T.len / beatQ;
   const svgs = [...document.querySelectorAll("#scoreBox svg")]; if (!svgs.length) return;
   const segs = []; let acc = 0; svgs.forEach(sv => { const beats = +sv.dataset.beats; segs.push({ sv, a: acc, b: acc + beats }); acc += beats; });
@@ -475,7 +475,8 @@ function startAlong() {
   const box = document.getElementById("scoreBox"), cur = document.createElement("div"); cur.className = "along-cur"; box.appendChild(cur);
   ALONG.on = true;
   const tick = () => {
-    if (!ALONG.on || !A) return stopAlong();
+    if (!ALONG.on || !A || !document.getElementById("scoreBox")) return stopAlong();
+    if (c.state !== "running") { stopAlong(); toast(t("soundPaused")); renderAct(); return; }
     const q = (c.currentTime - t0) / spq - startQ;
     if (q > totalQ) { stopAlong(); renderAct(); return; }
     if (q < 0) { cur.style.opacity = .35; } else cur.style.opacity = 1;
@@ -737,7 +738,7 @@ function studentClick(b, e) {
     case "recToggle": ac(); if (isRec) stopRec(); else startRec(A.pid); return;
     case "pstop": { const el0 = elapsed(); savePieceTime(); renderAct(); refreshTop(); if (el0 >= 60 && lastPlan()?.date !== TK) setTimeout(() => openAct("plan"), 1200); return; }
     case "sightRate": A.rated = b.dataset.r; if (A.song) { S.songsPlayed ||= {}; S.songsPlayed[A.song] = (S.songsPlayed[A.song] || 0) + 1; save(); } award("sight", ACT.sight.coins, 3); renderAct(); refreshTop(); return;
-    case "sightHear": ac(); playSight(); return;
+    case "sightHear": acReady().then(c => c ? playSight() : toast(t("soundPaused"))); return;
     case "along": ac(); ALONG.on ? (stopAlong(), renderAct()) : (startAlong(), b.innerHTML = "■ " + t("mStop")); return;
     case "aBpm": A.bpm = Math.max(40, Math.min(160, (A.bpm || 72) + +b.dataset.d)); { const e = document.getElementById("aBpm"); if (e) e.textContent = "♩=" + A.bpm; } return;
     case "songOpen": openAct("sight", { song: id }); return;

@@ -122,7 +122,15 @@ const TERMS=[
  [["smorzando","dying away"],["stringendo","gradually getting faster"],["sotto voce","in an undertone, quietly"],["attacca","go straight on"],["calando","getting softer and slower"]]];
 const TECHN=["tonic","supertonic","mediant","subdominant","dominant","submediant","leading note"];
 let AC=null;
-function ac(){try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();if(!PIANO.loading)pianoLoad()}catch(e){}return AC}
+function ac(){try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state!=="running")AC.resume().catch(()=>{});if(!PIANO.loading)pianoLoad()}catch(e){}return AC}
+/* iPhone: after the microphone was used (or a call/other app), the sound engine can be paused ("interrupted").
+   Wake it on every tap, and let actions wait until it really runs before scheduling sounds. */
+/* every sound goes through one gain node, so leaving a screen can silence sounds that were already scheduled */
+let OUTG=null;function outNode(){const c=ac();if(!OUTG||OUTG.context!==c){OUTG=c.createGain();OUTG.connect(c.destination)}return OUTG}
+function silenceAll(){if(OUTG){try{OUTG.disconnect()}catch(e){}OUTG=null}}
+async function acReady(){const c=ac();if(!c)return null;if(c.state!=="running"){try{await Promise.race([c.resume(),new Promise(r=>setTimeout(r,800))])}catch(e){}}
+ if(c.state!=="running"){try{AC.close()}catch(e){}AC=null;const d=ac();try{await Promise.race([d.resume(),new Promise(r=>setTimeout(r,800))])}catch(e){}return d&&d.state==="running"?d:null}return c}
+["touchend","click"].forEach(ev=>document.addEventListener(ev,()=>{if(AC&&AC.state!=="running")AC.resume().catch(()=>{})},{capture:true,passive:true}));
 /* Real piano: Salamander Grand Piano (Yamaha C5) by Alexander Holm, CC BY 3.0. Sampled every minor third; the nearest sample is re-pitched.
    Until the samples have loaded (or if they cannot), a soft synthesized tone is used instead. */
 const PIANO={buf:{},loading:false,ready:false,names:[]};
@@ -135,12 +143,12 @@ function tone(midi,when=0,dur=1.1,vol=.3){const c=ac();if(!c)return;if(!PIANO.lo
  if(keys.length){let best=keys[0];keys.forEach(k=>{if(Math.abs(k-midi)<Math.abs(best-midi))best=k});
   const src=c.createBufferSource(),g=c.createGain();src.buffer=PIANO.buf[best];src.playbackRate.value=Math.pow(2,(midi-best)/12);
   const v=Math.min(1,vol*2.6),hold=Math.max(.25,dur),rel=.35;g.gain.setValueAtTime(v,t0);g.gain.setValueAtTime(v,t0+hold);g.gain.exponentialRampToValueAtTime(.0001,t0+hold+rel);
-  src.connect(g);g.connect(c.destination);src.start(t0);src.stop(t0+hold+rel+.05);return}
+  src.connect(g);g.connect(outNode());src.start(t0);src.stop(t0+hold+rel+.05);return}
  const f=440*Math.pow(2,(midi-69)/12);
- const g=c.createGain();g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(vol,t0+.01);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);g.connect(c.destination);
+ const g=c.createGain();g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(vol,t0+.01);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);g.connect(outNode());
  [[1,"triangle",1],[2,"sine",.35],[3,"sine",.12]].forEach(([m,ty,v])=>{const o=c.createOscillator(),gg=c.createGain();o.type=ty;o.frequency.value=f*m;gg.gain.value=v;o.connect(gg);gg.connect(g);o.start(t0);o.stop(t0+dur+.05)})}
-function click(acc){const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.frequency.value=acc?1500:1000;g.gain.setValueAtTime(.3,c.currentTime);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.06);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.07)}
-function clickAt(t,acc){const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.frequency.value=acc?1500:1000;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.002);g.gain.exponentialRampToValueAtTime(.0001,t+.06);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+.07)}
+function click(acc){const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.frequency.value=acc?1500:1000;g.gain.setValueAtTime(.3,c.currentTime);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.06);o.connect(g);g.connect(outNode());o.start();o.stop(c.currentTime+.07)}
+function clickAt(t,acc){const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.frequency.value=acc?1500:1000;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.002);g.gain.exponentialRampToValueAtTime(.0001,t+.06);o.connect(g);g.connect(outNode());o.start(t);o.stop(t+.07)}
 function ding(ok){if(ok){tone(84,0,.25,.14);tone(88,.09,.35,.14)}else tone(57,0,.35,.12)}
 const MUSICFONT=`'Noto Music','Bravura','Apple Symbols',serif`,INK="#2A2438";
 const SHARP_STEPS=[8,5,9,6,3,7,4],FLAT_STEPS=[4,7,3,6,2,5,1];
