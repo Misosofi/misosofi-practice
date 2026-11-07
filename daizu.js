@@ -95,6 +95,7 @@ function daizuArrive() {
   if (!x || DZ.scene || !document.getElementById("sheet").hidden) return;
   DZ.shown[x.id] = 1; DZ.scene = { id: x.id, from: x.other_name, cat: catOf(x), wish: wishOf(x.id), step: "peek", fromTeacher: isTeacherTrip(x), msg: x.msg || "" };
   dzRender();
+  DZ.scene.banged = dzEnterSound(DZ.scene.cat);
 }
 function myTreats() {
   const R = roomOf(), seen = {};
@@ -118,21 +119,58 @@ function dzRender() {
   }
   if (sc.step === "gift") ctl = `<button class="btn" data-dz="thank">💖 ${t("tc_thankBtn")} · +${I.coin}5</button>`;
   if (sc.step === "kiss" || sc.step === "angry") ctl = `<button class="btn" data-dz="end">← ${t("dz_back")}</button>`;
-  openSheet(`<div class="stack"><div class="act-head"><h2>🐱 ${fromT ? t("tc_fromTeacher", { cat: C.n }) : t("dz_title", { name: esc(sc.from), cat: C.n })}</h2>${sc.step === "kiss" || sc.step === "angry" ? `<button class="icon-btn" data-dz="end" aria-label="Close">${I.close}</button>` : ""}</div>
+  openSheet(`<div class="stack"><div class="act-head"><h2>🐱 ${fromT ? t("tc_fromTeacher", { cat: C.n }) : t("dz_title", { name: esc(sc.from), cat: C.n })}</h2><span class="purse" id="dzPurse">${I.coin}<b>${(S.coins || 0) - (sc.step === "kiss" && sc.coins && !sc.counted ? sc.coins : 0)}</b></span>${sc.step === "kiss" || sc.step === "angry" ? `<button class="icon-btn" data-dz="end" aria-label="Close">${I.close}</button>` : ""}</div>
   <div class="dz-say">${bubble}</div>
   ${sc.step === "kiss" && sc.coins ? `<div class="coinfly" aria-live="polite">${Array.from({ length: sc.coins }, (_, i) => `<span style="--i:${i}">${I.coin}</span>`).join("")}<b id="coinCount">+0</b></div>` : ""}
   <div class="dz-stage ${sc.step === "peek" ? "dz-enter-" + C.enter : ""} ${isNight() ? "night" : ""}">${sc.step === "peek" && C.enter === "bang" ? `<span class="dz-boom">BAM!</span>` : ""}${friendRoomHTML({ room: S.room, avatar: S.avatar, stars: S.stars })}
    <div class="dz-cat dz-${sc.step} ${C.enter === "ghost" ? "dz-ghostcat" : ""}"><img src="${ART}${sc.cat}_${pic}.webp" alt="${C.n}">${sc.step === "sing" ? `<span class="notes go"><i>♪</i><i>♫</i><i>♪</i><i>♬</i></span>` : ""}${sc.step === "kiss" ? `<span class="dz-hearts">💋 ♥ ♥</span>` : ""}${sc.step === "angry" ? `<span class="dz-puff">💢</span>` : ""}</div></div>
   ${ctl}</div>`, true);
 }
-/* a flamenco "I'm hungry" song on the piano: the Andalusian cadence Am–G–F–E with a strummed feel and a little sung line */
-function dzSong() {
-  const ch = [[45, 57, 60, 64], [43, 55, 59, 62], [41, 53, 57, 60], [40, 52, 56, 59, 64]];
-  [0, 1.4, 2.8, 4.2].forEach((w, i) => { ch[i].forEach((m, k) => tone(m, w + k * .03, 1.3, .2)); ch[i].slice(1).forEach((m, k) => tone(m, w + .7 + k * .025, .6, .14)); });
-  [[76, 0, .35], [77, .35, .35], [76, .7, .7], [74, 1.4, .35], [72, 1.75, .35], [71, 2.1, .7], [72, 2.8, .35], [71, 3.15, .35], [69, 3.5, .7], [68, 4.2, 1.2]].forEach(([m, w, d]) => tone(m, w + .02, d * 1.3, .3));
-  const L = [t("dz_l1"), t("dz_l2"), t("dz_l3"), t("dz_l4")];
+/* each cat has its own song (all played on the piano), 4 lines of about 1.4 s */
+function dzSong(cat) {
+  cat = CATS[cat] ? cat : "daizu";
+  const T = (m, w, d, v = .26) => tone(m, w, d, v), CH = (ns, w, d, v = .16) => ns.forEach((m, k) => tone(m, w + k * .02, d, v));
+  if (cat === "daizu") {   /* flamenco: Andalusian cadence Am–G–F–E */
+    const ch = [[45, 57, 60, 64], [43, 55, 59, 62], [41, 53, 57, 60], [40, 52, 56, 59, 64]];
+    [0, 1.4, 2.8, 4.2].forEach((w, i) => { ch[i].forEach((m, k) => tone(m, w + k * .03, 1.3, .2)); ch[i].slice(1).forEach((m, k) => tone(m, w + .7 + k * .025, .6, .14)); });
+    [[76, 0, .35], [77, .35, .35], [76, .7, .7], [74, 1.4, .35], [72, 1.75, .35], [71, 2.1, .7], [72, 2.8, .35], [71, 3.15, .35], [69, 3.5, .7], [68, 4.2, 1.2]].forEach(([m, w, d]) => T(m, w + .02, d * 1.3, .3));
+  } else if (cat === "kuriito") {   /* bright pop song: C–G–Am–F, bouncy */
+    [[48, 55, 60, 64], [43, 55, 59, 62], [45, 57, 60, 64], [41, 53, 57, 60]].forEach((c, i) => { CH(c, i * 1.4, .6); CH(c.slice(1), i * 1.4 + .7, .5, .12); });
+    [[72, 0], [72, .35], [76, .7], [79, 1.05], [79, 1.4], [77, 1.75], [76, 2.1], [74, 2.45], [76, 2.8], [77, 3.15], [79, 3.5], [81, 3.85], [79, 4.2], [76, 4.55], [72, 4.9]].forEach(([m, w]) => T(m, w, .4, .3));
+  } else if (cat === "matcha") {   /* magic: whole-tone sparkles and a spell going up */
+    const wt = [72, 74, 76, 78, 80, 82, 84, 86, 88, 90];
+    [0, 2.8].forEach(w0 => wt.forEach((m, i) => T(m, w0 + i * .07, .5, .14)));
+    [1.4, 4.2].forEach(w0 => wt.slice().reverse().forEach((m, i) => T(m, w0 + i * .07, .5, .12)));
+    [[48, 52, 56], [50, 54, 58], [52, 56, 60], [48, 52, 56, 60]].forEach((c, i) => CH(c, i * 1.4, 1.3, .14));
+    [[84, .6], [90, 2], [86, 3.4], [96, 4.9]].forEach(([m, w]) => T(m, w, .9, .18));
+  } else if (cat === "azuki") {   /* elegant jazz: swing with walking bass, Gm7–C7–Fmaj7–D7 */
+    const ch = [[55, 58, 62, 65], [52, 55, 58, 64], [53, 57, 60, 64], [54, 57, 60, 66]], bass = [[43, 46, 48, 50], [48, 46, 45, 43], [41, 45, 48, 41], [50, 48, 45, 42]];
+    ch.forEach((c, i) => { CH(c, i * 1.4 + .02, .5, .13); CH(c, i * 1.4 + .95, .3, .1); bass[i].forEach((m, k) => T(m, i * 1.4 + k * .35, .32, .22)); });
+    [[74, 0], [72, .47], [70, .7], [69, 1.17], [67, 1.4], [70, 1.87], [72, 2.1], [76, 2.57], [77, 2.8], [76, 3.27], [74, 3.5], [72, 3.97], [74, 4.2], [70, 4.67], [69, 4.9]].forEach(([m, w]) => T(m, w, .36, .26));
+  } else {   /* Sakura's lullaby: slow and soft, in three */
+    [[45, 52, 57], [50, 53, 57], [45, 52, 57], [40, 52, 56]].forEach((c, i) => { T(c[0], i * 1.4, 1.3, .14); T(c[1], i * 1.4 + .47, .5, .09); T(c[2], i * 1.4 + .93, .5, .09); });
+    [[76, 0, .9], [74, .93, .47], [72, 1.4, .93], [69, 2.33, .47], [72, 2.8, .93], [74, 3.73, .47], [71, 4.2, 1.4]].forEach(([m, w, d]) => T(m, w, d * 1.2, .2));
+  }
+  const L = [1, 2, 3, 4].map(n => t(cat === "daizu" ? "dz_l" + n : "dz_l_" + cat + n));
   L.forEach((l, i) => setTimeout(() => { const e = document.getElementById("dzLyric"); if (e) e.textContent = l; }, i * 1400));
 }
+/* door sounds: a cat bursts the door open (BAM!), a ghost floats in (whoooo) */
+function dzNoise(c, dur) { const b = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2); const s = c.createBufferSource(); s.buffer = b; return s; }
+function dzBang() {
+  const c = ac(); if (!c || c.state !== "running") return false; const t0 = c.currentTime + .02;
+  const n = dzNoise(c, .35), f = c.createBiquadFilter(), g = c.createGain(); f.type = "lowpass"; f.frequency.value = 900; g.gain.setValueAtTime(.9, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + .35); n.connect(f); f.connect(g); g.connect(outNode()); n.start(t0);
+  const o = c.createOscillator(), og = c.createGain(); o.frequency.setValueAtTime(120, t0); o.frequency.exponentialRampToValueAtTime(40, t0 + .3); og.gain.setValueAtTime(.8, t0); og.gain.exponentialRampToValueAtTime(.001, t0 + .4); o.connect(og); og.connect(outNode()); o.start(t0); o.stop(t0 + .45);
+  [0, .09].forEach(w => { const k = c.createOscillator(), kg = c.createGain(); k.type = "square"; k.frequency.value = 180; kg.gain.setValueAtTime(.12, t0 + .25 + w); kg.gain.exponentialRampToValueAtTime(.001, t0 + .31 + w); k.connect(kg); kg.connect(outNode()); k.start(t0 + .25 + w); k.stop(t0 + .33 + w); });
+  return true;
+}
+function dzWhoosh() {
+  const c = ac(); if (!c || c.state !== "running") return false; const t0 = c.currentTime + .02;
+  const n = dzNoise(c, 1.4), f = c.createBiquadFilter(), g = c.createGain(); f.type = "bandpass"; f.Q.value = 3; f.frequency.setValueAtTime(300, t0); f.frequency.exponentialRampToValueAtTime(2200, t0 + 1.2); g.gain.setValueAtTime(.001, t0); g.gain.linearRampToValueAtTime(.5, t0 + .5); g.gain.exponentialRampToValueAtTime(.001, t0 + 1.4); n.connect(f); f.connect(g); g.connect(outNode()); n.start(t0);
+  const o = c.createOscillator(), og = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(); o.type = "sine"; o.frequency.setValueAtTime(520, t0); o.frequency.linearRampToValueAtTime(780, t0 + 1.3); lfo.frequency.value = 6; lg.gain.value = 18; lfo.connect(lg); lg.connect(o.frequency);
+  og.gain.setValueAtTime(.001, t0); og.gain.linearRampToValueAtTime(.12, t0 + .4); og.gain.exponentialRampToValueAtTime(.001, t0 + 1.5); o.connect(og); og.connect(outNode()); o.start(t0); lfo.start(t0); o.stop(t0 + 1.6); lfo.stop(t0 + 1.6);
+  return true;
+}
+const dzEnterSound = cat => (CATS[cat]?.enter === "ghost" ? dzWhoosh : dzBang)();
 async function dzFinish(fed, food) {
   const sc = DZ.scene; if (!sc || sc.done) return; sc.done = true; sc.gotWish = food === sc.wish;
   try { await dzrpc("daizu_answer", { trip: sc.id, fed, food_: food || "" }); } catch (e) { toast(e.message); }
@@ -145,7 +183,7 @@ document.addEventListener("click", e => {
   const a = b.dataset.dz, sc = DZ.scene;
   if (a === "send") daizuSendSheet(b.dataset.id);
   else if (a === "go") daizuGo(b.dataset.id, b.dataset.cat);
-  else if (a === "sing" && sc) { sc.step = "sing"; dzRender(); dzSong(); setTimeout(() => { if (DZ.scene === sc && sc.step === "sing") { sc.step = sc.fromTeacher ? "gift" : "ask"; dzRender(); } }, 6200); }
+  else if (a === "sing" && sc) { ac(); sc.step = "sing"; dzRender(); const late = !sc.banged && (sc.banged = true); if (late) setTimeout(() => dzEnterSound(sc.cat), 30); setTimeout(() => dzSong(sc.cat), late ? 700 : 0); setTimeout(() => { if (DZ.scene === sc && sc.step === "sing") { sc.step = sc.fromTeacher ? "gift" : "ask"; dzRender(); } }, 6200); }
   else if (a === "thank" && sc && !sc.done) { sc.done = true; dzrpc("daizu_answer", { trip: sc.id, fed: true, food_: "" }).catch(e => toast(e.message)); S.coins += 5; save(); sc.coins = 5; sc.step = "kiss"; dzRender(); coinCount(5); }
   else if (a === "toT") catToTeacherSheet();
   else if (a === "goT") catToTeacherGo(b.dataset.cat);
@@ -222,7 +260,21 @@ document.addEventListener("click", async e => {
   }
 });
 
-/* coins fly into the purse one by one: 1, 2, 3, 4, 5 */
+/* coins fly up into the purse one by one (clink, clink…), then a rainbow sparkle and a magic sound */
 function coinCount(n) {
-  for (let i = 1; i <= n; i++) setTimeout(() => { const c = document.getElementById("coinCount"); if (c) { c.textContent = "+" + i; c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop"); } tone(84 + i * 2, 0, .18, .16); if (i === n) refreshTop?.(); }, 450 + i * 380);
+  const sc = DZ.scene, purse = document.getElementById("dzPurse"), num = purse?.querySelector("b"); let have = +(num?.textContent || 0);
+  for (let i = 1; i <= n; i++) setTimeout(() => {
+    const coin = document.querySelector(`.coinfly span[style*="--i:${i - 1}"]`), c = document.getElementById("coinCount");
+    if (c) c.textContent = "+" + i;
+    if (coin && purse && coin.animate) { const a = coin.getBoundingClientRect(), b = purse.getBoundingClientRect();
+      coin.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${b.left - a.left}px,${b.top - a.top}px) scale(.5)`, opacity: .2 }], { duration: 420, easing: "cubic-bezier(.5,0,.8,.4)", fill: "forwards" }); }
+    setTimeout(() => { if (num) { num.textContent = ++have; purse.classList.remove("bump"); void purse.offsetWidth; purse.classList.add("bump"); } tone(88 + (i % 2) * 3, 0, .15, .2); tone(96, .04, .1, .1); }, 420);
+    if (i === n) setTimeout(() => { if (sc) sc.counted = true; dzRainbow(); refreshTop?.(); }, 900);
+  }, 1300 + i * 420);
+}
+function dzRainbow() {
+  const p = document.getElementById("panel"); if (!p) return;
+  const fx = document.createElement("div"); fx.className = "rainbow-fx"; fx.innerHTML = Array.from({ length: 26 }, (_, i) => `<i style="--x:${Math.random() * 100}%;--d:${(Math.random() * .8).toFixed(2)}s;--h:${i * 14}">${["✦", "★", "✧", "♪", "❀"][i % 5]}</i>`).join("") + `<b>✨ +5 ✨</b>`;
+  p.appendChild(fx); setTimeout(() => fx.remove(), 2600);
+  [72, 76, 79, 84, 88, 91, 96, 100].forEach((m, i) => tone(m, i * .06, .9, .12)); [84, 88, 91, 96].forEach(m => tone(m, .7, 1.6, .08));
 }
