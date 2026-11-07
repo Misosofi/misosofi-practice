@@ -615,3 +615,11 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 @keyframes qBob{50%{transform:translateY(-8px)}}
 .dz-stage.dz-left .dz-cat{right:auto;left:6%;transform-origin:0 100%}
 .dz-stage.dz-left .dz-cat img{transform:scaleX(-1)}
+/* sleeping in bed: the friend lies with the head on the pillow, the quilt from the bed picture covers the body */
+.ri .sleeper{position:absolute;z-index:1;pointer-events:none;transform-origin:50% 50%;filter:brightness(.85)}
+.ri .sleeper svg,.ri .sleeper img{width:100%;height:auto;display:block}
+.ri .sleeper.h_bed{left:20%;top:6%;width:26%;transform:rotate(-64deg)}
+.ri .sleeper.h_futon{left:17%;top:-7%;width:27%;transform:rotate(-60deg)}
+.ri .sleeper .zzz{left:-20%;top:0;transform:rotate(68deg)}
+.ri .quilt-ov{position:absolute;left:0;top:0;width:100%;height:auto;z-index:2;pointer-events:none}
+.ri.flip .sleeper{transform:scaleX(-1) rotate(-68deg);left:auto;right:12%}

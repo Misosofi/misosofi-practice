@@ -87,8 +87,8 @@ const isNight = () => { if (ROOM.lights === "off") return true; if (ROOM.lights 
 function sleepSpot(R) {
   const on = id => R.items.find(i => i.placed && i.id === id);
   const b = on("h_bed"), f = on("h_futon");
-  if (b) return { x: b.x + 1, y: b.y - 4, w: 15, where: "bed" };
-  if (f) return { x: f.x + 1, y: f.y + 0.5, w: 15, where: "futon" };
+  if (b) return { x: b.x + 1, y: b.y - 4, w: 15, where: "bed", u: b.u };
+  if (f) return { x: f.x + 1, y: f.y + 0.5, w: 15, where: "futon", u: f.u };
   return { x: R.me.x, y: Math.min(99, R.me.y + 3), w: 15, where: "floor" };
 }
 function roomHTML(edit) {
@@ -98,12 +98,13 @@ function roomHTML(edit) {
     .concat([{ k: "me", y: meY }, { k: "inst", y: R.inst.y }]).sort((a, b) => a.y - b.y);
   let toyN = 0;
   const el = o => {
+    if (o.k === "me" && sp && sp.u) return "";   /* tucked into the bed, drawn inside the bed below */
     if (o.k === "me" && sp) return `<div class="ri me sleep ${sp.where !== "floor" ? "inbed" : ""}" data-ri="me" style="left:${sp.x}%;top:${sp.y}%;width:${sp.w}%;z-index:${Math.round(meY)}">${avatarSVG(S.avatar, { room: true })}${sp.where !== "floor" ? `<span class="quilt ${sp.where}"></span><span class="nightcap">🌙</span>` : ""}<span class="zzz">z<b>z</b><i>Z</i></span></div>`;
     if (o.k === "me") return `<div class="ri me ${ROOM.sel === "me" ? "sel" : ""}" data-ri="me" style="left:${R.me.x}%;top:${R.me.y}%;width:22%;z-index:${Math.round(R.me.y)}">${S.thief?.boxed ? `<span class="pet-full"><img src="${ART}boxed.webp" alt="" draggable="false"></span>` : avatarSVG(S.avatar, { room: true })}<span class="hearts" id="hearts"></span><span class="notes" id="notes"></span></div>`;
     if (o.k === "inst") return `<div class="ri ${ROOM.sel === "inst" ? "sel" : ""}" data-ri="inst" style="left:${R.inst.x}%;top:${R.inst.y}%;width:${ins.w}%;z-index:${Math.round(R.inst.y)}">${itemImg(ins.id)}</div>`;
     const it = itemOf(o.i.id);
     const alive = night && it.cat === "toy" && o.i.id !== "r_guitar";
-    return `<div class="ri ${ROOM.sel === o.i.u ? "sel" : ""} ${o.i.flip ? "flip" : ""} ${it.cat === "food" && !edit && !night ? "food" : ""} ${alive ? "alive" : ""}" data-ri="${o.i.u}" style="left:${o.i.x}%;top:${o.i.y}%;width:${it.w}%;z-index:${Math.round(o.i.y)}${alive ? `;--d:${(toyN++ * 0.37) % 1.5}s;--k:${toyN % 3}` : ""}">${itemImg(o.i.id)}</div>`;
+    return `<div class="ri ${ROOM.sel === o.i.u ? "sel" : ""} ${o.i.flip ? "flip" : ""} ${it.cat === "food" && !edit && !night ? "food" : ""} ${alive ? "alive" : ""}" data-ri="${o.i.u}" style="left:${o.i.x}%;top:${o.i.y}%;width:${it.w}%;z-index:${Math.round(o.i.y)}${alive ? `;--d:${(toyN++ * 0.37) % 1.5}s;--k:${toyN % 3}` : ""}">${itemImg(o.i.id)}${sp?.u === o.i.u ? `<div class="sleeper ${o.i.id}">${avatarSVG(S.avatar, { room: true })}<span class="zzz">z<b>z</b><i>Z</i></span></div><img class="quilt-ov" src="${ART}${o.i.id}_quilt.webp" alt="" draggable="false">` : ""}</div>`;
   };
   const sel = ROOM.sel && ROOM.sel.length > 6 ? R.items.find(i => i.u === ROOM.sel) : null;
   const TH = S.thief || {};
