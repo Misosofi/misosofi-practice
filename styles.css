@@ -524,3 +524,11 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .terms-card{background:#F6F4FF;border:1px solid #DCD6FA}
 .terms-text{line-height:1.5}
 @media (prefers-color-scheme:dark){.terms-card{background:#24213A;border-color:#3D3766}}
+.wz-piece{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.wz-piece .chip{font-size:.9rem}
+.btn.rec-on{background:#E5484D;color:#fff}
+.staffbox.big svg{width:100%;max-width:560px}
+.nc-fb{text-align:center;font-weight:800;font-size:1.3rem;padding:6px;border-radius:12px}
+.nc-fb.ok{color:var(--good);background:color-mix(in srgb,var(--good) 12%,transparent)}
+.nc-fb.no{color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
+.linkbtn{background:none;border:0;color:var(--muted,#7a6a80);text-decoration:underline;font:inherit;font-size:.9rem;padding:8px;cursor:pointer;align-self:center}

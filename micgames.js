@@ -14,15 +14,17 @@ function micShow(o) {
 }
 async function micStart(mode, onLive, onNote) {
   micStop();
-  try { await pitchStart(onNote || null, onLive || null); MIC.on = true; MIC.mode = mode; MIC.hold = 0; MIC.t0 = Date.now(); return true; }
+  try { await pitchStart(onNote || null, onLive || null); S.micOk = true; MIC.on = true; MIC.mode = mode; MIC.hold = 0; MIC.t0 = Date.now(); return true; }
   catch (e) { toast(t("micBlocked")); return false; }
 }
 
 /* ---------- solfège: sing it ---------- */
 function solfMicBtn() {
   if (A?.k !== "solf" || A.picked != null) return "";
-  return MIC.mode === "solf" ? `${micLiveHTML()}<div class="muted small" style="text-align:center">${t("mic_singNow")}</div><button class="btn ghost sm" data-mic="stop">${t("mic_stop")}</button>`
-    : `<button class="btn soft block" data-mic="solf">🎤 ${t("mic_sing")}</button>`;
+  if (A.tap) return "";
+  if (MIC.mode !== "solf" && S.micOk) setTimeout(() => { if (A?.k === "solf" && A.picked == null && !A.tap && MIC.mode !== "solf") micStart("solf", solfLive).then(ok => ok && renderAct()); }, 150);
+  return MIC.mode === "solf" ? `${micLiveHTML()}<div class="big-msg" style="text-align:center">🎤 ${t("mic_singNow")}</div>`
+    : `<button class="btn block" data-mic="solf" style="padding:18px">🎤 ${t("mic_sing")}</button>`;
 }
 function solfLive(o) {
   micShow(o);
@@ -32,7 +34,7 @@ function solfLive(o) {
   if (o.midi != null) MIC.heard = o.midi;
   if (MIC.hold >= 14) {   /* about half a second on the right note */
     micStop(); A.picked = Q.ans; A.res[A.i] = true; A.sung = true; ding(true); renderAct();
-  } else if (Date.now() - MIC.t0 > 12000) { micStop(); toast(MIC.heard != null ? t("mic_heard", { n: pcName(MIC.heard) }) : t("mic_quiet")); renderAct(); }
+  } else if (Date.now() - MIC.t0 > 15000) { micStop(); toast(MIC.heard != null ? t("mic_heard", { n: pcName(MIC.heard) }) : t("mic_quiet")); A.tap = true; renderAct(); }
 }
 
 /* ---------- Note Catcher: play on my piano ---------- */
@@ -44,6 +46,7 @@ function ncMicNote(midi) {
   if (key) key.classList.add(ok ? "hit" : "miss");
   if (!ok) { const wrong = document.querySelector(`[data-act="ncKey"][data-pc="${pcOf(midi)}"]`); if (wrong) wrong.classList.add("miss"); if (key) key.classList.add("hit"); }
   R.res[R.i] = ok; if (ok) R.ok++; R.lock = true;
+  const fb = document.getElementById("ncFb"); if (fb) { fb.className = "nc-fb " + (ok ? "ok" : "no"); fb.textContent = ok ? "✓ " + pcName(midi) : t("nc_heard", { n: pcName(midi) }); }
   setTimeout(() => { if (!A?.run) return; R.lock = false; R.i++; if (R.i >= NC_N) { ncFinish(); micStop(); } else R.cur = ncNote(NC_LEVELS.find(x => x.id === R.lvl), R.cur); renderAct(); refreshTop(); }, ok ? 260 : 1000);
 }
 

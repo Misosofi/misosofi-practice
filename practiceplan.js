@@ -264,7 +264,9 @@ function ppWizard() {
   if (st === "bars") body = `<h2>${t("wz_q_bars")}</h2>${W.pieces.map(n => { const b = W.bars[n] || {}; return `<div class="card stack"><b>🎵 ${esc(n)}</b>
     <div class="pp-bars"><label class="label">${t("pp_bars")}</label><input type="number" min="1" inputmode="numeric" data-wbar="${esc(n)}" data-k="from" value="${esc(b.from || "")}" placeholder="7"><span>–</span><input type="number" min="1" inputmode="numeric" data-wbar="${esc(n)}" data-k="to" value="${esc(b.to || "")}" placeholder="8"></div>
     <button class="chip ${b.whole ? "on" : ""}" data-pp="wWhole" data-v="${esc(n)}">${t("wz_whole")}</button></div>`; }).join("")}`;
-  if (st === "said") body = `<h2>${t("wz_q_said")}</h2><div class="wz-opts">${SAID.map(([k, e]) => `<button class="wz-opt ${W.said.includes(k) ? "on" : ""}" data-pp="wTog" data-f="said" data-v="${k}">${e} ${t("wz_s_" + k)}</button>`).join("")}</div>
+  if (st === "said" && W.pieces.length > 1) body = `<h2>${t("wz_q_said")}</h2>${W.pieces.map((p, pi) => `<div class="wz-piece"><div class="label">🎵 ${esc(p)}</div><div class="chips">${SAID.map(([k, e]) => `<button class="chip ${(W.saidBy?.[p] || []).includes(k) ? "on" : ""}" data-pp="wTogP" data-p="${pi}" data-v="${k}">${e} ${t("wz_s_" + k)}</button>`).join("")}</div></div>`).join("")}
+    <input id="wzSaid" maxlength="80" value="${esc(W.saidTxt)}" placeholder="${t("wz_saidOther")}">`;
+  else if (st === "said") body = `<h2>${t("wz_q_said")}</h2><div class="wz-opts">${SAID.map(([k, e]) => `<button class="wz-opt ${W.said.includes(k) ? "on" : ""}" data-pp="wTog" data-f="said" data-v="${k}">${e} ${t("wz_s_" + k)}</button>`).join("")}</div>
     <input id="wzSaid" maxlength="80" value="${esc(W.saidTxt)}" placeholder="${t("wz_saidOther")}">`;
   if (st === "scales") body = `<h2>${t("wz_q_scales")}</h2><div class="wz-yn">${yn("scales", true)}${yn("scales", false)}</div>${W.scales ? `<input id="wzScale" maxlength="40" value="${esc(W.scaleTxt)}" placeholder="${t("wz_scalePh")}">` : ""}`;
   if (st === "tech") body = `<h2>${t("wz_q_tech")}</h2><div class="wz-yn">${yn("tech", true)}${yn("tech", false)}</div>${W.tech ? `<div class="wz-opts">${TECH.map(x => `<button class="wz-opt ${W.techIds.includes(x.id) ? "on" : ""}" data-pp="wTog" data-f="techIds" data-v="${x.id}">${x.em} ${t("tc_" + x.id)}</button>`).join("")}</div>` : ""}`;
@@ -285,14 +287,18 @@ function wzRead() {
   const sc = document.getElementById("wzScale"); if (sc) W.scaleTxt = sc.value.trim().slice(0, 40);
 }
 function wzCards() {
-  const W = PPW, young = ppMode() === "young", sep = W.said.includes("hands") || young, slow = W.said.includes("slow") || true;
-  const tips = W.said.filter(k => !["hands", "slow", "round"].includes(k)).concat(W.saidTxt ? [W.saidTxt] : []);
+  const W = PPW, young = ppMode() === "young", slow = true;
+  const saidOf = n => W.pieces.length > 1 && W.saidBy ? (W.saidBy[n] || []) : W.said;
+  let sep = W.said.includes("hands") || young, tips = [];
   const out = [], mk = (what, from, to, hands, speed, reps) => ({ id: uid(), what, from: from || "", to: to || "", hands, speed, reps, streak: 0, tries: 0, done: false, tips: tips.slice() });
   W.pieces.forEach(n => {
+    const sd = saidOf(n); sep = sd.includes("hands") || young;
+    tips = sd.filter(k => !["hands", "slow", "round"].includes(k)).concat(W.saidTxt ? [W.saidTxt] : []);
     const b = W.bars[n] || {};
     if (b.from && !b.whole) { if (sep) { out.push(mk(n, b.from, b.to, "rh", "slow", 5)); out.push(mk(n, b.from, b.to, "lh", "slow", 5)); } out.push(mk(n, b.from, b.to, "both", slow ? "slow" : "mid", sep ? 3 : 5)); }
     else out.push(mk(n, "", "", "both", "mid", 3));
   });
+  tips = [];
   if (W.scales) out.push({ ...mk(W.scaleTxt || t("pp_scales"), "", "", "both", "mid", 3), tips: [] });
   const tech = W.tech ? (W.techIds.length ? W.techIds : [techToday().id]) : W.said.includes("round") ? ["tip"] : [];
   [...new Set(tech)].forEach(id => out.push({ id: uid(), kind: "tech", tech: id, what: "", streak: 0, reps: 1, done: false }));
@@ -308,6 +314,8 @@ document.addEventListener("click", e => {
   if (a === "wNext") { wzRead(); W.step++; ppWizard(); }
   else if (a === "wBack") { wzRead(); W.step = Math.max(0, W.step - 1); if (wzSteps()[W.step] === "bars" && !W.pieces.length) W.step--; ppWizard(); }
   else if (a === "wTog") { wzRead(); const f = W[b.dataset.f], v = b.dataset.v, i = f.indexOf(v); i < 0 ? f.push(v) : f.splice(i, 1); ppWizard(); }
+  else if (a === "wTogP") { wzRead(); const p = W.pieces[+b.dataset.p]; W.saidBy ||= {}; const f = W.saidBy[p] ||= [], i = f.indexOf(b.dataset.v); i < 0 ? f.push(b.dataset.v) : f.splice(i, 1);
+    W.said = [...new Set(W.pieces.flatMap(x => W.saidBy[x] || []))]; ppWizard(); }
   else if (a === "w") { wzRead(); W[b.dataset.f] = b.dataset.v === "true"; ppWizard(); }
   else if (a === "wWhole") { wzRead(); const bb = W.bars[b.dataset.v] ||= {}; bb.whole = !bb.whole; if (bb.whole) bb.from = bb.to = ""; ppWizard(); }
   else if (a === "wAddPiece") { const i = document.getElementById("wzNewPiece"), v = (i?.value || "").trim().slice(0, 60); if (v && !W.pieces.includes(v)) W.pieces.push(v); wzRead(); ppWizard(); }

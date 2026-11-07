@@ -404,8 +404,10 @@ function actPiece() {
  ${isRec ? `<span class="live">${t("recording")}</span>` : ""}<div class="muted small" id="keepMsg">${A.start ? (A.goal && el >= A.goal * 60 ? t("goalReached") : t("keep")) : ""}</div>
  <div class="timebox"><div><span class="muted small">${t("todayPiece")}</span><b id="tToday">${fmtDur((p.days?.[TK] || 0) + el)}</b></div><div><span class="muted small">${t("totalPiece")}</span><b id="tTotal">${fmtDur((p.sec || 0) + el)}</b></div></div>
  <button class="btn block" data-act="${A.start ? "pstop" : "pstart"}">${A.start ? t("stop") : I.play + " " + t("start")}</button>
- <label class="toggle" style="border:0;padding:0;width:100%"><span><strong>${c ? t("recTeacher") : t("recSelf")}</strong><br><span class="muted small">${c ? t("recTeacherInfo") : t("recSelfInfo")}</span></span><input type="checkbox" id="recOn" ${S.recOn ? "checked" : ""} ${A.start ? "disabled" : ""}></label>
- <div class="chips"><span class="btn sm soft filebtn">${t("attach")}<input type="file" id="recFile" accept="audio/*"></span>${c ? `<span class="btn sm soft filebtn">${I.video} ${t("video")}<input type="file" id="vidFile" accept="video/*"></span>` : ""}</div></div>
+ <button class="btn block ${isRec ? "rec-on" : "soft"}" data-act="recToggle">${isRec ? "■ " + t("recStopBtn") : "🎤 " + (c ? t("recTeacher") : t("recSelf"))}</button>
+ <div class="muted small" style="text-align:center">${isRec ? t("recNowInfo") : c ? t("recTeacherInfo") : t("recSelfInfo")}</div>
+ ${(() => { const r = allRecs().find(x => x.piece === p.id && x.date === TK && x.kind !== "video"); return r && !isRec ? `<div class="stack" style="width:100%"><div class="label">${t("recLast")}</div><audio controls preload="metadata" data-rec="${r.id}" style="width:100%"></audio></div>` : ""; })()}
+ ${c ? `<span class="btn sm ghost filebtn">${I.video} ${t("video")}<input type="file" id="vidFile" accept="video/*"></span>` : ""}</div>
  ${(() => { const its = S.items.filter(i => i.week === WK && i.pieceId === p.id); return its.length ? `<h2>${t("teacherForPiece")}</h2><div class="list">${its.map(i => `<div class="row"><button class="chk ${i.done?.[TK] ? "on" : ""}" data-act="toggleItem" data-id="${i.id}" aria-label="${esc(i.title)}">✓</button><div class="grow"><div class="title">${esc(i.title)}</div></div></div>`).join("")}</div>` : ""; })()}
  ${libOf(p)?.score_path ? `<button class="btn soft" data-act="score" data-id="${p.libId}">${t("score")}</button>` : ""}
  <h2>${t("sectionsH")}</h2><div class="list">${p.sections.map(s => `<div class="row"><button class="chk ${s.done ? "on" : ""}" data-act="psec" data-id="${p.id}" data-s="${s.id}" aria-label="${esc(s.name)}">✓</button><div class="grow">${esc(s.name)}</div></div>`).join("") || `<div class="empty">—</div>`}</div></div>`;
@@ -533,7 +535,7 @@ function ncKeyboard() {
 }
 function actNR() {
   if (!A.run) {
-    const best = S.ncBest || {}; A.lvl ??= S.ncLvl || NC_LEVELS[0].id;
+    const best = S.ncBest || {}; A.lvl ??= S.ncLvl || NC_LEVELS[0].id; S.ncMic ??= true;
     return `<div class="stack"><div class="muted small">${t("ncHow")}</div><div class="label">${t("ncLevels")}</div>
   <div class="lvls">${NC_LEVELS.map(L => `<button class="lvl ${A.lvl === L.id ? "on" : ""}" data-act="ncLvl" data-id="${L.id}"><span class="title">${L.name}</span>${best[L.id] ? `<span class="small muted">${t("ncBest")} ${miniStars(best[L.id].stars)}</span>` : ""}</button>`).join("")}</div>
   <label class="toggle" style="border:0;padding:0"><strong>${t("ncNames")}</strong><input type="checkbox" id="ncNames" ${S.ncNames ? "checked" : ""}></label>
@@ -550,7 +552,7 @@ function actNR() {
   const N = R.cur, L = NC_LEVELS.find(x => x.id === R.lvl); const nt = { d: N.d, dur: 4 }; if (N.alt) nt.sym = N.alt > 0 ? "♯" : "♭";
   return `<div class="stack"><div class="nc-top"><span class="pill a">${L.name}</span><span class="nc-timer" id="ncT">${clockOf((Date.now() - R.t0) / 1000)}</span></div>
  <div class="qprog">${Array.from({ length: NC_N }, (_, i) => `<span class="${i < R.i ? (R.res[i] ? "ok" : "no") : i === R.i ? "cur" : ""}"></span>`).join("")}</div>
- <div class="staffbox">${staff({ clef: N.clef, notes: [nt], width: 200 })}</div>${R.mic ? micLiveHTML() + `<div class="muted small" style="text-align:center">${t("mic_ncPlay")}</div>` : ""}${ncKeyboard()}</div>`;
+ <div class="staffbox big">${staff({ clef: N.clef, notes: [nt], width: 200 })}</div>${R.mic ? micLiveHTML() + `<div class="nc-fb" id="ncFb">${t("mic_ncPlay")}</div><button class="linkbtn" data-act="ncTap">${t("nc_tapInstead")}</button>` : ncKeyboard()}</div>`;
 }
 function ncFinish() {
   const R = A.run; R.end = Date.now(); clearInterval(R.timer); const acc = R.ok / NC_N, avg = (R.end - R.t0) / 1000 / NC_N;
@@ -646,10 +648,10 @@ function actQuiz() {
   }
   const Q = A.qs[A.i];
   return `<div class="stack"><div class="muted small">${how}${k === "ear" ? " · " + t("earSet", { n: (S.earSet || []).map(i => CHROM[i]).join(" ") }) : ""}</div><div class="qprog">${A.qs.map((_, i) => `<span class="${i < A.i ? (A.res[i] ? "ok" : "no") : i === A.i ? "cur" : ""}"></span>`).join("")}</div>
- ${Q.p ? `<h2>${esc(Q.p)}</h2>` : ""}${Q.vis ? `<div class="staffbox">${Q.vis}</div>` : ""}
+ ${Q.p ? `<h2>${esc(Q.p)}</h2>` : ""}${Q.vis ? `<div class="staffbox ${k === "solf" ? "big" : ""}">${Q.vis}</div>` : ""}
  ${k === "solf" && typeof solfMicBtn === "function" ? solfMicBtn() : ""}
  ${Q.ear ? `<div style="text-align:center;padding:16px"><button class="btn" data-act="earPlay" style="font-size:1.1rem;padding:16px 26px">${I.play} ${t("playAgain")}</button></div>` : ""}
- <div class="opts ${Q.grid || ""}">${Q.opts.map(o => `<button class="opt ${A.picked != null ? (o === Q.ans ? "right" : o === A.picked ? "wrong" : "") : ""}" data-act="ans" data-o="${esc(o)}" ${A.picked != null ? "disabled" : ""}>${esc(o)}</button>`).join("")}</div>
+ ${k === "solf" && !A.tap && A.picked == null ? `<button class="linkbtn" data-act="solfTap">${t("solf_tap")}</button>` : `<div class="opts ${Q.grid || ""}">${Q.opts.map(o => `<button class="opt ${A.picked != null ? (o === Q.ans ? "right" : o === A.picked ? "wrong" : "") : ""}" data-act="ans" data-o="${esc(o)}" ${A.picked != null ? "disabled" : ""}>${esc(o)}</button>`).join("")}</div>`}
  ${A.picked != null ? `<div class="card" style="text-align:center;font-weight:800;color:${A.picked === Q.ans ? "var(--good)" : "var(--bad)"}">${A.picked === Q.ans ? (A.sung ? t("mic_sungRight") : t("correct")) : t("notQuite", { a: esc(Q.ans) })}</div><button class="btn block" data-act="nextQ">${A.i === A.qs.length - 1 ? t("finish") : t("next")}</button>` : ""}</div>`;
 }
 function guessArea(s) {
@@ -725,8 +727,9 @@ function studentClick(b, e) {
     case "obDone": S.onboarded = true; OB = null; save(); document.getElementById("sheet").hidden = true; refresh(); celebrate(); return;
     case "ppick": A.pid = id; renderAct(); return;
     case "pgoal": A.goal = +b.dataset.m; renderAct(); return;
-    case "pstart": ac(); A.start = Date.now(); A.goalHit = 0; A.timer = setInterval(tickPiece, 250); if (S.recOn) startRec(A.pid); renderAct(); return;
-    case "pstop": { const el0 = elapsed(); savePieceTime(); renderAct(); refreshTop(); if (el0 >= 60 && lastPlan()?.date !== TK) setTimeout(() => openAct("plan"), 1200); return; }
+    case "pstart": ac(); A.start = Date.now(); A.goalHit = 0; A.timer = setInterval(tickPiece, 250); renderAct(); return;
+    case "recToggle": ac(); if (isRec) stopRec(); else startRec(A.pid); return;
+    case "pstop": { const el0 = elapsed(); if (isRec) stopRec(); savePieceTime(); renderAct(); refreshTop(); if (el0 >= 60 && lastPlan()?.date !== TK) setTimeout(() => openAct("plan"), 1200); return; }
     case "sightRate": A.rated = b.dataset.r; if (A.song) { S.songsPlayed ||= {}; S.songsPlayed[A.song] = (S.songsPlayed[A.song] || 0) + 1; save(); } award("sight", ACT.sight.coins, 3); renderAct(); refreshTop(); return;
     case "sightHear": ac(); playSight(); return;
     case "along": ac(); ALONG.on ? (stopAlong(), renderAct()) : (startAlong(), b.innerHTML = "■ " + t("mStop")); return;
@@ -735,6 +738,8 @@ function studentClick(b, e) {
     case "sightNew": A.ex = null; A.rated = null; renderAct(); return;
     case "sightBars": A.nb = +b.dataset.n; A.ex = null; A.rated = null; renderAct(); return;
     case "ncLvl": A.lvl = id; S.ncLvl = id; save(); renderAct(); return;
+    case "solfTap": A.tap = true; if (typeof micStop === "function") micStop(); renderAct(); return;
+    case "ncTap": if (A.run) { A.run.mic = false; micStop(); renderAct(); } return;
     case "ncStart": case "ncAgain": { ac(); const lvl = A.lvl || S.ncLvl || NC_LEVELS[0].id, L = NC_LEVELS.find(x => x.id === lvl) || NC_LEVELS[0]; A.run = { lvl: L.id, i: 0, ok: 0, res: [], t0: Date.now(), cur: ncNote(L) }; A.run.timer = setInterval(() => { const e = document.getElementById("ncT"); if (e && A?.run) e.textContent = clockOf((Date.now() - A.run.t0) / 1000); }, 250);
       if (S.ncMic && typeof micStart === "function") { A.run.mic = true; micStart("nc", micShow, ncMicNote).then(ok => { if (!ok && A?.run) { A.run.mic = false; renderAct(); } }); }
       renderAct(); return; }

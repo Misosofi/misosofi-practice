@@ -176,7 +176,8 @@ function noteHead(nt,nx,y,base,opt={}){let s="";const ny=y(nt.d),st=nt.d-base;
  for(let L=10;L<=st;L+=2)s+=`<line x1="${nx-11}" x2="${nx+11}" y1="${y(base+L)}" y2="${y(base+L)}" stroke="${INK}" stroke-width="1.3"/>`;
  if(nt.sym)s+=accG(nt.sym,nx-17,ny,opt.gap||11);
  const hollow=(nt.dur??4)>=2;
- s+=`<ellipse cx="${nx}" cy="${ny}" rx="6.6" ry="4.8" transform="rotate(-20 ${nx} ${ny})" fill="${hollow?"#FFFDF8":INK}" stroke="${INK}" stroke-width="${hollow?2:1}"/>`;
+ s+=hollow?`<path fill-rule="evenodd" fill="${INK}" d="M${nx-6.8} ${ny} a6.8 4.9 0 1 0 13.6 0 a6.8 4.9 0 1 0 -13.6 0 Z M${nx-4.6} ${ny} a4.6 2.3 0 1 1 9.2 0 a4.6 2.3 0 1 1 -9.2 0 Z" transform="rotate(${(nt.dur??4)>=4?-10:-24} ${nx} ${ny})"/>`
+ :`<ellipse cx="${nx}" cy="${ny}" rx="6.6" ry="4.8" transform="rotate(-20 ${nx} ${ny})" fill="${INK}" stroke="${INK}" stroke-width="1"/>`;
  if(nt.dur===3||nt.dur===1.5||nt.dur===.75)s+=`<circle cx="${nx+12}" cy="${ny-(st%2===0?3:0)}" r="2.2" fill="${INK}"/>`;
  return s}
 /* grand staff for sight-reading */

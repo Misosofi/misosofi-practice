@@ -133,7 +133,7 @@ function hwItems(W, st) {
 function hwApply(W, st) {
   const h = W.hw; if (!h) return;
   if (st === "pieces" || st === "bars") (h.pieces || []).forEach(p => { if (!W.pieces.includes(p.title)) W.pieces.push(p.title); if (st === "bars" && p.from) W.bars[p.title] = { from: p.from, to: p.to || "" }; });
-  if (st === "said") W.said = [...new Set(W.said.concat(h.said || []))];
+  if (st === "said") { W.said = [...new Set(W.said.concat(h.said || []))]; if (W.pieces.length > 1) { W.saidBy ||= {}; W.pieces.forEach(p => W.saidBy[p] = [...new Set((W.saidBy[p] || []).concat(h.said || []))]); } }
   if (st === "scales" && h.scales) { W.scales = true; W.scaleTxt = W.scaleTxt || h.scales; }
   if (st === "tech" && (h.tech || []).length) { W.tech = true; W.techIds = [...new Set(W.techIds.concat(h.tech))]; }
   if (st === "extras") { W.extras = [...new Set(W.extras.concat(h.extras || []))]; (W.hwVids || []).forEach(v => { if (!W.vids.some(x => x.id === v.id)) W.vids.push(v); }); }
