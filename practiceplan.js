@@ -74,6 +74,7 @@ function ppHome() {
      <span class="pp-chk">${c.done ? "✓" : ""}</span><span class="grow"><b>${esc(ppTitle(c))}</b><span class="muted small">${ppHow(c)}</span></span>
      ${ppDots(c)}</button>`).join("")}</div>
    ${done === P.cards.length ? `<div class="pp-all">🎉 ${t("pp_allDone")}</div><button class="btn soft block" data-act="planOpen">🎥 ${t("pp_nextPlan")}</button>` : ""}
+   ${ppMode() !== "grown" ? `<button class="btn ${done === P.cards.length ? "" : "soft"} block" data-pp="help">✨ ${t("pp_more")}</button>` : ""}
    <button class="btn ghost sm" data-pp="edit">✏️ ${t("pp_edit")}</button></div></div>`;
 }
 const ppTitle = c => c.kind === "vid" ? "📺 " + c.what : c.kind === "act" ? t("wz_x_" + c.act) : c.kind === "tech" ? techOf(c.tech).em + " " + t("tc_" + c.tech) : c.what + (c.from ? ` · ${t("pp_bars")} ${c.from}${c.to && c.to !== c.from ? "–" + c.to : ""}` : "");
@@ -365,7 +366,7 @@ document.addEventListener("click", e => {
   else if (a === "wHelp") { wzRead(); hwApply(W, wzSteps()[W.step]); ppWizard(); }
   else if (a === "wFix") { ["pieces", "bars", "said", "scales", "tech", "extras"].forEach(st => hwApply(W, st)); ppWizard(); }
   else if (a === "wVid") { wzRead(); const v = (W.hwVids || []).find(x => x.id === b.dataset.v), i = W.vids.findIndex(x => x.id === b.dataset.v); i < 0 ? v && W.vids.push(v) : W.vids.splice(i, 1); ppWizard(); }
-  else if (a === "wSave") { const cards = wzCards(); if (!cards.length) { toast(t("wz_empty")); return; } S.pplan = { date: TK, cards }; if (W.hw) S.thwSeen = W.hw.id; save(); PPW = null; closeSheet(); toast(t("pp_helpDone")); }
+  else if (a === "wSave") { const cards = wzCards(); if (!cards.length) { toast(t("wz_empty")); return; } const P0 = ppToday(); S.pplan = { date: TK, cards: (P0 ? P0.cards : []).concat(cards) }; if (W.hw) S.thwSeen = W.hw.id; save(); PPW = null; closeSheet(); toast(t("pp_helpDone")); }
 });
 
 /* ---------- choosing pieces from the teacher's library: by grade, by book, search, and listen with one tap ---------- */
