@@ -27,25 +27,31 @@ const practisedOn = d => !!ppDays()[d] || S.log.some(l => l.date === d && (+l.se
 function ppPlead() {
   const name = esc(S.profile?.name || PROF?.display_name || ""), today = practisedOn(TK), off = daysOff(), last = lastPractice();
   const run = streakDays(), lines = [];
-  let pic = "paw", mood = "beg";
+  /* the gap before today's practice: Daizu "comes back to life" after playing dead */
+  const prevGap = () => { let d = addDays(TODAY, -1), n = 1; while (n < 400 && !practisedOn(key(d))) { d = addDays(d, -1); n++; } return n < 400 ? n : 0; };
+  let pic = "paw", mood = "beg", ghost = false;
   if (today) {
-    mood = "yum"; pic = "kiss";
-    if (run >= 2) { lines.push(t("dz_h_snack", { name })); lines.push(t("dz_h_run", { n: run })); } else lines.push(t("dz_h_dinner", { name }));
-    if (run >= 7 && run % 7 === 0) lines.push(t("dz_h_star", { n: run }));
-    if (S.sangOn === TK) lines.push(t("dz_h_sang"));
-  } else if (!last) { lines.push(t("dz_h_first", { name })); }
+    mood = "yum"; pic = "kiss"; const g = run === 1 ? prevGap() : 0;
+    if (g >= 2) lines.push(t("dz_f_alive"));
+    else if (run >= 7 && run % 7 === 0) lines.push(t("dz_f_star", { n: run }));
+    else if (run >= 2) lines.push(t("dz_f_run", { n: run }));
+    else lines.push(t("dz_f_today"));
+    if (S.sangOn === TK) lines.push(t("dz_f_sang"));
+  } else if (!last) { lines.push(t("dz_f_first")); }
   else if (off <= 1) {
-    mood = "hope"; pic = "guitar"; lines.push(t("dz_h_hope", { name }));
-    const r = streakDays(); if (r >= 2) lines.push(t("dz_h_hopeRun", { n: r, m: r + 1 }));
+    mood = "hope"; pic = "guitar"; lines.push(t("dz_f_hope", { name }));
+    if (run >= 2) lines.push(t("dz_f_hopeRun", { n: run }));
   } else {
-    if (off === 2) lines.push(t("dz_h_2"));
-    else if (off <= 14) { mood = "flop"; lines.push(t("dz_h_n", { n: off })); }
-    else { mood = "flop"; lines.push(t("dz_h_many")); }
-    lines.push(t("dz_h_one", { name }));
+    mood = "dead";
+    if (off === 2) lines.push(t("dz_f_dead2"));
+    else if (off <= 6) { ghost = true; lines.push(t("dz_f_deadN", { n: off })); lines.push(t("dz_f_deadTalk", { name })); }
+    else if (off <= 14) { ghost = true; lines.push(t("dz_f_deadWeek", { n: off })); }
+    else { ghost = true; lines.push(t("dz_f_deadLong")); }
+    lines.push(t("dz_f_wake"));
   }
   let offer = "";
   if (!today && last && (off >= 2 || comebackToday())) { if (!comebackToday()) { S.comeback = { day: TK }; save(); } offer = `<div class="small dz-offer">${t("pl_pleadOffer")}</div>`; }
-  return `<div class="section"><div class="card pp-plead dz-${mood}"><img src="${ART}daizu_${pic}.webp" alt="Daizu"><div class="grow"><b>${lines[0]}</b>${lines.slice(1).map(l => `<div class="small">${l}</div>`).join("")}${offer}</div></div></div>`;
+  return `<div class="section"><div class="card pp-plead dz-${mood}"><div class="dz-pic"><img src="${ART}daizu_${pic}.webp" alt="Daizu">${ghost ? `<img class="dz-ghost-orbit" src="${ART}sakura_guitar.webp" alt="Sakura">` : ""}</div><div class="grow"><b>${lines[0]}</b>${lines.slice(1).map(l => `<div class="small">${l}</div>`).join("")}${offer}</div></div></div>`;
 }
 function ppHome() {
   ppSyncActs();

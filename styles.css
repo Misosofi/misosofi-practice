@@ -538,3 +538,10 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .pp-plead.dz-flop img{transform:rotate(-78deg) translateX(-10px);filter:saturate(.6)}
 .pp-plead .dz-offer{margin-top:4px;font-weight:700}
 @media (prefers-color-scheme:dark){.pp-plead.dz-yum{background:#1F3A25;border-color:#3F7A4B}.pp-plead.dz-hope{background:#3A3220;border-color:#7A6630}}
+.dz-pic{position:relative;flex:none;width:72px;height:84px;display:grid;place-items:center}
+.pp-plead.dz-dead{background:#F1F0F6;border-color:#C9C4D6;animation:none}
+.pp-plead.dz-dead .dz-pic>img:first-child{transform:rotate(180deg) translateY(-6px);filter:grayscale(.5)}
+.dz-ghost-orbit{position:absolute;width:56px!important;height:64px!important;object-fit:contain;opacity:1;filter:drop-shadow(0 0 6px #BFE6FF) saturate(1.6);z-index:1;animation:ghostOrbit 6s linear infinite;pointer-events:none}
+@keyframes ghostOrbit{0%{transform:translate(-30px,-26px)}25%{transform:translate(26px,-34px) scaleX(-1)}50%{transform:translate(32px,12px) scaleX(-1)}75%{transform:translate(-26px,20px)}100%{transform:translate(-30px,-26px)}}
+@media (prefers-reduced-motion:reduce){.dz-ghost-orbit{animation:none;transform:translate(26px,-26px)}}
+@media (prefers-color-scheme:dark){.pp-plead.dz-dead{background:#24213A;border-color:#3D3766}}
