@@ -458,7 +458,7 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 /* practice plan */
 .pp-card{border:2px solid var(--accent)}
 .pp-list{display:flex;flex-direction:column;gap:8px}
-.pp-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:#fff;text-align:left;font:inherit;color:inherit;width:100%}
+.pp-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--surface);text-align:left;font:inherit;color:inherit;width:100%}
 .pp-item .grow{display:flex;flex-direction:column}
 .pp-item.done{background:#EAF8F1;border-color:#9ADBB9}
 .pp-chk{width:26px;height:26px;flex:0 0 26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:900;color:#fff}
