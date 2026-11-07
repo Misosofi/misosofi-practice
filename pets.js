@@ -37,6 +37,7 @@ const ITEMS = [
   { id: "f_banana", cat: "food", n: "Banana", p: 8, w: 13, multi: 1 }, { id: "f_apple", cat: "food", n: "Apple", p: 8, w: 10, multi: 1 },
   { id: "f_candy", cat: "food", n: "Lollipop", p: 10, w: 9, multi: 1 }, { id: "f_donut", cat: "food", n: "Donut", p: 15, w: 11, multi: 1 },
   { id: "f_icecream", cat: "food", n: "Ice cream", p: 18, w: 9, multi: 1 }, { id: "f_cake", cat: "food", n: "Strawberry cake", p: 25, w: 12, multi: 1 },
+  { id: "f_pepper", cat: "food", n: "Green pepper", p: 8, w: 11, multi: 1 }, { id: "f_cucumber", cat: "food", n: "Cucumber", p: 8, w: 13, multi: 1 },
   { id: "f_macarons", cat: "food", n: "Macaron tower", p: 35, w: 12, multi: 1 },
   { id: "b_backpack", cat: "bag", n: "Music backpack", p: 40, w: 13 }, { id: "b_heartpurse", cat: "bag", n: "Heart bag", p: 60, w: 13 },
   { id: "j_jewelbox", cat: "bag", n: "Jewellery box", p: 80, w: 13 }, { id: "j_crown", cat: "bag", n: "Crown", p: 120, w: 11 },
@@ -135,7 +136,7 @@ function roomSheet() {
 }
 function rerenderRoom() { const w = document.getElementById("roomWrap"); if (!w) return; w.innerHTML = roomHTML(true); const tw = document.getElementById("trayWrap"); if (tw) tw.innerHTML = roomTray(); bindRoom(); }
 function bindRoom() {
-  const room = document.getElementById("room"); if (!room || !room.classList.contains("edit")) return;
+  const room = document.querySelector("#panel .room.edit"); if (!room) return;
   room.onpointerdown = e => {
     const n = e.target.closest(".ri"); if (!n) { ROOM.sel = null; rerenderRoom(); return; }
     e.preventDefault(); const r = room.getBoundingClientRect();
@@ -202,7 +203,7 @@ document.addEventListener("click", e => { const f = e.target.closest(".room:not(
 function ownsItem(it) { const R = roomOf(); if (it.cat === "room") return R.owned.includes(it.id); return !it.multi && R.items.some(i => i.id === it.id); }
 function petShop() {
   const cat = SHOPCATS.includes(ROOM.cat) ? ROOM.cat : "food", R = roomOf();
-  return `<div class="chips">${SHOPCATS.map(k => `<button class="chip ${cat === k ? "on" : ""}" data-act="petCat" data-v="${k}">${t("pc_" + k)}</button>`).join("")}</div>
+  return `<div class="subtabs">${SHOPCATS.map(k => `<button class="subtab ${cat === k ? "on" : ""}" data-act="petCat" data-v="${k}">${t("pc_" + k)}</button>`).join("")}</div>
   <div class="shop pshop">${ITEMS.filter(i => i.cat === cat).map(it => {
     const own = ownsItem(it), nIn = it.multi ? R.items.filter(i => i.id === it.id).length : 0, on = it.cat === "room" && R.bg === it.id;
     const status = on ? `<span class="muted">✓</span>` : own ? `<span class="muted">${it.cat === "room" ? t("rm_use") : t("rm_inRoom")}</span>` : `<span class="price">${I.coin}${it.p}</span>`;

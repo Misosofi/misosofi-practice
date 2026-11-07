@@ -56,3 +56,41 @@ document.addEventListener("click", async e => {
   else if (b.dataset.mic === "stop") { micStop(); renderAct(); }
 });
 document.addEventListener("change", e => { if (e.target.id === "ncMicOn") { S.ncMic = e.target.checked; save(); } });
+
+/* ---------- Sight-reading: play it on your piano, each note turns green when the microphone hears it (no rhythm) ---------- */
+let FOLLOW = null;
+function followGroups(E) {
+  const m = new Map();
+  [["rh", E.rh], ["lh", E.lh]].forEach(([h, v]) => { let pos = 0; (v || []).forEach(n => {
+    if (!n.rest) { const k = Math.round(pos * 1000) / 1000, g = m.get(k) || { pos: k, pcs: new Set() };
+      g.pcs.add(pcOf(midiOf(n.d, n.alt))); (n.chord || []).forEach(c => g.pcs.add(pcOf(midiOf(c, keyAlt(m7(c), E.keyAcc))))); m.set(k, g); }
+    pos += n.dur; }); });
+  return [...m.values()].sort((a, b) => a.pos - b.pos).map(g => ({ pos: g.pos, need: [...g.pcs], got: new Set() }));
+}
+/* global position of every note head in the score (the score can be split over several lines) */
+function followHeads() {
+  const out = []; let acc = 0;
+  document.querySelectorAll("#scoreBox svg").forEach(sv => { sv.querySelectorAll(".nh").forEach(g => out.push({ g, pos: Math.round((acc + +g.dataset.p) * 1000) / 1000 })); acc += +sv.dataset.beats || 0; });
+  return out;
+}
+function followPaint() {
+  if (!FOLLOW) return; const H = followHeads(), cur = FOLLOW.groups[FOLLOW.i];
+  H.forEach(h => { const gi = FOLLOW.groups.findIndex(g => g.pos === h.pos); h.g.classList.toggle("hit", gi > -1 && gi < FOLLOW.i); h.g.classList.toggle("cur", !!cur && h.pos === cur.pos); });
+  const b = document.getElementById("followMsg"); if (b) b.textContent = FOLLOW.i >= FOLLOW.groups.length ? t("fo_done") : t("fo_left", { n: FOLLOW.groups.length - FOLLOW.i });
+}
+function followNote(midi) {
+  if (!FOLLOW) return; const g = FOLLOW.groups[FOLLOW.i]; if (!g) return; const pc = pcOf(midi);
+  if (g.need.includes(pc)) { g.got.add(pc); if (g.got.size >= g.need.length) { FOLLOW.i++; followPaint(); if (FOLLOW.i >= FOLLOW.groups.length) { ding(true); micStop(); FOLLOW.done = true; setTimeout(() => { if (A) renderAct(); }, 600); } } }
+  else { FOLLOW.miss++; document.querySelectorAll("#scoreBox .nh.cur").forEach(e => { e.classList.add("miss"); setTimeout(() => e.classList.remove("miss"), 500); }); }
+}
+function followBar() {
+  if (!A || A.song === undefined && !A.ex) return "";
+  if (FOLLOW?.done) return `<div class="card nc-fb ok">✓ ${t("fo_done")}</div>`;
+  return FOLLOW?.on ? `${micLiveHTML()}<div class="muted small" style="text-align:center" id="followMsg"></div><button class="btn ghost sm" data-fo="stop">${t("mic_stop")}</button>`
+    : `<button class="btn block" data-fo="start">🎹 ${t("fo_start")}</button><div class="muted small" style="text-align:center">${t("fo_how")}</div>`;
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-fo]"); if (!b || !S || !A?.ex) return;
+  if (b.dataset.fo === "start") { ac(); FOLLOW = { on: true, groups: followGroups(A.ex), i: 0, miss: 0 }; if (await micStart("follow", micShow, followNote)) { renderAct(); followPaint(); } else FOLLOW = null; }
+  else if (b.dataset.fo === "stop") { micStop(); FOLLOW = null; renderAct(); }
+});

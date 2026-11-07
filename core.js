@@ -213,7 +213,7 @@ function grand({keyAcc,ts,rh,lh,width,single,noTime,final=true,marks=null}){
      else if(a==="ac")out+=`<path d="M${o.nx-gap*.6} ${ay-gap*.35} L${o.nx+gap*.6} ${ay} L${o.nx-gap*.6} ${ay+gap*.35}" fill="none" stroke="${INK}" stroke-width="${gap*.13}"/>`;
      else if(a==="ma")out+=`<path d="M${o.nx-gap*.45} ${ay+gap*.3} L${o.nx} ${ay-gap*.45} L${o.nx+gap*.45} ${ay+gap*.3}" fill="none" stroke="${INK}" stroke-width="${gap*.16}"/>`;
      else if(a==="fe")out+=`<path d="M${o.nx-gap*.8} ${ay+gap*.2} Q${o.nx} ${ay-gap*1.1} ${o.nx+gap*.8} ${ay+gap*.2}" fill="none" stroke="${INK}" stroke-width="${gap*.14}"/><circle cx="${o.nx}" cy="${ay}" r="${gap*.14}" fill="${INK}"/>`;})};
-  const heads=o=>{allD(o.nt).forEach((dd,j)=>out+=noteHead({...o.nt,d:dd,sym:j===0?o.nt.sym:null},o.nx,yy,base));decor(o)};
+  const heads=o=>{out+=`<g class="nh" data-h="${clef}" data-p="${o.pos}">`;allD(o.nt).forEach((dd,j)=>out+=noteHead({...o.nt,d:dd,sym:j===0?o.nt.sym:null},o.nx,yy,base));out+="</g>";decor(o)};
   for(let i=0;i<P.length;i++){const o=P[i];if(done.has(i))continue;
    if(o.nt.rest){const full=o.nt.dur>=T.len-1e-6,cx=full?x+(Math.floor(o.pos/T.len+1e-6)+.5)*T.len*W:o.nx;out+=restG(full&&T.len!==2?4:o.nt.dur,cx,top,gap);continue}
    heads(o);
