@@ -114,7 +114,7 @@ function showAuth() {
    <button class="btn block" type="submit" ${busy}>${A_.busy ? t("wait") : t("au_sendReset")}</button></form><button class="linkbtn" data-act="aMode" data-m="in">${t("au_back")}</button>`;
   if (A_.mode === "setpw") body = `<h1>${t("au_setPw")}</h1><form class="stack" data-form="aSetPw">${field("aP", "password", t("au_pwNew"), 'autocomplete="new-password" minlength="8" required')}
    <button class="btn block" type="submit" ${busy}>${A_.busy ? t("wait") : t("save")}</button></form>`;
-  if (A_.mode === "confirm") body = `<h1>${t("au_signUp")}</h1><div class="card">${t("au_confirm")}</div><button class="btn block" data-act="aMode" data-m="in">${t("au_signIn")}</button>`;
+  if (A_.mode === "confirm") body = `<h1>${t("au_signUp")}</h1><div class="card">${t("au_confirm")}</div>${A_.msg ? `<div class="card small">${A_.msg}</div>` : ""}<button class="btn soft block" data-act="aResend">📧 ${t("au_resend")}</button><button class="btn block" data-act="aMode" data-m="in">${t("au_signIn")}</button>`;
   el.innerHTML = `<div class="auth-in"><div class="brand"><span class="logo">${I.note}</span><div><div class="brand-n">${t("appName")}</div><div class="muted small">${t("au_tagline")}</div></div></div>
   ${AUTH.unconf ? `<button class="btn soft block" data-act="aResend">📧 ${t("au_resend")}</button>` : ""}
   ${pendingJoin() ? `<div class="card teacher small">${t("au_join")}</div>` : ""}
@@ -126,7 +126,7 @@ function authClick(b) {
   const a = b.dataset.act;
   if (a === "reload") { location.reload(); return; }
   if (a === "aMode") { AUTH = { mode: b.dataset.m, msg: "", err: "", busy: false }; showAuth(); return; }
-  if (a === "aResend") { const em = AUTH.unconf, j = pendingJoin(); return authRun(async () => { await DB.resend(em, APP_URL + (j ? "?join=" + j : "")); AUTH = { mode: "in", msg: t("au_resent"), err: "", busy: false }; showAuth(); }); }
+  if (a === "aResend") { const em = AUTH.unconf, j = pendingJoin(); return authRun(async () => { await DB.resend(em, APP_URL + (j ? "?join=" + j : "")); AUTH = { mode: AUTH.mode === "confirm" ? "confirm" : "in", msg: t("au_resent"), err: "", busy: false, unconf: em }; showAuth(); }); }
   if (a === "aDemoT") { authRun(async () => enter(await DB.signIn("teacher@demo.test", "demo1234"))); return; }
   if (a === "aDemoS") {
     const c = DB.demoNewStudent(); try { if (!pendingJoin()) localStorage.setItem("mp-join", DEMO_TEACHER); } catch (e) { }
@@ -149,7 +149,7 @@ function authSubmit(e) {
     const j = pendingJoin(), redirect = APP_URL + (j ? "?join=" + j : "");
     return authRun(async () => {
       const r = await DB.signUp(email, pw, name, redirect);
-      if (r.needsConfirm) { AUTH = { mode: "confirm", msg: "", err: "", busy: false }; showAuth(); return; }
+      if (r.needsConfirm) { AUTH = { mode: "confirm", msg: "", err: "", busy: false, unconf: email }; showAuth(); return; }
       enter(r.user);
     });
   }
