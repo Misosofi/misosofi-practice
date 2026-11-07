@@ -116,6 +116,7 @@ function showAuth() {
    <button class="btn block" type="submit" ${busy}>${A_.busy ? t("wait") : t("save")}</button></form>`;
   if (A_.mode === "confirm") body = `<h1>${t("au_signUp")}</h1><div class="card">${t("au_confirm")}</div><button class="btn block" data-act="aMode" data-m="in">${t("au_signIn")}</button>`;
   el.innerHTML = `<div class="auth-in"><div class="brand"><span class="logo">${I.note}</span><div><div class="brand-n">${t("appName")}</div><div class="muted small">${t("au_tagline")}</div></div></div>
+  ${AUTH.unconf ? `<button class="btn soft block" data-act="aResend">📧 ${t("au_resend")}</button>` : ""}
   ${pendingJoin() ? `<div class="card teacher small">${t("au_join")}</div>` : ""}
   ${A_.err ? `<div class="card errbox" role="alert">${esc(A_.err)}</div>` : ""}${A_.msg ? `<div class="card okbox" role="status">${esc(A_.msg)}</div>` : ""}
   <div class="card stack">${body}</div>
@@ -125,6 +126,7 @@ function authClick(b) {
   const a = b.dataset.act;
   if (a === "reload") { location.reload(); return; }
   if (a === "aMode") { AUTH = { mode: b.dataset.m, msg: "", err: "", busy: false }; showAuth(); return; }
+  if (a === "aResend") { const em = AUTH.unconf, j = pendingJoin(); return authRun(async () => { await DB.resend(em, APP_URL + (j ? "?join=" + j : "")); AUTH = { mode: "in", msg: t("au_resent"), err: "", busy: false }; showAuth(); }); }
   if (a === "aDemoT") { authRun(async () => enter(await DB.signIn("teacher@demo.test", "demo1234"))); return; }
   if (a === "aDemoS") {
     const c = DB.demoNewStudent(); try { if (!pendingJoin()) localStorage.setItem("mp-join", DEMO_TEACHER); } catch (e) { }
@@ -141,7 +143,7 @@ function authSubmit(e) {
   const email = v("aE"), pw = document.getElementById("aP")?.value || "";
   const bad = m => { AUTH.err = m; showAuth(); };
   if (f !== "aSetPw" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad(t("err_email"));
-  if (f === "aIn") return authRun(async () => enter(await DB.signIn(email, pw)));
+  if (f === "aIn") return authRun(async () => { try { enter(await DB.signIn(email, pw)); } catch (e) { if (/not confirmed/i.test(e?.message || "")) AUTH.unconf = email; throw e; } });
   if (f === "aUp") {
     const name = v("aN"); if (!name) return bad(t("err_name")); if (pw.length < 8) return bad(t("err_pwShort"));
     const j = pendingJoin(), redirect = APP_URL + (j ? "?join=" + j : "");

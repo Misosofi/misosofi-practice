@@ -52,6 +52,7 @@ function supabaseDB() {
       return { user: r.data.user ? { id: r.data.user.id, email: r.data.user.email } : null, needsConfirm: !r.data.session };
     }),
     resetPw: wrap(async (email, redirect) => ok(await sb.auth.resetPasswordForEmail(email, { redirectTo: redirect || APP_URL }))),
+    resend: wrap(async (email, redirect) => ok(await sb.auth.resend({ type: "signup", email, options: { emailRedirectTo: redirect || APP_URL } }))),
     setPw: wrap(async password => ok(await sb.auth.updateUser({ password }))),
     signOut: wrap(async () => { await sb.auth.signOut(); }),
     sel: wrap(async (table, o = {}) => {
@@ -161,6 +162,7 @@ function demoDB() {
       const u = newUser(email, pw, name); localStorage.setItem(SKEY, JSON.stringify(u)); return { user: u, needsConfirm: false };
     },
     resetPw: async () => { await delay(); },
+    resend: async () => { await delay(); },
     setPw: async pw => { const s = me(); const u = s && D.users.find(x => x.id === s.id); if (u) { u.pw = pw; persist(); } },
     signOut: async () => { localStorage.removeItem(SKEY); },
     sel: async (table, o = {}) => {
