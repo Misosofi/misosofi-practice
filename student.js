@@ -208,6 +208,8 @@ async function flushOpsOnly() { while (OUT.length) { try { await runOp(OUT[0]); 
 const q = () => S.quest[TK] || (S.quest[TK] = {});
 /* coins grow with effort: every bit of practice earns; the first one of each area today adds the quest bonus */
 function award(kind, bonus, extra = 0) { const Q = q(); let n = extra; if (!Q[kind]) { Q[kind] = 1; n += bonus; } if (n > 0) { S.coins += n; toast(n === 1 ? t("coinGot") : t("coinsGot", { n })); } save(); checkStar(); return n; }
+/* counts for today's quest, but gives no coins (things the child only ticks off) */
+function markDone(kind) { const Q = q(); if (!Q[kind]) { Q[kind] = 1; save(); checkStar(); } }
 function earn(n) { if (n > 0) { S.coins += n; save(); toast(n === 1 ? t("coinGot") : t("coinsGot", { n })); } }
 function checkStar() {
   const Q = q(), others = ORDER.filter(k => k !== "piece" && Q[k]).length;
@@ -245,9 +247,9 @@ async function saveRec(blob, dur, pid, kind = "audio") {
 }
 async function startRec(pid) {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const chunks = []; mr = new MediaRecorder(stream); recStart = Date.now(); isRec = true;
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const chunks = []; mr = new MediaRecorder(stream); recStart = Date.now(); isRec = true; smAttach(stream);
     mr.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
-    mr.onstop = () => { stream.getTracks().forEach(x => x.stop()); isRec = false; const type = (mr && mr.mimeType) || chunks[0]?.type || "audio/webm"; saveRec(new Blob(chunks, { type }), (Date.now() - recStart) / 1000, pid); mr = null; };
+    mr.onstop = () => { stream.getTracks().forEach(x => x.stop()); isRec = false; if (!SM.own) { smStop(); if (A?.start) smStart(); } const type = (mr && mr.mimeType) || chunks[0]?.type || "audio/webm"; saveRec(new Blob(chunks, { type }), (Date.now() - recStart) / 1000, pid); mr = null; };
     mr.start(1000); if (A) renderAct();
   } catch (e) { isRec = false; toast(t("micBlocked")); if (A) renderAct(); }
 }
@@ -390,7 +392,7 @@ function vMe() {
 
 /* ===== activities ===== */
 function openSheet(html, full) { const sh = document.getElementById("sheet"); sh.classList.toggle("full", !!full); const p = document.getElementById("panel"); p.innerHTML = html; sh.hidden = false; if (S) { hydrateMedia(p); hydratePlans(p); } }
-function closeSheet() { silenceAll(); if (typeof micStop === "function") micStop(); if (typeof FOLLOW !== "undefined") FOLLOW = null; if (isRec) stopRec(); stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
+function closeSheet() { silenceAll(); if (typeof smStop === "function" && !isRec && !(A && A.start)) smStop(); if (typeof micStop === "function") micStop(); if (typeof FOLLOW !== "undefined") FOLLOW = null; if (isRec) stopRec(); stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
 function actHead(k) { return `<div class="act-head"><span class="ic" style="background:${ACT[k].col}">${I[ACT[k].ic]}</span><h2>${t("a_" + k)}</h2>${q()[k] ? `<span class="pill g">✓</span>` : `<span class="price">${I.coin}${ACT[k].coins}</span>`}<button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>`; }
 function openAct(k, opt = {}) { A = { k, ...opt }; renderAct(); if (k === "ear") setTimeout(() => A && A.qs && tone(A.qs[0].midi), 300); }
 function renderAct() { if (!A) return; const k = A.k; if (k === "plan") { openSheet(`<div class="act-head"><span class="ic" style="background:#5C6BC0">${I.book}</span><h2>${t("pl_title")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>` + actPlan(), true); return; } const b = k === "piece" ? actPiece() : k === "sight" ? actSight() : k === "nr" ? actNR() : k === "tech" ? actTech() : k === "theory" ? actTheory() : actQuiz(); openSheet(actHead(k) + b, true); }
@@ -407,6 +409,7 @@ function actPiece() {
  <button class="timerbtn ${A.start ? "run" : ""}" data-act="${A.start ? "pstop" : "pstart"}" aria-label="${A.start ? t("stop") : t("start")}">${A.start ? "■" : "▶"}</button></div>
  <div class="muted small" id="keepMsg">${A.start ? (A.goal && el >= A.goal * 60 ? t("goalReached") : t("keep")) : ""}</div>
  <div class="timebox"><div><span class="muted small">${t("todayPiece")}</span><b id="tToday">${fmtDur((p.days?.[TK] || 0) + el)}</b></div><div><span class="muted small">${t("totalPiece")}</span><b id="tTotal">${fmtDur((p.sec || 0) + el)}</b></div></div>
+ ${A.start ? `<div class="heard small" id="heardNow">${A.noMic ? t("heardNoMic") : smLabel()}</div>` : ""}
  <div class="muted small">${A.start ? t("timerStopHow") : t("timerStartHow")}</div></div>
  <div class="card stack rec-card" style="align-items:center"><div class="label">🎤 ${t("recH")}</div>${isRec ? `<span class="live">${t("recording")}</span>` : ""}
  <button class="btn block ${isRec ? "rec-on" : "rec-btn"}" data-act="recToggle">${isRec ? "■ " + t("recStopBtn") : "🎤 " + (c ? t("recTeacher") : t("recSelf"))}</button>
@@ -426,9 +429,12 @@ function tickPiece() {
 function savePieceTime() {
   const el = elapsed(); clearInterval(A.timer); A.start = null; if (el < 1) return;
   const p = S.pieces.find(x => x.id === A.pid); if (!p) return; p.sec = (p.sec || 0) + el; p.days = p.days || {}; p.days[TK] = (p.days[TK] || 0) + el; addSec(el); save();
-  const pt = pieceToday(), Q = q(), mins = Math.floor(pt / 60), extra = Math.max(0, mins - (Q.piecePaid || 0)); Q.piecePaid = mins;
-  if (pt >= 300 && !Q.piece) award("piece", ACT.piece.coins, extra); else if (extra) earn(extra); else { save(); toast(t("saved") + " · " + fmtDur(el)); }
-  if (pt >= 600 && !Q.piece10) { Q.piece10 = 1; S.coins += 5; save(); setTimeout(() => toast(t("bonus10")), 1500); }
+  /* coins only for the minutes the microphone heard playing */
+  const Q = q(), heard = Math.min(el, Math.round((SM.heardMs - (A.h0 || 0)) / 1000)); if (!isRec) smStop();
+  Q.heard = (Q.heard || 0) + Math.max(0, heard);
+  const mins = Math.floor(Q.heard / 60), extra = Math.max(0, mins - (Q.piecePaid || 0)); Q.piecePaid = mins;
+  if (Q.heard >= 300 && !Q.piece) award("piece", ACT.piece.coins, extra); else if (extra) earn(extra); else { save(); toast(heard < 20 ? t("heardNone") : t("saved") + " · " + fmtDur(el)); }
+  if (Q.heard >= 600 && !Q.piece10) { Q.piece10 = 1; S.coins += 5; save(); setTimeout(() => toast(t("bonus10")), 1500); }
 }
 /* sight-reading */
 function actSight() {
@@ -571,7 +577,7 @@ function ncFinish() {
   R.stars = acc >= .95 && avg <= 2 ? 5 : acc >= .9 && avg <= 3 ? 4 : acc >= .8 ? 3 : acc >= .6 ? 2 : 1;
   const best = S.ncBest[R.lvl]; if (!best || R.stars > best.stars || (R.stars === best.stars && avg < best.avg)) { S.ncBest[R.lvl] = { stars: R.stars, avg }; R.newBest = !!best; }
   S.nr.sessions.push({ id: uid(), date: TK, level: NC_LEVELS.find(x => x.id === R.lvl).name, stars: R.stars }); if (S.nr.sessions.length > 100) S.nr.sessions = S.nr.sessions.slice(-100); save();
-  award("nr", ACT.nr.coins, R.ok + R.stars); if (R.stars === 5) celebrate();
+  if (R.stars >= 3) award("nr", ACT.nr.coins, R.ok + R.stars); else { earn(Math.floor(R.ok / 3)); toast(t("tryMore")); } if (R.stars === 5) celebrate();
 }
 const miniStars = n => `<span class="ministars">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= n ? "" : "off"}">${I.star}</span>`).join("")}</span>`;
 /* technique */
@@ -739,10 +745,11 @@ function studentClick(b, e) {
     case "obDone": S.onboarded = true; OB = null; save(); document.getElementById("sheet").hidden = true; refresh(); celebrate(); return;
     case "ppick": A.pid = id; renderAct(); return;
     case "pgoal": A.goal = +b.dataset.m; renderAct(); return;
-    case "pstart": ac(); A.start = Date.now(); A.goalHit = 0; A.timer = setInterval(tickPiece, 250); renderAct(); return;
+    case "pstart": ac(); A.start = Date.now(); A.goalHit = 0; A.timer = setInterval(tickPiece, 250); A.h0 = SM.heardMs; A.noMic = false;
+      smStart().then(ok => { if (!ok && A) { A.noMic = true; renderAct(); } else if (A) A.h0 = SM.heardMs; }); renderAct(); return;
     case "recToggle": ac(); if (isRec) stopRec(); else startRec(A.pid); return;
     case "pstop": { const el0 = elapsed(); savePieceTime(); renderAct(); refreshTop(); if (el0 >= 60 && lastPlan()?.date !== TK) setTimeout(() => openAct("plan"), 1200); return; }
-    case "sightRate": A.rated = b.dataset.r; if (A.song) { S.songsPlayed ||= {}; S.songsPlayed[A.song] = (S.songsPlayed[A.song] || 0) + 1; save(); } award("sight", ACT.sight.coins, 3); renderAct(); refreshTop(); return;
+    case "sightRate": A.rated = b.dataset.r; if (A.song) { S.songsPlayed ||= {}; S.songsPlayed[A.song] = (S.songsPlayed[A.song] || 0) + 1; save(); } if (typeof FOLLOW !== "undefined" && FOLLOW?.done && !A.paid) { A.paid = 1; award("sight", ACT.sight.coins, 3); } else markDone("sight"); renderAct(); refreshTop(); return;
     case "sightHear": acReady().then(c => c ? playSight() : toast(t("soundPaused"))); return;
     case "along": ac(); ALONG.on ? (stopAlong(), renderAct()) : (startAlong(), b.innerHTML = "■ " + t("mStop")); return;
     case "aBpm": A.bpm = Math.max(40, Math.min(160, (A.bpm || 72) + +b.dataset.d)); { const e = document.getElementById("aBpm"); if (e) e.textContent = "♩=" + A.bpm; } return;
@@ -765,19 +772,19 @@ function studentClick(b, e) {
     }
     case "bpm": MET.bpm = Math.max(40, Math.min(208, MET.bpm + +b.dataset.d)); if (MET.on) startMetro(); document.getElementById("bpm").textContent = MET.bpm; document.querySelectorAll(".setbest").forEach(x => x.textContent = "♩=" + MET.bpm); return;
     case "metro": ac(); MET.on ? stopMetro() : startMetro(); b.innerHTML = MET.on ? t("mStop") : I.play + " " + t("mStart"); return;
-    case "drill": { const d = S.drills.find(x => x.id === id); if (!d) return; d.doneOn = d.doneOn || {}; d.doneOn[TK] = !d.doneOn[TK]; save(); if (d.doneOn[TK] && !d.paidOn?.[TK]) { d.paidOn = { ...(d.paidOn || {}), [TK]: 1 }; award("tech", ACT.tech.coins, 2); } renderAct(); refreshTop(); return; }
+    case "drill": { const d = S.drills.find(x => x.id === id); if (!d) return; d.doneOn = d.doneOn || {}; d.doneOn[TK] = !d.doneOn[TK]; save(); if (d.doneOn[TK] && !d.paidOn?.[TK]) { d.paidOn = { ...(d.paidOn || {}), [TK]: 1 }; markDone("tech"); } renderAct(); refreshTop(); return; }
     case "setBest": { const d = S.drills.find(x => x.id === id); if (!d) return; d.best = Math.max(+d.best || 0, MET.bpm); d.hist = (d.hist || []).filter(x => x.date !== TK).concat([{ date: TK, bpm: MET.bpm }]).slice(-60); save(); toast(t("saved")); renderAct(); return; }
     case "delDrill": S.drills = S.drills.filter(x => x.id !== id); if (!S.drillsDel.includes(id)) S.drillsDel.push(id); save(); renderAct(); return;
     case "dAns": { if (A.picked != null) return; const Q = A.daily; A.picked = b.dataset.o; const ok = A.picked === Q.ans; if (Q.midi) tone(Q.midi); else if (Q.midis) Q.midis.forEach((m, i) => tone(m, i * .55)); else ding(ok); award("theory", ACT.theory.coins, ok ? 2 : 0); renderAct(); refreshTop(); return; }
     case "theoryMore": A = { k: "theory", more: true }; renderAct(); return;
-    case "vidWatched": { const v = vwOf(id); v.w[TK] = !v.w[TK]; if (!v.w[TK]) delete v.w[TK]; save(); if (v.w[TK] && !v.p[TK]) { v.p[TK] = 1; award("theory", ACT.theory.coins, 5); } renderAct(); refreshTop(); return; }
+    case "vidWatched": { const v = vwOf(id); v.w[TK] = !v.w[TK]; if (!v.w[TK]) delete v.w[TK]; save(); if (v.w[TK] && !v.p[TK]) { v.p[TK] = 1; } renderAct(); refreshTop(); return; }
     case "earPlay": tone(A.qs[A.i].midi); return;
     case "ans": {
       if (A.picked != null) return; const Q = A.qs[A.i]; A.picked = b.dataset.o; const ok = A.picked === Q.ans; A.res[A.i] = ok;
       if (Q.midi && !Q.ear) tone(Q.midi); else if (Q.midis) Q.midis.forEach((m, i) => tone(m, i * .55)); else ding(ok); renderAct(); return;
     }
     case "nextQ": A.i++; A.picked = null; A.sung = false; if (typeof micStop === "function") micStop();
-      if (A.i >= A.qs.length) { const c = A.res.filter(Boolean).length; if (A.more) earn(c); else award(A.k, ACT[A.k].coins, c); if (A.res.every(Boolean)) celebrate(); }
+      if (A.i >= A.qs.length) { const c = A.res.filter(Boolean).length; if (A.more) earn(c); else if (c * 2 >= A.qs.length) award(A.k, ACT[A.k].coins, c); else { earn(c); toast(t("tryMore")); } if (A.res.every(Boolean)) celebrate(); }
       else if (A.qs[A.i].ear) setTimeout(() => tone(A.qs[A.i].midi), 250);
       renderAct(); refreshTop(); return;
     case "again": { const k = A.k, more = A.more; A = { k, more }; renderAct(); if (k === "ear") setTimeout(() => tone(A.qs[0].midi), 250); return; }
@@ -787,7 +794,7 @@ function studentClick(b, e) {
     case "redeem": { const r = S.rewards.find(x => x.id === id); if (!r) return; if (S.coins < r.price) { toast(t("notEnough")); return; } S.coins -= r.price; S.redeemed.push({ id: uid(), title: r.title, price: r.price, date: TK, given: false }); toast(t("redeemed")); celebrate(); break; }
     case "score": showScore(id); return;
     case "scoreBack": renderAct(); return;
-    case "toggleItem": { const i = S.items.find(x => x.id === id); if (!i) return; i.done = i.done || {}; i.done[TK] = !i.done[TK]; if (!i.done[TK]) delete i.done[TK]; const pk = i.id + "|" + TK; if (i.done[TK] && !S.taskPaid[pk]) { S.taskPaid[pk] = 1; earn(2); } save(); if (sheetOpen && A) { renderAct(); refreshTop(); return; } break; }
+    case "toggleItem": { const i = S.items.find(x => x.id === id); if (!i) return; i.done = i.done || {}; i.done[TK] = !i.done[TK]; if (!i.done[TK]) delete i.done[TK]; const pk = i.id + "|" + TK; if (i.done[TK] && !S.taskPaid[pk]) { S.taskPaid[pk] = 1; } save(); if (sheetOpen && A) { renderAct(); refreshTop(); return; } break; }
     case "delItem": { const i = S.items.find(x => x.id === id); if (!i || i.source === "teacher") return; S.items = S.items.filter(x => x.id !== id); break; }
     case "toggleGoal": { const g = S.goals.find(x => x.id === id); g.done = !g.done; if (g.done && !g.starred) { g.starred = 1; S.stars++; celebrate(); toast(t("goalStar")); } break; }
     case "toggleStep": { const s = S.events.find(x => x.id === b.dataset.e).steps.find(x => x.id === b.dataset.s); s.done = !s.done; break; }

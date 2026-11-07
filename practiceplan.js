@@ -116,7 +116,8 @@ function ppReadForm() { const v = id => (document.getElementById(id)?.value || "
 function ppCounter(id) {
   const P = ppToday(), c = P?.cards.find(x => x.id === id); if (!c) return;
   if (c.kind === "act") { if (!c.done) openAct(c.act); return; }
-  PPC = { id, t0: PPC?.id === id ? PPC.t0 : Date.now(), tm: PPC?.id === id ? PPC.tm : null };
+  PPC = { id, t0: PPC?.id === id ? PPC.t0 : Date.now(), tm: PPC?.id === id ? PPC.tm : null, h0: PPC?.id === id ? PPC.h0 : SM.heardMs };
+  if (c.kind !== "vid" && !c.done && !SM.on) smStart().then(ok => { if (ok && PPC?.id === id) PPC.h0 = SM.heardMs; });
   if (c.kind === "vid") {
     openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
     ${/^https?:\/\//i.test(c.url || "") ? `<a class="btn soft block" href="${esc(c.url)}" target="_blank" rel="noopener">▶ ${t("watch")} ↗</a>` : `<div class="muted">${t("noLink")}</div>`}
@@ -157,6 +158,9 @@ function ppComplete(P, c) {
   c.done = true; ppDays()[TK] = 1; histAdd("done");
   addSec(Math.min(1200, Math.round((Date.now() - PPC.t0) / 1000)));
   const mult = comebackToday() ? 10 : 1, grown = ppMode() === "grown";
+  /* coins only when the microphone heard the child play during this card */
+  const heard = (SM.heardMs - (PPC.h0 || 0)) / 1000, need = c.kind === "tech" ? 10 : c.kind === "vid" ? 0 : Math.min(25, 4 * (c.reps || 3));
+  if (heard < need) { save(); ppCounter(c.id); refreshTop(); toast(t("heardNone")); thiefRestore(1); return; }
   S.coins += 2 * mult; if (!grown) ding(true); if (!grown || mult > 1) toast(mult > 1 ? t("pp_cardCoins10", { n: 2 * mult }) : t("pp_cardCoins"));
   if (mult > 1 || P.cards.every(x => x.done)) { if (P.cards.every(x => x.done) && !P.paid) { P.paid = true; S.coins += 5 * mult; if (!grown) celebrate(); } thiefRestore(99); } else thiefRestore(1);
   save(); ppCounter(c.id); refreshTop();

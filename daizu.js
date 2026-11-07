@@ -93,9 +93,8 @@ function daizuArrive() {
   if (DZ.scene && document.getElementById("sheet").hidden) { if (!DZ.scene.done) DZ.shown[DZ.scene.id] = 0; DZ.scene = null; }
   const x = DZ.list.find(y => !y.mine && y.status === "sent" && !DZ.shown[y.id] && CATS[catOf(y)].ready && (CATS[catOf(y)].arrive !== "night" || isNight()));
   if (!x || DZ.scene || !document.getElementById("sheet").hidden) return;
-  DZ.shown[x.id] = 1; DZ.scene = { id: x.id, from: x.other_name, cat: catOf(x), wish: wishOf(x.id), step: "peek", fromTeacher: isTeacherTrip(x), msg: x.msg || "" };
-  dzRender();
-  DZ.scene.banged = dzEnterSound(DZ.scene.cat);
+  DZ.shown[x.id] = 1; DZ.scene = { id: x.id, from: x.other_name, cat: catOf(x), wish: wishOf(x.id), step: "knock", fromTeacher: isTeacherTrip(x), msg: x.msg || "" };
+  dzRender(); [0, .25, .5].forEach(w => tone(50, w, .12, .25));
 }
 function myTreats() {
   const R = roomOf(), seen = {};
@@ -103,6 +102,9 @@ function myTreats() {
 }
 function dzRender() {
   const sc = DZ.scene; if (!sc) return;
+  if (sc.step === "knock") return openSheet(`<div class="stack knock" style="text-align:center"><div class="knock-door">🚪<span class="knock-q">?</span></div>
+   <h2>${t("dz_knockH")}</h2><div class="muted">${sc.fromTeacher ? t("dz_knockT") : t("dz_knockF", { name: esc(sc.from) })}</div>
+   <button class="btn block big-open" data-dz="open">🚪 ${t("dz_open")}</button></div>`);
   const fromT = sc.fromTeacher;
   const pic = { peek: "guitar", sing: "guitar", ask: "paw", gift: "paw", kiss: "kiss", angry: "angry" }[sc.step];
   const C = CATS[sc.cat], W = itemOf(sc.wish);
@@ -122,7 +124,7 @@ function dzRender() {
   openSheet(`<div class="stack"><div class="act-head"><h2>🐱 ${fromT ? t("tc_fromTeacher", { cat: C.n }) : t("dz_title", { name: esc(sc.from), cat: C.n })}</h2><span class="purse" id="dzPurse">${I.coin}<b>${(S.coins || 0) - (sc.step === "kiss" && sc.coins && !sc.counted ? sc.coins : 0)}</b></span>${sc.step === "kiss" || sc.step === "angry" ? `<button class="icon-btn" data-dz="end" aria-label="Close">${I.close}</button>` : ""}</div>
   <div class="dz-say">${bubble}</div>
   ${sc.step === "kiss" && sc.coins ? `<div class="coinfly" aria-live="polite">${Array.from({ length: sc.coins }, (_, i) => `<span style="--i:${i}">${I.coin}</span>`).join("")}<b id="coinCount">+0</b></div>` : ""}
-  <div class="dz-stage ${sc.step === "peek" ? "dz-enter-" + C.enter : ""} ${isNight() ? "night" : ""}">${sc.step === "peek" && C.enter === "bang" ? `<span class="dz-boom">BAM!</span>` : ""}${friendRoomHTML({ room: S.room, avatar: S.avatar, stars: S.stars })}
+  <div class="dz-stage ${roomOf().me.x > 50 ? "dz-left" : ""} ${sc.step === "peek" ? "dz-enter-" + C.enter : ""} ${isNight() ? "night" : ""}">${sc.step === "peek" && C.enter === "bang" ? `<span class="dz-boom">BAM!</span>` : ""}${friendRoomHTML({ room: S.room, avatar: S.avatar, stars: S.stars })}
    <div class="dz-cat dz-${sc.step} ${C.enter === "ghost" ? "dz-ghostcat" : ""}"><img src="${ART}${sc.cat}_${pic}.webp" alt="${C.n}">${sc.step === "sing" ? `<span class="notes go"><i>♪</i><i>♫</i><i>♪</i><i>♬</i></span>` : ""}${sc.step === "kiss" ? `<span class="dz-hearts">💋 ♥ ♥</span>` : ""}${sc.step === "angry" ? `<span class="dz-puff">💢</span>` : ""}</div></div>
   ${ctl}</div>`, true);
 }
@@ -183,6 +185,7 @@ document.addEventListener("click", e => {
   const a = b.dataset.dz, sc = DZ.scene;
   if (a === "send") daizuSendSheet(b.dataset.id);
   else if (a === "go") daizuGo(b.dataset.id, b.dataset.cat);
+  else if (a === "open" && sc && sc.step === "knock") { ac(); sc.step = "peek"; sc.banged = true; dzRender(); setTimeout(() => dzEnterSound(sc.cat), 40); }
   else if (a === "sing" && sc) { ac(); sc.step = "sing"; dzRender(); const late = !sc.banged && (sc.banged = true); if (late) setTimeout(() => dzEnterSound(sc.cat), 30); setTimeout(() => dzSong(sc.cat), late ? 700 : 0); setTimeout(() => { if (DZ.scene === sc && sc.step === "sing") { sc.step = sc.fromTeacher ? "gift" : "ask"; dzRender(); } }, 6200); }
   else if (a === "thank" && sc && !sc.done) { sc.done = true; dzrpc("daizu_answer", { trip: sc.id, fed: true, food_: "" }).catch(e => toast(e.message)); S.coins += 5; save(); sc.coins = 5; sc.step = "kiss"; dzRender(); coinCount(5); }
   else if (a === "toT") catToTeacherSheet();

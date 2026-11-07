@@ -26,7 +26,7 @@ function pitchTick() {
   const sr = an.context.sampleRate, b = PITCH.buf;
   let rms = 0; for (let i = 0; i < b.length; i++) rms += b[i] * b[i]; rms = Math.sqrt(rms / b.length);
   /* the quiet level of the room is learnt, so soft playing far from the phone still counts */
-  PITCH.floor = PITCH.floor == null ? rms : rms < PITCH.floor ? rms : PITCH.floor * .995 + rms * .005;
+  PITCH.floor = smFloor(PITCH.floor, rms);
   const muted = Date.now() < PITCH.muteUntil, loud = rms > Math.max(0.003, PITCH.floor * 2.2);
   let f = loud && !muted ? yin(b, sr) : -1;
   let midi = null, cents = 0;
@@ -51,3 +51,32 @@ function yin(buf, sr) {
 const PC_NAME = ["Do", "Do♯", "Re", "Re♯", "Mi", "Fa", "Fa♯", "So", "So♯", "La", "La♯", "Ti"];
 const PC_LET = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
 const pcName = m => { const p = ((m % 12) + 12) % 12; return (typeof S !== "undefined" && S && S.abc) ? PC_LET[p] + " (" + PC_NAME[p] + ")" : PC_NAME[p]; };
+
+/* ===== Sound meter: "is the child really playing?" =====
+   Only measures loudness (nothing is recorded or sent). Coins for practice come from the time the microphone
+   actually heard playing, not from the timer or from ticking boxes. */
+const SM = { on: false, own: false, stream: null, an: null, buf: null, timer: 0, floor: null, heardMs: 0, at: 0 };
+async function smStart() {
+  if (SM.on) return true;
+  try {
+    const c = ac(); const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    smUse(stream, true); return true;
+  } catch (e) { return false; }
+}
+function smUse(stream, own) {
+  smStop(); const c = ac(); const src = c.createMediaStreamSource(stream), an = c.createAnalyser(); an.fftSize = 2048; src.connect(an);
+  Object.assign(SM, { on: true, own, stream, an, buf: new Float32Array(an.fftSize), floor: null, at: Date.now() });
+  SM.timer = setInterval(() => {
+    if (!SM.an) return; SM.an.getFloatTimeDomainData(SM.buf); let r = 0; for (let i = 0; i < SM.buf.length; i++) r += SM.buf[i] * SM.buf[i]; r = Math.sqrt(r / SM.buf.length);
+    SM.floor = smFloor(SM.floor, r);
+    const now = Date.now(), dt = Math.min(500, now - SM.at); SM.at = now;
+    if (r > Math.max(0.004, SM.floor * 3)) SM.heardMs += dt;
+    const e = document.getElementById("heardNow"); if (e && typeof smLabel === "function") e.textContent = smLabel();
+  }, 200);
+}
+/* the recorder hands over its microphone so both can run together */
+function smAttach(stream) { if (SM.on) smUse(stream, false); }
+function smStop() { clearInterval(SM.timer); if (SM.own && SM.stream) SM.stream.getTracks().forEach(t => t.stop()); Object.assign(SM, { on: false, own: false, stream: null, an: null }); }
+const smLabel = () => t("heardLbl", { t: fmtDur(Math.round(((SM.heardMs || 0) - ((typeof A !== "undefined" && A?.h0) || 0)) / 1000)) });
+/* the quiet level of the room: drops at once when it gets quieter, and only creeps up with background noise (never with playing) */
+function smFloor(f, r) { if (f == null) return Math.min(r, 0.003); if (r < f) return Math.max(r, 0.0005); if (r < f * 2) return f * .99 + r * .01; return f; }

@@ -69,7 +69,7 @@ async function planSave(kind, blob, text) {
 function planAction(act, b) {
   if (act === "planRec") { planStart(b.dataset.k); return true; }
   if (act === "planStop") { planStop(); return true; }
-  if (act === "planDone") { const p = lastPlan(); if (p) { p.done = true; S.coins += 2; save(); toast(t("pl_doneMsg")); refresh(); if (A) renderAct(); } return true; }
+  if (act === "planDone") { const p = lastPlan(); if (p) { p.done = true; save(); toast(t("pl_doneMsg")); refresh(); if (A) renderAct(); } return true; }
   if (act === "planOpen") { openAct("plan"); return true; }
   return false;
 }

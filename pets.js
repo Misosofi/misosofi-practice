@@ -98,7 +98,7 @@ function roomHTML(edit) {
     .concat([{ k: "me", y: meY }, { k: "inst", y: R.inst.y }]).sort((a, b) => a.y - b.y);
   let toyN = 0;
   const el = o => {
-    if (o.k === "me" && sp) return `<div class="ri me sleep" data-ri="me" style="left:${sp.x}%;top:${sp.y}%;width:${sp.w}%;z-index:${Math.round(meY)}">${avatarSVG(S.avatar, { room: true })}<span class="zzz">z<b>z</b><i>Z</i></span></div>`;
+    if (o.k === "me" && sp) return `<div class="ri me sleep ${sp.where !== "floor" ? "inbed" : ""}" data-ri="me" style="left:${sp.x}%;top:${sp.y}%;width:${sp.w}%;z-index:${Math.round(meY)}">${avatarSVG(S.avatar, { room: true })}${sp.where !== "floor" ? `<span class="quilt ${sp.where}"></span><span class="nightcap">🌙</span>` : ""}<span class="zzz">z<b>z</b><i>Z</i></span></div>`;
     if (o.k === "me") return `<div class="ri me ${ROOM.sel === "me" ? "sel" : ""}" data-ri="me" style="left:${R.me.x}%;top:${R.me.y}%;width:22%;z-index:${Math.round(R.me.y)}">${S.thief?.boxed ? `<span class="pet-full"><img src="${ART}boxed.webp" alt="" draggable="false"></span>` : avatarSVG(S.avatar, { room: true })}<span class="hearts" id="hearts"></span><span class="notes" id="notes"></span></div>`;
     if (o.k === "inst") return `<div class="ri ${ROOM.sel === "inst" ? "sel" : ""}" data-ri="inst" style="left:${R.inst.x}%;top:${R.inst.y}%;width:${ins.w}%;z-index:${Math.round(R.inst.y)}">${itemImg(ins.id)}</div>`;
     const it = itemOf(o.i.id);
