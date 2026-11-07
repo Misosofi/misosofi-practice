@@ -6,8 +6,8 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "thw", "thwSeen"];
-const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc", "thw"];
+const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "thw", "thwSeen"];
+const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc", "thw", "weekChk"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
   return {
@@ -234,7 +234,7 @@ function extOf(blob) {
   const n = String(blob.name || ""); const e = n.includes(".") ? n.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "") : ""; return e || "bin";
 }
 async function saveRec(blob, dur, pid, kind = "audio") {
-  const id = uid(); MEM[id] = blob; await idbPut(id, blob);
+  const id = uid(); MEM[id] = blob; await idbPut(id, blob); if (typeof weekRecSaved === "function" && kind !== "video") weekRecSaved(id, pid, dur);
   if (coach()) {
     const ext = extOf(blob), row = { id, student_id: ME, kind, path: `${ME}/${id}.${ext}`, seconds: sec1(dur), piece_id: pid || null };
     S.remoteRecs.unshift({ id, kind, date: TK, dur: Math.round(dur || 0), piece: pid || null, listened: false, heart: false, comment: "", path: row.path, remote: true, pending: true });
@@ -312,6 +312,7 @@ function vHome() {
  ${!PROF.teacher_id ? `<div class="section"><div class="card muted small">${t("noTeacher")}</div></div>` : ""}
  ${typeof ppPlead === "function" ? ppPlead() : ""}
  ${typeof ppHome === "function" ? ppHome() : ""}
+ ${typeof weekCard === "function" ? weekCard() : ""}
  ${typeof ppGrowth === "function" && ppMode() === "grown" ? ppGrowth() : ""}
  ${bellBanner()}
  ${ev ? `<div class="section">${countdownCard(ev)}</div>` : ""}

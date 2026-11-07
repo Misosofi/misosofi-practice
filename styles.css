@@ -545,3 +545,4 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 @keyframes ghostOrbit{0%{transform:translate(-30px,-26px)}25%{transform:translate(26px,-34px) scaleX(-1)}50%{transform:translate(32px,12px) scaleX(-1)}75%{transform:translate(-26px,20px)}100%{transform:translate(-30px,-26px)}}
 @media (prefers-reduced-motion:reduce){.dz-ghost-orbit{animation:none;transform:translate(26px,-26px)}}
 @media (prefers-color-scheme:dark){.pp-plead.dz-dead{background:#24213A;border-color:#3D3766}}
+.wr-card.done{background:#EFFAF1;border-color:#9AD9A6}@media (prefers-color-scheme:dark){.wr-card.done{background:#1F3A25;border-color:#3F7A4B}}
