@@ -579,3 +579,16 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .story-ans{text-align:center;font-size:1.2rem;padding:8px;border-radius:12px}
 .story-ans.ok{background:#E3F6EA;color:#1F7A47}.story-ans.no{background:#FDE8E8;color:#B23A3A}
 .story-sheet{max-width:100%;overflow-wrap:anywhere}
+.kb .wk b{font-size:.7rem;color:#5B4BDB;font-weight:900}
+.kb .wk.midc{background:linear-gradient(#fff 70%,#EEE9FF)}
+.room:not(.edit){touch-action:pan-y}
+.room:not(.edit) .ri{touch-action:none;cursor:grab}
+.dz-say{background:#fff;color:#2A1F33;border-radius:18px;padding:12px 16px;font-weight:800;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.12);position:relative}
+.dz-say::after{content:"";position:absolute;left:70%;bottom:-10px;border:10px solid transparent;border-top-color:#fff;border-bottom:0}
+.dz-bubble{display:none}
+.coinfly{display:flex;justify-content:center;align-items:center;gap:6px;min-height:52px}
+.coinfly span{width:34px;height:34px;color:var(--gold);opacity:0;animation:coinIn .45s ease-out forwards;animation-delay:calc(.45s + var(--i) * .38s)}
+.coinfly b{font-size:1.8rem;color:var(--gold);margin-left:8px;min-width:2.5em}
+.coinfly b.pop{animation:coinPop .3s ease-out}
+@keyframes coinIn{0%{opacity:0;transform:translateY(-60px) scale(.4) rotate(-180deg)}100%{opacity:1;transform:none}}
+@keyframes coinPop{0%{transform:scale(1.6)}100%{transform:scale(1)}}

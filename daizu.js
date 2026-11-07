@@ -117,10 +117,12 @@ function dzRender() {
       <button class="btn ghost" data-dz="refuse">${t("dz_refuse")}</button>`;
   }
   if (sc.step === "gift") ctl = `<button class="btn" data-dz="thank">💖 ${t("tc_thankBtn")} · +${I.coin}5</button>`;
-  if (sc.step === "kiss" || sc.step === "angry") ctl = `<button class="btn" data-dz="end">OK</button>`;
+  if (sc.step === "kiss" || sc.step === "angry") ctl = `<button class="btn" data-dz="end">← ${t("dz_back")}</button>`;
   openSheet(`<div class="stack"><div class="act-head"><h2>🐱 ${fromT ? t("tc_fromTeacher", { cat: C.n }) : t("dz_title", { name: esc(sc.from), cat: C.n })}</h2>${sc.step === "kiss" || sc.step === "angry" ? `<button class="icon-btn" data-dz="end" aria-label="Close">${I.close}</button>` : ""}</div>
+  <div class="dz-say">${bubble}</div>
+  ${sc.step === "kiss" && sc.coins ? `<div class="coinfly" aria-live="polite">${Array.from({ length: sc.coins }, (_, i) => `<span style="--i:${i}">${I.coin}</span>`).join("")}<b id="coinCount">+0</b></div>` : ""}
   <div class="dz-stage ${sc.step === "peek" ? "dz-enter-" + C.enter : ""} ${isNight() ? "night" : ""}">${sc.step === "peek" && C.enter === "bang" ? `<span class="dz-boom">BAM!</span>` : ""}${friendRoomHTML({ room: S.room, avatar: S.avatar, stars: S.stars })}
-   <div class="dz-cat dz-${sc.step} ${C.enter === "ghost" ? "dz-ghostcat" : ""}"><div class="dz-bubble">${bubble}</div><img src="${ART}${sc.cat}_${pic}.webp" alt="${C.n}">${sc.step === "sing" ? `<span class="notes go"><i>♪</i><i>♫</i><i>♪</i><i>♬</i></span>` : ""}${sc.step === "kiss" ? `<span class="dz-hearts">💋 ♥ ♥</span>` : ""}${sc.step === "angry" ? `<span class="dz-puff">💢</span>` : ""}</div></div>
+   <div class="dz-cat dz-${sc.step} ${C.enter === "ghost" ? "dz-ghostcat" : ""}"><img src="${ART}${sc.cat}_${pic}.webp" alt="${C.n}">${sc.step === "sing" ? `<span class="notes go"><i>♪</i><i>♫</i><i>♪</i><i>♬</i></span>` : ""}${sc.step === "kiss" ? `<span class="dz-hearts">💋 ♥ ♥</span>` : ""}${sc.step === "angry" ? `<span class="dz-puff">💢</span>` : ""}</div></div>
   ${ctl}</div>`, true);
 }
 /* a flamenco "I'm hungry" song on the piano: the Andalusian cadence Am–G–F–E with a strummed feel and a little sung line */
@@ -134,9 +136,9 @@ function dzSong() {
 async function dzFinish(fed, food) {
   const sc = DZ.scene; if (!sc || sc.done) return; sc.done = true; sc.gotWish = food === sc.wish;
   try { await dzrpc("daizu_answer", { trip: sc.id, fed, food_: food || "" }); } catch (e) { toast(e.message); }
-  if (fed) { S.coins += sc.gotWish ? 5 : 2; roomOf().happy++; save(); ding(true); [84, 88, 91].forEach((m, i) => tone(m, i * .12, .5, .18)); }
+  if (fed) { sc.coins = sc.gotWish ? 5 : 2; S.coins += sc.coins; roomOf().happy++; save(); ding(true); [84, 88, 91].forEach((m, i) => tone(m, i * .12, .5, .18)); }
   else { tone(45, 0, .5, .3); tone(44, .25, .7, .3); }
-  sc.step = fed ? "kiss" : "angry"; dzRender();
+  sc.step = fed ? "kiss" : "angry"; dzRender(); if (fed) coinCount(sc.coins);
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-dz]"); if (!b || !S) return;
@@ -144,7 +146,7 @@ document.addEventListener("click", e => {
   if (a === "send") daizuSendSheet(b.dataset.id);
   else if (a === "go") daizuGo(b.dataset.id, b.dataset.cat);
   else if (a === "sing" && sc) { sc.step = "sing"; dzRender(); dzSong(); setTimeout(() => { if (DZ.scene === sc && sc.step === "sing") { sc.step = sc.fromTeacher ? "gift" : "ask"; dzRender(); } }, 6200); }
-  else if (a === "thank" && sc && !sc.done) { sc.done = true; dzrpc("daizu_answer", { trip: sc.id, fed: true, food_: "" }).catch(e => toast(e.message)); S.coins += 5; save(); ding(true); [84, 88, 91].forEach((m, i) => tone(m, i * .12, .5, .18)); sc.step = "kiss"; dzRender(); }
+  else if (a === "thank" && sc && !sc.done) { sc.done = true; dzrpc("daizu_answer", { trip: sc.id, fed: true, food_: "" }).catch(e => toast(e.message)); S.coins += 5; save(); sc.coins = 5; sc.step = "kiss"; dzRender(); coinCount(5); }
   else if (a === "toT") catToTeacherSheet();
   else if (a === "goT") catToTeacherGo(b.dataset.cat);
   else if (a === "msgT") { DZ.tmsg = b.dataset.v; catToTeacherSheet(); }
@@ -219,3 +221,8 @@ document.addEventListener("click", async e => {
     await TcatLoad(); Trefresh();
   }
 });
+
+/* coins fly into the purse one by one: 1, 2, 3, 4, 5 */
+function coinCount(n) {
+  for (let i = 1; i <= n; i++) setTimeout(() => { const c = document.getElementById("coinCount"); if (c) { c.textContent = "+" + i; c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop"); } tone(84 + i * 2, 0, .18, .16); if (i === n) refreshTop?.(); }, 450 + i * 380);
+}

@@ -155,7 +155,9 @@ const SHARP_STEPS=[8,5,9,6,3,7,4],FLAT_STEPS=[4,7,3,6,2,5,1];
 /* single staff (theory, solfège): treble bottom line E4 = d30, bass bottom line G2 = d18 */
 function staff({clef="treble",notes=[],keyAcc=0,width=220}){
  const top=34,gap=12,bot=top+4*gap,base=clef==="treble"?30:18,y=d=>bot-(d-base)*gap/2,shift=clef==="treble"?0:-2;
- let s=`<svg viewBox="0 0 ${width} 130" width="${width}" role="img" aria-label="Music staff">`;
+ /* make room for notes high above or low below the staff (ledger lines + stems) */
+ const ys=notes.map(n=>y(n.d)),y0=Math.min(0,...ys.map(v=>v-42)),y1=Math.max(130,...ys.map(v=>v+42));
+ let s=`<svg viewBox="0 ${y0} ${width} ${y1-y0}" width="${width}" role="img" aria-label="Music staff">`;
  for(let i=0;i<5;i++)s+=`<line x1="4" x2="${width-4}" y1="${top+i*gap}" y2="${top+i*gap}" stroke="${INK}" stroke-width="1.3"/>`;
  s+=clefGlyph(clef,8,top,gap);let x=48;
  const n=Math.abs(keyAcc);s+=keySig(keyAcc,x,y,base,shift,gap);x+=n*gap*1.05;

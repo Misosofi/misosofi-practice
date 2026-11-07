@@ -41,12 +41,10 @@ function solfLive(o) {
 function ncMicToggle() { return `<label class="toggle" style="border:0;padding:0"><span><strong>🎹 ${t("mic_ncOn")}</strong><br><span class="muted small">${t("mic_ncHow")}</span></span><input type="checkbox" id="ncMicOn" ${S.ncMic ? "checked" : ""}></label>`; }
 function ncMicNote(midi) {
   const R = A?.run; if (!R || R.lock || R.i >= NC_N) return;
-  const ok = pcOf(midi) === R.cur.pc;
-  const key = document.querySelector(`[data-act="ncKey"][data-pc="${R.cur.pc}"]`);
-  if (key) key.classList.add(ok ? "hit" : "miss");
-  if (!ok) { const wrong = document.querySelector(`[data-act="ncKey"][data-pc="${pcOf(midi)}"]`); if (wrong) wrong.classList.add("miss"); if (key) key.classList.add("hit"); }
+  const ok = midi === midiOf(R.cur.d, R.cur.alt);   /* the right note in the right octave */
+
   R.res[R.i] = ok; if (ok) R.ok++; R.lock = true;
-  const fb = document.getElementById("ncFb"); if (fb) { fb.className = "nc-fb " + (ok ? "ok" : "no"); fb.textContent = ok ? "✓ " + pcName(midi) : t("nc_heard", { n: pcName(midi) }); }
+  const fb = document.getElementById("ncFb"); if (fb) { fb.className = "nc-fb " + (ok ? "ok" : "no"); fb.textContent = ok ? "✓ " + pcName(midi) + (Math.floor(midi / 12) - 1) : t("nc_heard", { n: pcName(midi) + (Math.floor(midi / 12) - 1) }); }
   setTimeout(() => { if (!A?.run) return; R.lock = false; R.i++; if (R.i >= NC_N) { ncFinish(); micStop(); } else R.cur = ncNote(NC_LEVELS.find(x => x.id === R.lvl), R.cur); renderAct(); refreshTop(); }, ok ? 260 : 1000);
 }
 

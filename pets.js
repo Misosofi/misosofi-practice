@@ -197,7 +197,27 @@ function roomAction(act, id) {
   if (act === "rmStyle") { if (itemOf(id)?.cat === "room") { R.bg = id; save(); rerenderRoom(); } return true; }
   return false;
 }
-document.addEventListener("click", e => { const f = e.target.closest(".room:not(.edit) .ri.food"); if (f) feed(f.dataset.ri); });
+/* the room on the Me page: drag things with a finger; a tap on a treat gives it to your friend */
+let RDRAG = null;
+document.addEventListener("pointerdown", e => {
+  const n = e.target.closest(".room:not(.edit) .ri"); if (!n || n.classList.contains("sleep")) return;
+  const room = n.closest(".room"); e.preventDefault();
+  RDRAG = { n, room, id: n.dataset.ri, r: room.getBoundingClientRect(), sx: e.clientX, sy: e.clientY, moved: false };
+  try { n.setPointerCapture(e.pointerId); } catch (_) { }
+});
+document.addEventListener("pointermove", e => {
+  const d = RDRAG; if (!d) return;
+  if (Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) > 6) d.moved = true; if (!d.moved) return;
+  const x = Math.max(4, Math.min(96, (e.clientX - d.r.left) / d.r.width * 100)), y = Math.max(20, Math.min(99, (e.clientY - d.r.top) / d.r.height * 100));
+  d.n.style.left = x + "%"; d.n.style.top = y + "%"; d.n.style.zIndex = Math.round(y); d.x = x; d.y = y;
+});
+const rdEnd = () => {
+  const d = RDRAG; RDRAG = null; if (!d) return;
+  if (!d.moved) { if (d.n.classList.contains("food")) feed(d.id); return; }
+  const R = roomOf(), tgt = d.id === "me" ? R.me : d.id === "inst" ? R.inst : R.items.find(i => i.u === d.id);
+  if (tgt) { tgt.x = Math.round(d.x * 10) / 10; tgt.y = Math.round(d.y * 10) / 10; if (tgt.placed === false) tgt.placed = true; save(); }
+};
+document.addEventListener("pointerup", rdEnd); document.addEventListener("pointercancel", rdEnd);
 
 /* ---------- shop ---------- */
 function ownsItem(it) { const R = roomOf(); if (it.cat === "room") return R.owned.includes(it.id); return !it.multi && R.items.some(i => i.id === it.id); }

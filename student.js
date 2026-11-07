@@ -533,12 +533,17 @@ function ncNote(L, prev) {
   let alt = 0; if (L.acc && Math.random() < .6) alt = pick([1, -1]);
   return { d, alt, clef, pc: ((SEMI[m7(d)] + alt) % 12 + 12) % 12 };
 }
+/* two octaves of real piano keys around the note; the C keys show their octave (C3, C4…) so the child must find the right octave */
 function ncKeyboard() {
-  const WH = [0, 2, 4, 5, 7, 9, 11], names = S.abc ? LET : SOL; let w = "", b = "";
-  for (let o = 0; o < 2; o++)WH.forEach((pc, i) => { w += `<button class="wk" data-act="ncKey" data-pc="${pc}" data-o="${o}" aria-label="${LET[i]}">${S.ncNames ? names[i] : ""}</button>`; });
+  const R = A.run, m = midiOf(R.cur.d, R.cur.alt);
+  R.kbLo ??= 12 * (Math.floor(m / 12) - (m % 12 < 5 || Math.random() < .5 ? 1 : 0));
+  if (m < R.kbLo || m >= R.kbLo + 24) R.kbLo = 12 * (Math.floor(m / 12) - (m % 12 < 6 ? 1 : 0));
+  const WH = [0, 2, 4, 5, 7, 9, 11], names = S.abc ? LET : SOL; let w = "", bk = "";
+  for (let o = 0; o < 2; o++)WH.forEach((pc, i) => { const mm = R.kbLo + o * 12 + pc, oc = Math.floor(mm / 12) - 1;
+    w += `<button class="wk ${mm === 60 ? "midc" : ""}" data-act="ncKey" data-m="${mm}" aria-label="${LET[i]}${oc}">${pc === 0 ? `<b>C${oc}</b>` : S.ncNames ? names[i] : ""}</button>`; });
   const BL = [[0, 1], [1, 3], [3, 6], [4, 8], [5, 10]];
-  for (let o = 0; o < 2; o++)BL.forEach(([wi, pc]) => { const idx = o * 7 + wi; b += `<button class="bk" data-act="ncKey" data-pc="${pc}" data-o="${o}" style="left:calc(${(idx + 1) * 100 / 14}% - ${100 / 14 * .3}%);width:${100 / 14 * .6}%" aria-label="black key"></button>`; });
-  return `<div class="kbwrap"><div class="kb">${w}${b}</div></div>`;
+  for (let o = 0; o < 2; o++)BL.forEach(([wi, pc]) => { const idx = o * 7 + wi; bk += `<button class="bk" data-act="ncKey" data-m="${R.kbLo + o * 12 + pc}" style="left:calc(${(idx + 1) * 100 / 14}% - ${100 / 14 * .3}%);width:${100 / 14 * .6}%" aria-label="black key"></button>`; });
+  return `<div class="kbwrap"><div class="kb">${w}${bk}</div></div>`;
 }
 function actNR() {
   if (!A.run) {
@@ -752,9 +757,9 @@ function studentClick(b, e) {
       renderAct(); return; }
     case "ncMenu": if (A.run?.timer) clearInterval(A.run.timer); A.run = null; if (typeof micStop === "function") micStop(); renderAct(); return;
     case "ncKey": {
-      const R = A?.run; if (!R || R.lock || R.i >= NC_N) return; const pc = +b.dataset.pc, ok = pc === R.cur.pc;
-      tone(ok ? midiOf(R.cur.d, R.cur.alt) : 48 + 12 * (+b.dataset.o + 1) + pc, 0, .6, .28); b.classList.add(ok ? "hit" : "miss");
-      if (!ok) { const right = document.querySelector(`[data-act="ncKey"][data-pc="${R.cur.pc}"]`); if (right) right.classList.add("hit"); }
+      const R = A?.run; if (!R || R.lock || R.i >= NC_N) return; const mm = +b.dataset.m, want = midiOf(R.cur.d, R.cur.alt), ok = mm === want;
+      tone(mm, 0, .6, .28); b.classList.add(ok ? "hit" : "miss");
+      if (!ok) { const right = document.querySelector(`[data-act="ncKey"][data-m="${want}"]`); if (right) right.classList.add("hit"); }
       R.res[R.i] = ok; if (ok) R.ok++; R.lock = true;
       setTimeout(() => { if (!A?.run) return; R.lock = false; R.i++; if (R.i >= NC_N) ncFinish(); else R.cur = ncNote(NC_LEVELS.find(x => x.id === R.lvl), R.cur); renderAct(); refreshTop(); }, ok ? 220 : 900); return;
     }
