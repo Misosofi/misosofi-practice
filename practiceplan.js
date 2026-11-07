@@ -21,10 +21,31 @@ const comebackToday = () => S.comeback?.day === TK;
 const practisedOn = d => !!ppDays()[d] || S.log.some(l => l.date === d && (+l.sec || 0) > 0);
 
 /* ---------- home card ---------- */
+/* Daizu talks on the home screen — what he says depends on the child's practice:
+   practised today → eating (a special snack when it is a run of days); practised yesterday → hopeful;
+   no practice → hungrier every day; never practised → asks for his first dinner. */
 function ppPlead() {
-  if (practisedOn(TK) || (daysOff() < 2 && !comebackToday())) return "";
-  if (!comebackToday()) { S.comeback = { day: TK }; save(); }
-  return `<div class="section"><div class="card pp-plead"><img src="${ART}daizu_paw.webp" alt=""><div class="grow"><b>${t("pl_plead")}</b><div class="small">${t("pl_pleadOffer")}</div></div></div></div>`;
+  const name = esc(S.profile?.name || PROF?.display_name || ""), today = practisedOn(TK), off = daysOff(), last = lastPractice();
+  const run = streakDays(), lines = [];
+  let pic = "paw", mood = "beg";
+  if (today) {
+    mood = "yum"; pic = "kiss";
+    if (run >= 2) { lines.push(t("dz_h_snack", { name })); lines.push(t("dz_h_run", { n: run })); } else lines.push(t("dz_h_dinner", { name }));
+    if (run >= 7 && run % 7 === 0) lines.push(t("dz_h_star", { n: run }));
+    if (S.sangOn === TK) lines.push(t("dz_h_sang"));
+  } else if (!last) { lines.push(t("dz_h_first", { name })); }
+  else if (off <= 1) {
+    mood = "hope"; pic = "guitar"; lines.push(t("dz_h_hope", { name }));
+    const r = streakDays(); if (r >= 2) lines.push(t("dz_h_hopeRun", { n: r, m: r + 1 }));
+  } else {
+    if (off === 2) lines.push(t("dz_h_2"));
+    else if (off <= 14) { mood = "flop"; lines.push(t("dz_h_n", { n: off })); }
+    else { mood = "flop"; lines.push(t("dz_h_many")); }
+    lines.push(t("dz_h_one", { name }));
+  }
+  let offer = "";
+  if (!today && last && (off >= 2 || comebackToday())) { if (!comebackToday()) { S.comeback = { day: TK }; save(); } offer = `<div class="small dz-offer">${t("pl_pleadOffer")}</div>`; }
+  return `<div class="section"><div class="card pp-plead dz-${mood}"><img src="${ART}daizu_${pic}.webp" alt="Daizu"><div class="grow"><b>${lines[0]}</b>${lines.slice(1).map(l => `<div class="small">${l}</div>`).join("")}${offer}</div></div></div>`;
 }
 function ppHome() {
   ppSyncActs();

@@ -33,7 +33,7 @@ function solfLive(o) {
   if (o.midi != null && pcOf(o.midi) === pcOf(Q.midi) && Math.abs(o.cents) < 45) MIC.hold++; else MIC.hold = Math.max(0, MIC.hold - 1);
   if (o.midi != null) MIC.heard = o.midi;
   if (MIC.hold >= 14) {   /* about half a second on the right note */
-    micStop(); A.picked = Q.ans; A.res[A.i] = true; A.sung = true; ding(true); renderAct();
+    micStop(); A.picked = Q.ans; A.res[A.i] = true; A.sung = true; S.sangOn = TK; ding(true); renderAct();
   } else if (Date.now() - MIC.t0 > 15000) { micStop(); toast(MIC.heard != null ? t("mic_heard", { n: pcName(MIC.heard) }) : t("mic_quiet")); A.tap = true; renderAct(); }
 }
 

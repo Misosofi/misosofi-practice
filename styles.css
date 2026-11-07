@@ -532,3 +532,9 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .nc-fb.ok{color:var(--good);background:color-mix(in srgb,var(--good) 12%,transparent)}
 .nc-fb.no{color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
 .linkbtn{background:none;border:0;color:var(--muted,#7a6a80);text-decoration:underline;font:inherit;font-size:.9rem;padding:8px;cursor:pointer;align-self:center}
+.pp-plead.dz-yum{background:#EFFAF1;border-color:#9AD9A6;animation:none}
+.pp-plead.dz-hope{background:#FFF8E6;border-color:#F2D27A;animation:none}
+.pp-plead.dz-hope img{filter:drop-shadow(0 0 8px #FFE27A)}
+.pp-plead.dz-flop img{transform:rotate(-78deg) translateX(-10px);filter:saturate(.6)}
+.pp-plead .dz-offer{margin-top:4px;font-weight:700}
+@media (prefers-color-scheme:dark){.pp-plead.dz-yum{background:#1F3A25;border-color:#3F7A4B}.pp-plead.dz-hope{background:#3A3220;border-color:#7A6630}}
