@@ -335,5 +335,5 @@ document.addEventListener("click", e => {
   else if (a === "keep") { const x = R.items.find(i => i.u === b.dataset.u); if (!x) return; x.in = b.dataset.box; save(); closeSheet(); toast(t("st_putIn", { food: itemOf(x.id).n, box: itemOf(R.items.find(i => i.u === x.in).id).n })); refresh(); }
   else if (a === "cats") { closeSheet(); toast(t("gf_catsOk")); }
   else if (a === "zoo") zooOpen(b.dataset.a);
-  else if (a === "throw") { zooOpen("monkey"); setTimeout(() => zooAim(true), 400); }
+  else if (a === "throw") zooOpen("sensei");
 });

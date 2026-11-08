@@ -818,3 +818,34 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .zoo-fly.throw{transition:transform .5s cubic-bezier(.2,-.6,.7,1)}
 .zoo-splat{position:absolute;transform:translate(-50%,-50%);font-size:30px;pointer-events:none;animation:scPop .3s ease-out}
 .zoo-aim-btn.on{background:#ff6b6b!important;color:#fff!important}
+
+/* the zoo park */
+.zoo-world{position:relative;width:100%;aspect-ratio:3/4;background-size:cover;background-position:center;border-radius:18px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.zw-ani{position:absolute;transform:translate(-50%,-100%);aspect-ratio:1;display:flex;align-items:flex-end;justify-content:center;cursor:pointer;transition:filter .2s}
+.zw-ani img{height:100%;width:auto;pointer-events:none;filter:drop-shadow(0 4px 4px rgba(0,0,0,.2));animation:scBob 2.4s ease-in-out infinite}
+.zw-ani.over img{filter:drop-shadow(0 0 10px #ffd84d) drop-shadow(0 0 4px #fff)}
+.zw-ani.focus img{filter:drop-shadow(0 0 12px #ff9d00)}
+.zw-ani.zmunch img{animation:zMunch .25s ease-in-out infinite}
+.zw-ani.zhappy img{animation:zHappy .5s ease-in-out 3}
+.zw-ani.nope img{animation:zNope .15s linear 4}@keyframes zNope{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.zw-hearts{position:absolute;top:-4px;left:50%;transform:translate(-50%,-100%);font-size:11px;color:#ff4f86;background:#fffd;border-radius:999px;padding:1px 6px;white-space:nowrap;font-weight:900}
+.zw-ani .zoo-say{top:-26px;z-index:5}
+.zw-sensei{height:16%;top:40%;z-index:3;animation:zRun 9s ease-in-out infinite}
+@keyframes zRun{0%{left:12%}20%{left:48%;top:36%}35%{left:56%;top:44%}55%{left:30%;top:46%}75%{left:8%;top:38%}100%{left:12%}}
+.zw-sensei img{animation:zHop .4s ease-in-out infinite alternate}
+.zw-sensei.splatted{animation-play-state:paused}.zw-sensei.splatted img{animation:scShk .15s linear 8}
+.zw-sensei.hop img{animation:zFlip .6s ease-out}
+.zoo-tray{position:sticky;bottom:0;background:#fff8ec;color:#222;border:2px solid #f0d9a8;border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:8px;z-index:4}
+.zt-row{display:flex;gap:8px;align-items:center}
+.zt-items{display:flex;gap:8px;overflow-x:auto;flex:1;min-height:56px;align-items:center}
+.zt-item{position:relative;flex:none;width:56px;height:56px;background:#fff;border-radius:12px;display:grid;place-items:center;touch-action:none;cursor:grab;box-shadow:0 2px 6px #0001}
+.zt-item img{width:46px;height:46px;object-fit:contain;pointer-events:none}
+.zt-item b{position:absolute;right:-4px;top:-4px;background:#ff6b6b;color:#fff;border-radius:999px;font-size:11px;padding:1px 6px}
+.zt-shop{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.zt-buy{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:1px solid #eee;border-radius:10px;padding:4px;font:inherit;font-size:11px;color:#222;cursor:pointer}
+.zt-buy img{width:36px;height:36px;object-fit:contain}
+.zt-ghost{position:fixed;width:60px;height:60px;object-fit:contain;transform:translate(-50%,-60%) scale(1.15);pointer-events:none;z-index:9999;filter:drop-shadow(0 6px 8px rgba(0,0,0,.3))}
+.zt-ghost.back{transition:left .3s,top .3s,opacity .3s;opacity:0}
+.zw-ani .zoo-say.say-r{left:auto;right:-6px;transform:scale(0);transform-origin:right bottom}.zw-ani .zoo-say.say-r.on{transform:scale(1)}
+.zw-ani .zoo-say.say-l{left:-6px;transform:scale(0);transform-origin:left bottom}.zw-ani .zoo-say.say-l.on{transform:scale(1)}
+.zw-sensei .zoo-say{white-space:normal;width:150px;text-align:center}
