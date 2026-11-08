@@ -804,3 +804,10 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .zoo-hearts{color:#FF5C8A;font-size:15px;letter-spacing:2px}
 .zoo-stamp{display:inline-block;background:#FFE36E;color:#5a3b00;border-radius:999px;font-size:11px;padding:2px 6px;letter-spacing:0;font-weight:900}
 .zoo-fly{position:fixed;width:44px;height:44px;object-fit:contain;z-index:9999;transition:transform .7s cubic-bezier(.3,-.5,.6,1);pointer-events:none}
+
+.gift-warn{background:#FFF1E6!important;color:#6b3300!important;border:2px solid #ffb27a!important}
+.zoo-sensei{position:absolute;bottom:4px;left:0;width:56px;height:auto;background:none;border:0;padding:0;cursor:pointer;z-index:2;animation:zSensei 6s ease-in-out infinite}
+.zoo-sensei img{width:100%;height:auto;display:block;animation:zHop .45s ease-in-out infinite alternate}
+@keyframes zSensei{0%{left:0;transform:scaleX(1)}45%{left:calc(100% - 56px);transform:scaleX(1)}50%{left:calc(100% - 56px);transform:scaleX(-1)}95%{left:0;transform:scaleX(-1)}100%{left:0;transform:scaleX(1)}}
+@keyframes zHop{to{transform:translateY(-14px) rotate(8deg)}}
+.zoo-sensei.hop img{animation:zFlip .6s ease-out}@keyframes zFlip{to{transform:translateY(-30px) rotate(360deg)}}

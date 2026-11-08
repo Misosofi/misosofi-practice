@@ -17,7 +17,7 @@ const CATS = {
 const catOf = x => CATS[x?.cat] ? x.cat : "daizu";
 const isDusk = () => { const h = new Date().getHours(); return h >= 18 || h < 7; };
 /* what Daizu wants today: a different treat for every trip */
-const WISH = ["f_banana", "f_apple", "f_candy", "f_donut", "f_icecream", "f_cake", "f_macarons"];
+const WISH = ["c_kibble", "c_kibble", "c_tuna", "c_tuna", "c_treat"];   /* cats only eat cat food */
 const wishOf = id => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return WISH[h % WISH.length]; };
 
 function demoDaizu(fn, a) {
@@ -98,7 +98,7 @@ function daizuArrive() {
 }
 function myTreats() {
   const R = roomOf(), seen = {};
-  return R.items.filter(i => itemOf(i.id)?.cat === "food" && !seen[i.id] && (seen[i.id] = 1));
+  return R.items.filter(i => CATFOOD.includes(i.id) && !seen[i.id] && (seen[i.id] = 1));
 }
 function dzRender() {
   const sc = DZ.scene; if (!sc) return;

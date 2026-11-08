@@ -3,14 +3,14 @@
    Friendship hearts are kept in S.zoo; 5 hearts = best friends (a zoo stamp). No coins here: coins come only from practising. */
 const ZOO = [
   { id: "monkey", food: "f_banana" }, { id: "elephant", food: "f_apple" }, { id: "rabbit", food: "f_cucumber" },
-  { id: "parrot", food: "f_pepper" }, { id: "bear", food: "f_cake" }, { id: "penguin", food: "f_icecream" },
+  { id: "parrot", food: "f_pepper" }, { id: "bear", food: "f_honey" }, { id: "penguin", food: "f_fish" },
 ];
 const ZBEST = 5;
 let ZOOF = null;
 function zooCard(z) {
   const R = roomOf(), have = R.items.filter(i => i.id === z.food).length, n = (S.zoo || {})[z.id] || 0, F = itemOf(z.food);
   return `<div class="zoo-card ${ZOOF === z.id ? "focus" : ""}" id="zc-${z.id}">
-   <div class="zoo-pen"><img class="zoo-ani" src="${ART}z_${z.id}.webp" alt=""><span class="zoo-say" id="zs-${z.id}"></span></div>
+   <div class="zoo-pen">${z.id === "monkey" ? `<button class="zoo-sensei" data-zoo="sensei" aria-label="${t("z_sensei")}"><img src="${ART}z_sensei.webp" alt=""></button>` : ""}<img class="zoo-ani" src="${ART}z_${z.id}.webp" alt=""><span class="zoo-say" id="zs-${z.id}"></span></div>
    <b>${t("z_" + z.id)}</b>
    <div class="small zoo-loves">${t("z_loves")} <img src="${ART}${z.food}.webp" alt=""> ${esc(F.n)}</div>
    <div class="zoo-hearts">${Array.from({ length: ZBEST }, (_, k) => k < n ? "♥" : "♡").join("")}${n >= ZBEST ? ` <span class="zoo-stamp">⭐ ${t("z_best")}</span>` : ""}</div>
@@ -51,6 +51,7 @@ function zooGive(id, btn) {
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-zoo]"); if (!b) return; const a = b.dataset.zoo, id = b.dataset.a;
   if (a === "open") zooOpen();
+  else if (a === "sensei") { const s = document.getElementById("zs-monkey"), L = t("z_senseiSay").split("|"); if (s) { s.textContent = L[Math.floor(Math.random() * L.length)]; s.classList.add("on"); clearTimeout(s._t); s._t = setTimeout(() => s.classList.remove("on"), 2500); } [79, 84, 79, 84].forEach((m, k) => { try { tone(m, k * .09, .12, .2); } catch (er) { } }); b.classList.remove("hop"); void b.offsetWidth; b.classList.add("hop"); }
   else if (a === "give") zooGive(id, b);
   else if (a === "buy") { const z = ZOO.find(x => x.id === id); if (!z) return; const before = roomOf().items.length; petBuy(z.food); if (roomOf().items.length > before) { ZOOF = id; zooOpen(id); } }
 });
