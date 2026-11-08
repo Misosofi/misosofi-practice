@@ -274,7 +274,7 @@ document.addEventListener("click", e => {
   else if (a === "fexDone") { const P = ppToday(), c = P?.cards.find(x => x.id === PPC?.id); if (!c || c.done) return; const h = PPC.fx.hand; c.hands = { ...(c.hands || {}), [h]: true };
     if (c.hands.R && c.hands.L) ppComplete(P, c); else { PPC.fx.hand = h === "R" ? "L" : "R"; save(); toast(t("fx_next")); ppCounter(c.id); } }
   else if (a === "freeDone") { const P = ppToday(), c = P?.cards.find(x => x.id === PPC?.id); if (!c) return; c.note = (document.getElementById("ppNote")?.value || "").slice(0, 300); if (c.done) { save(); toast(t("saved")); } else ppComplete(P, c); }
-  else if (a === "copy") { const y = S.pplan; S.pplan = { date: TK, cards: y.cards.map(c => ({ ...c, id: uid(), streak: 0, tries: 0, done: false })) }; save(); refresh(); }
+  else if (a === "copy") { const y = S.pplan; S.pplan = { date: TK, cards: y.cards.map(c => ({ ...c, id: uid(), streak: 0, tries: 0, done: false, hands: undefined })) }; save(); refresh(); }
   else if (a === "set") { ppReadForm(); PPE[b.dataset.f] = b.dataset.f === "reps" ? +b.dataset.v : b.dataset.v; ppEdit(); }
   else if (a === "add") {
     ppReadForm(); if (!PPE.what) { toast(t("pp_needWhat")); return; }

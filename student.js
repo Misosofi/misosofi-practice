@@ -195,6 +195,11 @@ async function studentBoot(user, prof) {
   if (OUT.length || isDirty()) scheduleFlush(300);
   window.addEventListener("online", () => scheduleFlush(100));
   window.addEventListener("offline", () => setNet(false));
+  /* a new day while the app stayed open (iPhone may skip "visibilitychange"): check often and start the day fresh */
+  const dayCheck = () => { const o = TK; setDates(); if (o !== TK && !A && !OB && document.getElementById("sheet").hidden) refresh(); };
+  ["focus", "pageshow"].forEach(ev => window.addEventListener(ev, dayCheck));
+  document.addEventListener("pointerdown", dayCheck, true);
+  setInterval(dayCheck, 30000);
   document.addEventListener("visibilitychange", async () => {
     if (document.visibilityState === "hidden") { clearTimeout(flushT); flush(); return; }
     const oldTK = TK; setDates();
