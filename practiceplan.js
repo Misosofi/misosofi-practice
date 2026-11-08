@@ -82,7 +82,7 @@ function ppHome() {
    ${goal ? `<div class="pp-time"><div class="pp-time-h"><b>⏱ ${t("pp_timeGoal", { a: mins, b: goal })}</b>${mins >= goal ? `<span class="pill g">✓</span>` : ""}</div><div class="bar"><i style="width:${Math.min(100, Math.round(mins / goal * 100))}%"></i></div></div>` : ""}
    ${hwBanner()}
    <div class="pp-list">${P.cards.map((c, i) => `<button class="pp-item ${c.done ? "done" : ""}" data-pp="go" data-id="${c.id}">
-     <span class="pp-chk">${c.done ? "✓" : i + 1}</span><span class="grow"><b>${esc(ppTitle(c))}</b><span class="muted small">${ppHow(c)}</span>${ppDots(c)}</span></button>`).join("")}</div>
+     <span class="pp-chk">${c.done ? "✓" : i + 1}</span><span class="grow"><b>${esc(ppTitle(c))}</b><span class="muted small">${ppHow(c)}</span>${c.steps?.length ? `<span class="small pp-steps-mini">🎯 ${c.steps.map((k, j) => `<b class="${j < (c.stepDone || 0) || c.done ? "on" : ""}">${stratEm(k)}</b>`).join("")}</span>` : ""}${ppDots(c)}</span></button>`).join("")}</div>
    ${all ? `<div class="pp-all">🎉 ${t("pp_allDone")}</div>` : ""}
    ${all || done ? (nx ? `<div class="card pp-next-ok"><b>📅 ${t("pp_nextReady")}</b><span class="muted small">${nx.cards.map(c => esc(ppTitle(c))).join(" · ")}</span><button class="btn ghost sm" data-pp="next">✏️ ${t("pp_nextChange")}</button></div>`
      : `<button class="btn block ${all ? "" : "soft"}" data-pp="next">📅 ${t("pp_planTomorrow")}</button>`) : ""}
@@ -148,6 +148,9 @@ function ppCounter(id) {
   openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
   <div class="muted" style="text-align:center">${ppHow(c)}</div>
   ${c.tips?.length ? `<div class="card pp-remember">💬 <b>${t("pp_remember")}</b> ${c.tips.map(k => (SAID.find(s => s[0] === k) || [0, ""])[1] + " " + esc(STR_has("wz_s_" + k) ? t("wz_s_" + k) : k)).join(" · ")}</div>` : ""}
+  ${c.steps?.length ? `<div class="card pp-steps"><b>🎯 ${t("pp_howTo")}</b>${c.steps.map((k, i) => { const d = i < (c.stepDone || 0), cur = i === (c.stepDone || 0);
+    return `<button class="pp-step ${d ? "done" : ""} ${cur ? "cur" : ""}" data-pp="step" data-i="${i}"><span class="pp-step-n">${d ? "✓" : i + 1}</span><span class="grow">${stratTxt(k)}</span>${cur ? `<span class="pill m">${t("pp_stepNow")}</span>` : ""}</button>`; }).join("")}
+    ${(c.stepDone || 0) >= c.steps.length ? `<div class="small" style="text-align:center">👍 ${t("pp_stepsAll", { n: c.reps })}</div>` : `<div class="muted small">${t("pp_stepTap")}</div>`}</div>` : ""}
   ${(c.sets || 1) > 1 ? `<div class="pp-setline">${t("pp_setOf", { a: Math.min(c.sets, (c.setsDone || 0) + (c.done ? 0 : 1)), b: c.sets })} ${Array.from({ length: c.sets }, (_, i) => i < (c.done ? c.sets : c.setsDone || 0) ? "★" : "☆").join("")}</div>` : ""}
   <div class="pp-big-dots">${Array.from({ length: c.reps }, (_, i) => `<i class="${c.done || i < c.streak ? "on" : ""}">${i + 1}</i>`).join("")}</div>
   ${c.done ? `<div class="pp-all">🎉 ${t("pp_cardDone")}</div><button class="btn block" data-act="close">OK</button>` : `
@@ -266,6 +269,7 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-pp]"); if (!b || !S) return;
   const a = b.dataset.pp;
   if (a === "edit") { PPE = null; ppEdit(); }
+  else if (a === "step") { const P = ppToday(), c = P?.cards.find(x => x.id === PPC?.id); if (!c) return; const i = +b.dataset.i; c.stepDone = i < (c.stepDone || 0) ? i : i + 1; save(); ppCounter(c.id); if (c.stepDone === c.steps.length) toast(t("pp_stepsAll", { n: c.reps })); }
   else if (a === "help") { PPW = null; ppWizard(); }
   else if (a === "next") { PPW = null; ppWizard(true); }
   else if (a === "helpGo") {
@@ -310,7 +314,12 @@ document.addEventListener("click", e => {
 const SAID = [["fingers", "🖐"], ["eyes", "👀"], ["count", "🥁"], ["slow", "🐢"], ["hands", "✋"], ["dyn", "🔊"], ["legato", "〰️"], ["round", "🟠"], ["pedal", "🦶"]];
 const EXTRAS = ["piece", "sight", "nr", "ear", "solf", "theory"];
 const PP_MINS = [10, 15, 20, 30, 45, 60];
-const ppReset = c => ({ ...c, id: uid(), streak: 0, tries: 0, setsDone: 0, done: false, fh: undefined });
+const ppReset = c => ({ ...c, id: uid(), streak: 0, tries: 0, setsDone: 0, stepDone: 0, done: false, fh: undefined });
+/* ways to practise (Atsuko's steps). The "new piece" recipe is her order for a new piece / sight-reading. */
+const STRATS = [["clap", "👏"], ["clapSing", "👏🎤"], ["rh", "✋🎤"], ["lh", "🤚🎤"], ["rhythm1", "🥁"], ["bothSing", "🙌🎤"], ["lhSingRH", "🤚🎶"], ["slow", "🐢"], ["stop", "⏸"], ["count", "🔢"]];
+const RECIPE_NEW = ["clap", "clapSing", "rh", "lh", "rhythm1", "bothSing", "lhSingRH"];
+const stratEm = k => (STRATS.find(x => x[0] === k) || [0, "🎯"])[1];
+const stratTxt = k => stratEm(k) + " " + t("st_w_" + k);
 let PPW = null;
 function ppWizard(next) {
   const W = PPW ||= hwPrefill({ step: 0, next: !!next, mins: (next ? S.ppNext?.mins : ppToday()?.mins) || (ppMode() === "young" ? 15 : 20), pieces: [], bars: {}, said: [], saidTxt: "", scales: null, scaleTxt: "", tech: null, techIds: [], extras: [], vids: [] });
@@ -337,10 +346,16 @@ function ppWizard(next) {
   if (st === "scales") body = `<h2>${t("wz_q_scales")}</h2><div class="wz-yn">${yn("scales", true)}${yn("scales", false)}</div>${W.scales ? `<input id="wzScale" maxlength="40" value="${esc(W.scaleTxt)}" placeholder="${t("wz_scalePh")}">` : ""}`;
   if (st === "tech") body = `<h2>${t("wz_q_tech")}</h2><div class="wz-yn">${yn("tech", true)}${yn("tech", false)}</div>${W.tech ? `<div class="wz-opts">${TECH.map(x => `<button class="wz-opt ${W.techIds.includes(x.id) ? "on" : ""}" data-pp="wTog" data-f="techIds" data-v="${x.id}">${x.em} ${t("tc_" + x.id)}</button>`).join("")}</div>` : ""}`;
   if (st === "extras") body = `<h2>${t("wz_q_extras")}</h2><div class="wz-opts">${EXTRAS.map(k => `<button class="wz-opt ${W.extras.includes(k) ? "on" : ""}" data-pp="wTog" data-f="extras" data-v="${k}">${t("wz_x_" + k)}</button>`).join("")}${(W.hwVids || []).map(v => `<button class="wz-opt ${W.vids.some(x => x.id === v.id) ? "on" : ""}" data-pp="wVid" data-v="${esc(v.id)}">📺 ${esc(v.title)}</button>`).join("")}</div>`;
-  if (st === "done") { const cards = W.cards ||= wzCards(); body = `<h2>📋 ${W.next ? t("wz_resultNext") : t("wz_result")}</h2>${hwMissing(W)}
+  if (st === "done" && W.stepFor != null && W.cards?.[W.stepFor]) { const c = W.cards[W.stepFor], cur = c.steps || [];
+    body = `<h2>🎯 ${t("pp_stepsQ")}</h2><div class="muted small">${esc(ppTitle(c))} — ${t("pp_stepsHow")}</div>
+    <button class="btn soft block" data-pp="wRecipe">🆕 ${t("pp_recipeNew")}</button>
+    <div class="pp-list">${STRATS.map(([k]) => { const n = cur.indexOf(k); return `<button class="pp-item ${n >= 0 ? "on" : ""}" data-pp="wStrat" data-v="${k}"><span class="pp-num">${n >= 0 ? n + 1 : ""}</span><span class="grow">${stratTxt(k)}</span></button>`; }).join("")}</div>
+    <div class="row"><button class="btn ghost" data-pp="wStratClear">${t("pp_stepsClear")}</button><button class="btn grow" data-pp="wStratOk">✓ OK</button></div>`; }
+  else if (st === "done") { const cards = W.cards ||= wzCards(); body = `<h2>📋 ${W.next ? t("wz_resultNext") : t("wz_result")}</h2>${hwMissing(W)}
     <div class="pp-time-h"><b>⏱ ${t("pp_min", { n: W.mins })}</b><button class="chip" data-pp="wGo" data-v="mins">✏️ ${t("pp_nextChange")}</button></div>
     <div class="muted small">${t("wz_resultHow2")}</div><div class="pp-list">${cards.map((c, i) => `<div class="pp-item pp-preview"><span class="pp-num">${i + 1}</span><span class="grow"><b>${esc(ppTitle(c))}</b><span class="muted small">${ppHow(c)}</span>${c.tips?.length ? `<span class="small pp-tips">${c.tips.map(k => (SAID.find(s => s[0] === k) || [0, "💬"])[1] + " " + (t("wz_s_" + k) || k)).join(" · ")}</span>` : ""}
-      ${c.kind ? "" : `<span class="chips pp-setchips"><span class="small muted">${t("pp_inRow", { n: c.reps })} ×</span>${[1, 2, 3].map(n => `<button class="chip ${(c.sets || 1) === n ? "on" : ""}" data-pp="wSets" data-i="${i}" data-v="${n}">${n}</button>`).join("")}</span>`}</span>
+      ${c.kind ? "" : `<span class="chips pp-setchips"><span class="small muted">${t("pp_inRow", { n: c.reps })} ×</span>${[1, 2, 3].map(n => `<button class="chip ${(c.sets || 1) === n ? "on" : ""}" data-pp="wSets" data-i="${i}" data-v="${n}">${n}</button>`).join("")}</span>`}
+      ${c.kind ? "" : `<span class="pp-wsteps">${c.steps?.length ? `<span class="small">🎯 ${c.steps.map((k, j) => `${j + 1}.${stratEm(k)}`).join(" ")}</span>` : ""}<button class="chip" data-pp="wSteps" data-i="${i}">🎯 ${c.steps?.length ? t("pp_stepsChange") : t("pp_stepsAdd")}</button></span>`}</span>
       <button class="x" data-pp="wDel" data-i="${i}" aria-label="Delete">×</button></div>`).join("") || `<div class="muted">${t("wz_empty")}</div>`}</div>`; }
   openSheet(`<div class="stack wz"><div class="act-head"><h2>${W.next ? "📅 " + t("pp_planTomorrow") : "📝 " + t("pp_makePlan")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
   <div class="qprog">${steps.map((_, i) => `<span class="${i < W.step ? "ok" : i === W.step ? "cur" : ""}"></span>`).join("")}</div>
@@ -385,6 +400,11 @@ document.addEventListener("click", e => {
   else if (a === "wMins") { W.mins = +b.dataset.v; if (W.cards) W.step = wzSteps().indexOf("done"); else W.step++; ppWizard(); }
   else if (a === "wSame") { const L = W.next ? ppToday() : S.pplan; if (!L) return; W.cards = L.cards.map(ppReset); W.mins ||= L.mins || 20; W.step = wzSteps().indexOf("done"); ppWizard(); }
   else if (a === "wGo") { W.step = wzSteps().indexOf(b.dataset.v); ppWizard(); }
+  else if (a === "wSteps") { W.stepFor = +b.dataset.i; ppWizard(); }
+  else if (a === "wStrat") { const c = W.cards?.[W.stepFor]; if (!c) return; const k = b.dataset.v; c.steps = (c.steps || []).includes(k) ? c.steps.filter(x => x !== k) : (c.steps || []).concat(k); ppWizard(); }
+  else if (a === "wRecipe") { const c = W.cards?.[W.stepFor]; if (c) c.steps = RECIPE_NEW.slice(); ppWizard(); }
+  else if (a === "wStratClear") { const c = W.cards?.[W.stepFor]; if (c) c.steps = []; ppWizard(); }
+  else if (a === "wStratOk") { W.stepFor = null; ppWizard(); }
   else if (a === "wSets") { const c = W.cards?.[+b.dataset.i]; if (c) c.sets = +b.dataset.v; ppWizard(); }
   else if (a === "wDel") { W.cards?.splice(+b.dataset.i, 1); ppWizard(); }
   else if (a === "wBack") { wzRead(); if (wzSteps()[W.step] === "done") W.cards = null; W.step = Math.max(0, W.step - 1); if (wzSteps()[W.step] === "bars" && !W.pieces.length) W.step--; ppWizard(); }

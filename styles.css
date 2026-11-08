@@ -647,3 +647,14 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .pp-setchips{display:flex;align-items:center;gap:6px;margin-top:6px}.pp-setchips .chip{min-width:40px;padding:4px 10px}
 .wz-mins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pp-time-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+
+/* practice steps (how to practise) */
+.pp-steps{display:flex;flex-direction:column;gap:6px;background:#FFF8E6!important;color:#2a2200!important}
+.pp-step{display:flex;align-items:center;gap:10px;text-align:left;border:2px solid transparent;background:#fff;color:#222;border-radius:12px;padding:8px 10px;font:inherit;cursor:pointer}
+.pp-step.cur{border-color:#E0A100;font-weight:800}
+.pp-step.done{opacity:.6}.pp-step.done .grow{text-decoration:line-through}
+.pp-step-n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#f1e6c8;font-weight:800;flex:none}
+.pp-step.done .pp-step-n{background:var(--good);color:#fff}
+.pp-steps-mini{display:flex;gap:4px;margin-top:4px}.pp-steps-mini b{opacity:.35;font-weight:400}.pp-steps-mini b.on{opacity:1}
+.pp-wsteps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.pp-item.on{border-color:var(--accent);background:var(--accent-soft,#efeaff)}
