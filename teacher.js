@@ -174,6 +174,7 @@ function TrenderDetail() {
   ${P?.tasks?.length ? `<div class="list">${P.tasks.map((x, i) => `<div class="row">${areaIc(x.area)}<div class="grow"><div class="title">${esc(x.title)}</div><div class="muted small">${t("a_" + x.area)}${x.piece ? ` · <strong>${esc(x.piece)}</strong>${x.newPiece ? ` <span class="pill y">${t("newPiece")}</span>` : ""}` : ""}${x.tempo ? ` · ♩=${+x.tempo}` : ""}</div></div><button class="x" data-act="tPlanDrop" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}</div>${P.ear?.length ? `<div class="muted small">${t("earLabel")}: ${P.ear.map(i => CHROM[i]).join(" ")}</div>` : ""}<button class="btn block" data-act="tPlanAdd" ${TS.busy ? "disabled" : ""}>${t("planAddAll")} · ${esc(t("t_week", { d: fmt(wk) }))}</button>` : ""}
  </div>
  ${typeof TWeekCard === "function" ? TWeekCard(st, D) : ""}
+ ${typeof TVreqCard === "function" ? TVreqCard(st, D) : ""}
  ${THwCard(st, D)}
  ${typeof TcatSendCard === "function" ? TcatSendCard(sid) : ""}
 

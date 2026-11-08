@@ -658,3 +658,15 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .pp-steps-mini{display:flex;gap:4px;margin-top:4px}.pp-steps-mini b{opacity:.35;font-weight:400}.pp-steps-mini b.on{opacity:1}
 .pp-wsteps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
 .pp-item.on{border-color:var(--accent);background:var(--accent-soft,#efeaff)}
+
+/* video requests */
+.vr-card{background:#EEF4FF!important;color:#14213d!important;border:2px solid #7aa2ff!important}
+.vr-req{display:flex;flex-direction:column;gap:6px}
+.vr-piece{font-weight:800}
+.vr-ans{background:#fff;color:#222;border-radius:12px;padding:10px}
+.vr-video{width:100%;aspect-ratio:4/3;background:#000;border-radius:14px;object-fit:cover}
+.vr-what{background:#FFF8E6!important;color:#2a2200!important}
+.vr-clock{text-align:center;font-weight:900;color:#d0233a;font-size:1.3rem}
+.vr-rec,.vr-stop{background:#d0233a!important;color:#fff!important}
+.vr-tcard video{width:100%;border-radius:10px;background:#000}
+.vr-tcard select{height:48px;min-height:0;padding-block:0}

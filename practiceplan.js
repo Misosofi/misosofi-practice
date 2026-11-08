@@ -128,7 +128,7 @@ function ppReadForm() { const v = id => (document.getElementById(id)?.value || "
 function ppCounter(id) {
   const P = ppToday(), c = P?.cards.find(x => x.id === id); if (!c) return;
   if (c.kind === "act") { if (!c.done) openAct(c.act); return; }
-  PPC = { id, t0: PPC?.id === id ? PPC.t0 : Date.now(), tm: PPC?.id === id ? PPC.tm : null, h0: PPC?.id === id ? PPC.h0 : SM.heardMs, fx: PPC?.id === id ? PPC.fx : null };
+  PPC = { id, t0: PPC?.id === id ? PPC.t0 : Date.now(), tm: PPC?.id === id ? PPC.tm : null, h0: PPC?.id === id ? PPC.h0 : SM.heardMs, fx: PPC?.id === id ? PPC.fx : null, lastTap: PPC?.id === id ? PPC.lastTap : undefined };
   if (c.kind !== "vid" && !c.done && !SM.on) smStart().then(ok => { if (ok && PPC?.id === id) PPC.h0 = SM.heardMs; });
   if (c.kind === "vid") {
     openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
@@ -166,6 +166,8 @@ function ppSound(ok, n) {
 }
 function ppHit(ok) {
   const P = ppToday(), c = P?.cards.find(x => x.id === PPC?.id); if (!c || c.done) return;
+  /* with the microphone on, a tap only counts if you really played since the last tap */
+  if (SM.on) { const base = PPC.lastTap ?? PPC.h0 ?? 0; if (SM.heardMs - base < 1200) { toast(t("pp_playFirst")); return; } PPC.lastTap = SM.heardMs; }
   c.tries = (c.tries || 0) + 1; histAdd("tries"); if (ok) histAdd("rights");
   if (ok) c.streak++; else c.streak = 0; ppSound(ok, c.streak);
   if (ppMode() === "young" && ok) { const b = document.querySelector(".pp-tap"); if (b) { b.classList.remove("spark"); void b.offsetWidth; b.classList.add("spark"); } }
@@ -316,7 +318,7 @@ const EXTRAS = ["piece", "sight", "nr", "ear", "solf", "theory"];
 const PP_MINS = [10, 15, 20, 30, 45, 60];
 const ppReset = c => ({ ...c, id: uid(), streak: 0, tries: 0, setsDone: 0, stepDone: 0, done: false, fh: undefined });
 /* ways to practise (Atsuko's steps). The "new piece" recipe is her order for a new piece / sight-reading. */
-const STRATS = [["clap", "👏"], ["clapSing", "👏🎤"], ["rh", "✋🎤"], ["lh", "🤚🎤"], ["rhythm1", "🥁"], ["bothSing", "🙌🎤"], ["lhSingRH", "🤚🎶"], ["slow", "🐢"], ["stop", "⏸"], ["count", "🔢"]];
+const STRATS = [["clap", "👏"], ["clapSing", "👏🎤"], ["rh", "✋🎤"], ["lh", "🤚🎤"], ["rhythm1", "🥁"], ["bothSing", "🙌🎤"], ["lhSingRH", "🤚🎶"], ["part", "🧩"], ["notStart", "⏭"], ["slow", "🐢"], ["stop", "⏸"], ["count", "🔢"]];
 const RECIPE_NEW = ["clap", "clapSing", "rh", "lh", "rhythm1", "bothSing", "lhSingRH"];
 const stratEm = k => (STRATS.find(x => x[0] === k) || [0, "🎯"])[1];
 const stratTxt = k => stratEm(k) + " " + t("st_w_" + k);
