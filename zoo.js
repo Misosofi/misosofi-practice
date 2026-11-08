@@ -64,9 +64,14 @@ function zEnd(e) {
     if (!SWEETS.includes(d.id)) { zSay("sensei", t("z_senseiNo")); return; }
     const it = R.items.find(i => i.id === d.id); if (!it) return;
     R.items = R.items.filter(i => i !== it); S.zooHits = (S.zooHits || 0) + 1; save();
+    /* a big close-up of Sensei with cream on her face, in the middle of the zoo, for a few seconds */
     const img = target.querySelector("img"); img.src = ART + "z_sensei_splat.webp"; target.classList.add("splatted");
-    [48, 43, 36].forEach((m, k) => { try { tone(m, k * .06, .25, .35); } catch (er) { } }); zSay("sensei", zPick("z_hitSay"), 2600);
-    setTimeout(() => { img.src = ART + "z_sensei.webp"; target.classList.remove("splatted"); }, 2600); zTray(); return;
+    [48, 43, 36].forEach((m, k) => { try { tone(m, k * .06, .25, .35); } catch (er) { } });
+    const W = document.getElementById("zooWorld"), cu = document.createElement("div"); cu.className = "zw-closeup";
+    cu.innerHTML = `<div class="zw-splat-word">SPLAT! 💥</div><img src="${ART}z_sensei_splat.webp" alt=""><div class="zw-drops"><i></i><i></i><i></i><i></i><i></i></div><div class="zw-cu-say">${esc(zPick("z_hitSay"))}</div>`;
+    W?.appendChild(cu); setTimeout(() => { try { tone(72, 0, .15, .2); tone(67, .15, .15, .2); tone(64, .3, .3, .2); } catch (er) { } }, 900);
+    setTimeout(() => cu.classList.add("bye"), 4200);
+    setTimeout(() => { cu.remove(); img.src = ART + "z_sensei.webp"; target.classList.remove("splatted"); zSay("sensei", t("z_again"), 2200); }, 4700); zTray(); return;
   }
   const z = ZOO.find(a => a.id === who); if (!z) return;
   const nope = msg => { zSay(who, msg, 2600); target.classList.add("nope"); setTimeout(() => target.classList.remove("nope"), 600); try { tone(55, 0, .2, .2); tone(52, .15, .25, .2); } catch (er) { } };

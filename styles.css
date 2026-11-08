@@ -849,3 +849,16 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .zw-ani .zoo-say.say-r{left:auto;right:-6px;transform:scale(0);transform-origin:right bottom}.zw-ani .zoo-say.say-r.on{transform:scale(1)}
 .zw-ani .zoo-say.say-l{left:-6px;transform:scale(0);transform-origin:left bottom}.zw-ani .zoo-say.say-l.on{transform:scale(1)}
 .zw-sensei .zoo-say{white-space:normal;width:150px;text-align:center}
+
+.zw-closeup{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,.55);animation:cuIn .35s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes cuIn{from{transform:scale(.2);opacity:0}}
+.zw-closeup.bye{transition:transform .45s,opacity .45s;transform:scale(.2);opacity:0}
+.zw-closeup img{height:58%;width:auto;filter:drop-shadow(0 8px 12px rgba(0,0,0,.3));animation:cuWobble .5s ease-in-out 1s 4}
+@keyframes cuWobble{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+.zw-splat-word{font-size:2.4rem;font-weight:900;color:#fff;-webkit-text-stroke:2px #e0397a;text-shadow:0 4px 0 #e0397a;animation:cuWord .5s cubic-bezier(.2,1.8,.4,1) both;transform:rotate(-8deg)}
+@keyframes cuWord{from{transform:scale(3) rotate(-8deg);opacity:0}}
+.zw-cu-say{background:#fff;color:#222;border-radius:14px;padding:8px 12px;font-weight:900;max-width:85%;text-align:center;box-shadow:0 3px 10px #0002;margin-top:6px;animation:scPop .3s ease-out .5s both}
+.zw-drops{position:absolute;left:30%;right:30%;top:30%;height:40%;pointer-events:none}
+.zw-drops i{position:absolute;width:14px;height:18px;background:#fff;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;box-shadow:0 0 0 2px #f2e6d8;animation:drop 1.4s ease-in .6s infinite}
+.zw-drops i:nth-child(1){left:10%}.zw-drops i:nth-child(2){left:30%;animation-delay:.9s}.zw-drops i:nth-child(3){left:50%;animation-delay:1.2s}.zw-drops i:nth-child(4){left:70%;animation-delay:.75s}.zw-drops i:nth-child(5){left:88%;animation-delay:1.05s}
+@keyframes drop{from{top:20%;opacity:1}to{top:100%;opacity:0}}
