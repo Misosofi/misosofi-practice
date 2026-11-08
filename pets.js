@@ -43,6 +43,7 @@ const ITEMS = [
   { id: "j_jewelbox", cat: "bag", n: "Jewellery box", p: 80, w: 13 }, { id: "j_crown", cat: "bag", n: "Crown", p: 120, w: 11 },
   { id: "r_bike", cat: "ride", n: "Bicycle", p: 80, w: 30 }, { id: "r_train", cat: "ride", n: "Toy train", p: 90, w: 30 }, { id: "r_car", cat: "ride", n: "Red car", p: 150, w: 28 },
   { id: "h_gift", cat: "home", n: "Present", p: 20, w: 12, multi: 1 }, { id: "h_plant", cat: "home", n: "Plant", p: 25, w: 13, multi: 1 },
+  { id: "h_table", cat: "home", n: "Table", p: 30, w: 24 }, { id: "h_fridge", cat: "home", n: "Fridge", p: 45, w: 16 }, { id: "h_basket", cat: "home", n: "Fruit basket", p: 20, w: 14 },
   { id: "h_shelf", cat: "home", n: "Bookshelf", p: 50, w: 17 }, { id: "h_sofa", cat: "home", n: "Sofa", p: 70, w: 32 }, { id: "h_bed", cat: "home", n: "Bed", p: 80, w: 34 },
   { id: "room_pink", cat: "room", n: "Pink room", p: 0 }, { id: "room_yellow", cat: "room", n: "Sunny room", p: 40 },
   { id: "room_mint", cat: "room", n: "Night room", p: 50 }, { id: "room_music", cat: "room", n: "Music room", p: 60 },
@@ -102,9 +103,10 @@ function roomHTML(edit) {
     if (o.k === "me" && sp) return `<div class="ri me sleep ${sp.where !== "floor" ? "inbed" : ""}" data-ri="me" style="left:${sp.x}%;top:${sp.y}%;width:${sp.w}%;z-index:${Math.round(meY)}">${avatarSVG(S.avatar, { room: true })}${sp.where !== "floor" ? `<span class="quilt ${sp.where}"></span><span class="nightcap">🌙</span>` : ""}<span class="zzz">z<b>z</b><i>Z</i></span></div>`;
     if (o.k === "me") return `<div class="ri me ${ROOM.sel === "me" ? "sel" : ""}" data-ri="me" style="left:${R.me.x}%;top:${R.me.y}%;width:22%;z-index:${Math.round(R.me.y)}">${S.thief?.boxed ? `<span class="pet-full"><img src="${ART}boxed.webp" alt="" draggable="false"></span>` : avatarSVG(S.avatar, { room: true })}<span class="hearts" id="hearts"></span><span class="notes" id="notes"></span></div>`;
     if (o.k === "inst") return `<div class="ri ${ROOM.sel === "inst" ? "sel" : ""}" data-ri="inst" style="left:${R.inst.x}%;top:${R.inst.y}%;width:${ins.w}%;z-index:${Math.round(R.inst.y)}">${itemImg(ins.id)}</div>`;
-    const it = itemOf(o.i.id);
+    if (o.i.in) return "";   /* inside the fridge or the basket */
+    const it = itemOf(o.i.id), inside = STORES[o.i.id] ? R.items.filter(x => x.in === o.i.u) : null;
     const alive = night && it.cat === "toy" && o.i.id !== "r_guitar";
-    return `<div class="ri ${ROOM.sel === o.i.u ? "sel" : ""} ${o.i.flip ? "flip" : ""} ${it.cat === "food" && !edit && !night ? "food" : ""} ${alive ? "alive" : ""}" data-ri="${o.i.u}" style="left:${o.i.x}%;top:${o.i.y}%;width:${it.w}%;z-index:${Math.round(o.i.y)}${alive ? `;--d:${(toyN++ * 0.37) % 1.5}s;--k:${toyN % 3}` : ""}">${itemImg(o.i.id)}${sp?.u === o.i.u ? `<div class="sleeper ${o.i.id}">${avatarSVG(S.avatar, { room: true })}<span class="zzz">z<b>z</b><i>Z</i></span></div><img class="quilt-ov" src="${ART}${o.i.id}_quilt.webp" alt="" draggable="false">` : ""}</div>`;
+    return `<div class="ri ${ROOM.sel === o.i.u ? "sel" : ""} ${o.i.flip ? "flip" : ""} ${it.cat === "food" && !edit && !night ? "food" : ""} ${STORES[o.i.id] && !edit ? "store" : ""} ${alive ? "alive" : ""}" data-ri="${o.i.u}" style="left:${o.i.x}%;top:${o.i.y}%;width:${it.w}%;z-index:${Math.round(o.i.y)}${alive ? `;--d:${(toyN++ * 0.37) % 1.5}s;--k:${toyN % 3}` : ""}">${itemImg(o.i.id)}${inside ? storeLook(o.i.id, inside) : ""}${sp?.u === o.i.u ? `<div class="sleeper ${o.i.id}">${avatarSVG(S.avatar, { room: true })}<span class="zzz">z<b>z</b><i>Z</i></span></div><img class="quilt-ov" src="${ART}${o.i.id}_quilt.webp" alt="" draggable="false">` : ""}</div>`;
   };
   const sel = ROOM.sel && ROOM.sel.length > 6 ? R.items.find(i => i.u === ROOM.sel) : null;
   const TH = S.thief || {};
@@ -124,6 +126,7 @@ function roomCard() {
   <div class="muted small">${hint}</div>
   <div class="chips room-acts">${night ? "" : `<button class="btn sm soft" data-act="rmSing">🎤 ${t("rm_sing")} <span class="price">${I.coin}${SING_COST}</span></button><button class="btn sm soft ${hasG ? "" : "dim"}" data-act="rmGuitar">🎸 ${t("rm_guitar")} <span class="price">${I.coin}${GUITAR_COST}</span></button>`}
    <button class="btn sm ghost" data-act="rmLights">${night ? "💡 " + t("rm_lightsOn") : "🌙 " + t("rm_lightsOff")}</button></div>
+  <button class="btn block zoo-btn" data-zoo="open">🦁 ${t("z_go")}</button>
   <div class="chips"><button class="btn" data-act="rmEdit">${t("rm_decorate")}</button><button class="btn soft" data-act="avatar">${t("editAvatar")}</button></div>${instrLine()}</div>`;
 }
 function roomTray() {
@@ -230,8 +233,9 @@ document.addEventListener("pointermove", e => {
 });
 const rdEnd = () => {
   const d = RDRAG; RDRAG = null; if (!d) return;
-  if (!d.moved) { if (d.n.classList.contains("food")) feed(d.id); return; }
+  if (!d.moved) { if (d.n.classList.contains("food")) giftSheet(d.id); else if (d.n.classList.contains("store")) storeSheet(d.id); return; }
   const R = roomOf(), tgt = d.id === "me" ? R.me : d.id === "inst" ? R.inst : R.items.find(i => i.u === d.id);
+  if (tgt && tgt.id && itemOf(tgt.id)?.cat === "food" && dropInStore(d, tgt)) return;
   if (tgt) { tgt.x = Math.round(d.x * 10) / 10; tgt.y = Math.round(d.y * 10) / 10; if (tgt.placed === false) tgt.placed = true; save(); }
 };
 document.addEventListener("pointerup", rdEnd); document.addEventListener("pointercancel", rdEnd);
@@ -276,3 +280,51 @@ function petSet(f, v) {
   else if (f === "shape" && SHAPES[v]) S.avatar.shape = v;
   else if (f === "bg") S.avatar.bg = +v;
 }
+
+/* ---------- keeping treats: the fridge keeps every treat, the basket keeps fruit and vegetables ---------- */
+const STORES = { h_fridge: { all: true }, h_basket: { only: ["f_banana", "f_apple", "f_pepper", "f_cucumber"] } };
+const storeOK = (sid, fid) => STORES[sid] && (STORES[sid].all || STORES[sid].only.includes(fid));
+function storeLook(sid, inside) {
+  if (!inside.length) return "";
+  if (sid === "h_basket") return `<span class="basket-in">${inside.slice(0, 4).map((x, k) => `<img src="${ART}${x.id}.webp" alt="" style="--k:${k}">`).join("")}</span>`;
+  return `<span class="store-badge">${inside.length}</span>`;
+}
+/* dropping a treat on the fridge or the basket puts it inside */
+function dropInStore(d, tgt) {
+  const R = roomOf(), boxes = [...d.room.querySelectorAll(".ri.store")];
+  const hit = boxes.find(b => { const r = b.getBoundingClientRect(), x = d.r.left + d.x / 100 * d.r.width, y = d.r.top + d.y / 100 * d.r.height; return x > r.left && x < r.right && y > r.top - 10 && y < r.bottom; });
+  if (!hit) return false;
+  const box = R.items.find(i => i.u === hit.dataset.ri); if (!box) return false;
+  if (!storeOK(box.id, tgt.id)) { toast(t("st_notHere", { food: itemOf(tgt.id).n, box: itemOf(box.id).n })); refresh(); return true; }
+  tgt.in = box.u; save(); try { tone(box.id === "h_fridge" ? 72 : 79, 0, .25, .2); } catch (e) { } toast(t("st_putIn", { food: itemOf(tgt.id).n, box: itemOf(box.id).n })); refresh(); return true;
+}
+function storeSheet(u) {
+  const R = roomOf(), box = R.items.find(i => i.u === u); if (!box) return;
+  const inside = R.items.filter(x => x.in === u), B = itemOf(box.id);
+  openSheet(`<div class="stack"><div class="act-head"><h2>${box.id === "h_fridge" ? "🧊" : "🧺"} ${esc(B.n)}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
+   <div class="store-open"><img src="${ART}${box.id}.webp" alt=""></div>
+   ${inside.length ? `<div class="list">${inside.map(x => `<div class="row"><img src="${ART}${x.id}.webp" alt="" style="width:44px;height:44px;object-fit:contain"><div class="grow"><b>${esc(itemOf(x.id).n)}</b></div>
+     <button class="btn sm" data-gift="open" data-u="${x.u}">🎁 ${t("gf_give")}</button><button class="btn sm ghost" data-gift="out" data-u="${x.u}">${t("st_takeOut")}</button></div>`).join("")}</div>`
+     : `<div class="muted">${t("st_empty", { box: esc(B.n) })}</div>`}
+   <div class="muted small">${t("st_how")}</div></div>`);
+}
+/* ---------- who gets the treat? ---------- */
+function giftSheet(u) {
+  const R = roomOf(), it = R.items.find(i => i.u === u); if (!it) return; const F = itemOf(it.id);
+  const fans = ZOO.filter(z => z.food === it.id), stores = R.items.filter(i => i.placed && STORES[i.id] && storeOK(i.id, it.id) && it.in !== i.u);
+  openSheet(`<div class="stack"><div class="act-head"><h2>🎁 ${t("gf_who", { food: esc(F.n) })}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
+   <div class="gift-food"><img src="${ART}${it.id}.webp" alt=""></div>
+   ${fans.length ? fans.map(z => `<button class="card gift-opt" data-gift="zoo" data-a="${z.id}"><img src="${ART}z_${z.id}.webp" alt=""><span class="grow"><b>🦁 ${t("gf_zoo", { animal: t("z_" + z.id) })}</b><span class="muted small">${t("gf_zooWhy", { animal: t("z_" + z.id), food: esc(F.n) })}</span></span></button>`).join("")
+     : `<div class="card gift-opt dim"><span class="grow"><b>🦁 ${t("gf_zooNo")}</b><span class="muted small">${t("gf_zooNoWhy")}</span></span></div>`}
+   <button class="card gift-opt" data-gift="cats"><img src="${ART}daizu_paw.webp" alt=""><span class="grow"><b>🐾 ${t("gf_cats")}</b><span class="muted small">${t("gf_catsWhy")}</span></span></button>
+   ${stores.map(s => `<button class="card gift-opt" data-gift="keep" data-u="${u}" data-box="${s.u}"><img src="${ART}${s.id}.webp" alt=""><span class="grow"><b>${s.id === "h_fridge" ? "🧊" : "🧺"} ${t("gf_keep", { box: esc(itemOf(s.id).n) })}</b></span></button>`).join("")}
+  </div>`);
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-gift]"); if (!b) return; const a = b.dataset.gift, R = roomOf();
+  if (a === "open") giftSheet(b.dataset.u);
+  else if (a === "out") { const x = R.items.find(i => i.u === b.dataset.u), box = R.items.find(i => i.u === x?.in); if (!x) return; x.in = null; x.placed = true; x.x = Math.min(95, (box?.x || 50) + 8); x.y = Math.min(99, (box?.y || 85) + 2); save(); closeSheet(); refresh(); }
+  else if (a === "keep") { const x = R.items.find(i => i.u === b.dataset.u); if (!x) return; x.in = b.dataset.box; save(); closeSheet(); toast(t("st_putIn", { food: itemOf(x.id).n, box: itemOf(R.items.find(i => i.u === x.in).id).n })); refresh(); }
+  else if (a === "cats") { closeSheet(); toast(t("gf_catsOk")); }
+  else if (a === "zoo") zooOpen(b.dataset.a);
+});

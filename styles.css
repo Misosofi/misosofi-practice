@@ -779,3 +779,28 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .an-wobble{animation:scWobble .9s ease-in-out infinite}@keyframes scWobble{25%{transform:translateX(-40%) rotate(-8deg)}75%{transform:translateX(-60%) rotate(8deg)}}
 .an-rollaway{animation:scRoll 2s ease-in both}@keyframes scRoll{to{left:150%;transform:translateX(-50%) rotate(720deg) scale(.6)}}
 .an-waltz{animation:scWaltz 2.4s ease-in-out infinite}@keyframes scWaltz{33%{transform:translate(-40%,-6%) rotate(8deg)}66%{transform:translate(-60%,0) rotate(-8deg)}}
+
+/* gifts, fridge, basket, zoo */
+.gift-food{text-align:center}.gift-food img{width:90px;height:90px;object-fit:contain;animation:scBob 1.6s ease-in-out infinite}
+.gift-opt{display:flex;align-items:center;gap:12px;text-align:left;width:100%;font:inherit;cursor:pointer}
+.gift-opt img{width:56px;height:56px;object-fit:contain;flex:none}.gift-opt .grow{display:flex;flex-direction:column;gap:2px}
+.gift-opt.dim{opacity:.6;cursor:default}
+.store-badge{position:absolute;right:4%;top:6%;background:#2f80ed;color:#fff;border-radius:999px;font-size:11px;font-weight:900;line-height:1;padding:4px 7px}
+.basket-in{position:absolute;left:12%;right:12%;top:38%;height:30%;display:block}
+.basket-in img{position:absolute;width:42%;height:auto;left:calc(var(--k) * 18%);top:calc(var(--k) * -6%)}
+.store-open{text-align:center}.store-open img{width:120px;height:auto}
+.zoo-btn{margin-top:4px}
+.zoo-sign{background:#E9F7E4;color:#24502a;border-radius:14px;padding:10px 12px;font-weight:700}
+.zoo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.zoo-card{background:#fff;color:#222;border:2px solid #e6e0d0;border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:4px;text-align:center}
+.zoo-card.focus{border-color:#E0A100;box-shadow:0 0 0 3px #ffe59a}
+.zoo-pen{position:relative;background:linear-gradient(#cfeeff,#e8f8d8 65%,#b9e19a);border-radius:12px;height:120px;display:grid;place-items:end center;overflow:visible}
+.zoo-ani{height:100px;width:auto;margin-bottom:6px;transition:transform .3s}
+.zoo-ani.zmunch{animation:zMunch .25s ease-in-out infinite}@keyframes zMunch{50%{transform:scale(1.06,.92)}}
+.zoo-ani.zhappy{animation:zHappy .5s ease-in-out 3}@keyframes zHappy{50%{transform:translateY(-14px)}}
+.zoo-say{position:absolute;top:-8px;left:50%;transform:translateX(-50%) scale(0);background:#fff;color:#222;border-radius:12px;padding:3px 8px;font-weight:900;font-size:12px;white-space:nowrap;box-shadow:0 2px 6px #0002;transition:transform .2s}
+.zoo-say.on{transform:translateX(-50%) scale(1)}
+.zoo-loves{display:flex;align-items:center;justify-content:center;gap:4px}.zoo-loves img{width:22px;height:22px;object-fit:contain}
+.zoo-hearts{color:#FF5C8A;font-size:15px;letter-spacing:2px}
+.zoo-stamp{display:inline-block;background:#FFE36E;color:#5a3b00;border-radius:999px;font-size:11px;padding:2px 6px;letter-spacing:0;font-weight:900}
+.zoo-fly{position:fixed;width:44px;height:44px;object-fit:contain;z-index:9999;transition:transform .7s cubic-bezier(.3,-.5,.6,1);pointer-events:none}
