@@ -78,7 +78,7 @@ function ppHome() {
    <button class="btn ghost sm" data-pp="edit">✏️ ${t("pp_edit")}</button></div></div>`;
 }
 const ppTitle = c => c.kind === "vid" ? "📺 " + c.what : c.kind === "act" ? t("wz_x_" + c.act) : c.kind === "tech" ? techOf(c.tech).em + " " + t("tc_" + c.tech) : c.what + (c.from ? ` · ${t("pp_bars")} ${c.from}${c.to && c.to !== c.from ? "–" + c.to : ""}` : "");
-const ppHow = c => c.kind === "vid" ? t("hw_watchCard") : c.kind === "act" ? t("pp_inApp") : c.kind === "tech" ? t("pp_30s") : c.kind === "free" ? t("pp_ownStep") : [t("pp_h_" + c.hands), t("pp_s_" + c.speed), t("pp_inRow", { n: c.reps })].join(" · ");
+const ppHow = c => c.kind === "vid" ? t("hw_watchCard") : c.kind === "act" ? t("pp_inApp") : c.kind === "tech" ? (techOf(c.tech).vid ? t("fx_card") : t("pp_30s")) : c.kind === "free" ? t("pp_ownStep") : [t("pp_h_" + c.hands), t("pp_s_" + c.speed), t("pp_inRow", { n: c.reps })].join(" · ");
 const ppDots = c => c.kind ? "" : `<span class="pp-dots">${Array.from({ length: c.reps }, (_, i) => `<i class="${c.done || i < c.streak ? "on" : ""}"></i>`).join("")}</span>`;
 /* "help me plan" for younger children: their piece, the hard bars, hands separately, then together, and today's technique */
 function ppHelp() {
@@ -116,7 +116,7 @@ function ppReadForm() { const v = id => (document.getElementById(id)?.value || "
 function ppCounter(id) {
   const P = ppToday(), c = P?.cards.find(x => x.id === id); if (!c) return;
   if (c.kind === "act") { if (!c.done) openAct(c.act); return; }
-  PPC = { id, t0: PPC?.id === id ? PPC.t0 : Date.now(), tm: PPC?.id === id ? PPC.tm : null, h0: PPC?.id === id ? PPC.h0 : SM.heardMs };
+  PPC = { id, t0: PPC?.id === id ? PPC.t0 : Date.now(), tm: PPC?.id === id ? PPC.tm : null, h0: PPC?.id === id ? PPC.h0 : SM.heardMs, fx: PPC?.id === id ? PPC.fx : null };
   if (c.kind !== "vid" && !c.done && !SM.on) smStart().then(ok => { if (ok && PPC?.id === id) PPC.h0 = SM.heardMs; });
   if (c.kind === "vid") {
     openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
@@ -124,6 +124,7 @@ function ppCounter(id) {
     ${c.done ? `<div class="pp-all">✓ ${t("pp_cardDone")}</div><button class="btn block" data-act="close">OK</button>` : `<button class="btn block" data-pp="freeDone">✓ ${t("hw_watched")}</button>`}</div>`);
     return;
   }
+  if (c.kind === "tech" && techOf(c.tech).vid) { openSheet(fexSheet(c)); fexWire(); return; }
   if (c.kind === "tech" || c.kind === "free") {
     openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
     ${c.kind === "tech" ? `<div class="tech-pic">${techPic(c.tech)}</div><div class="card tech-how">${t("tc_" + c.tech + "_how")}</div>
@@ -267,6 +268,11 @@ document.addEventListener("click", e => {
       if (left <= 0) { clearInterval(tick); const P = ppToday(), c = P?.cards.find(x => x.id === id); if (c && !c.done) ppComplete(P, c); } }, 250);
     ppCounter(id);
   }
+  else if (a === "fexHand" || a === "fexSet") { if (!PPC?.fx) return; if (a === "fexHand") PPC.fx.hand = b.dataset.v; else PPC.fx[b.dataset.f] = b.dataset.v;
+    if (a === "fexSet" && b.dataset.f === "rate") { const v = document.getElementById("fexV"); if (v) { v.playbackRate = v.defaultPlaybackRate = FEX_RATES[b.dataset.v]; document.querySelectorAll('[data-f="rate"]').forEach(x => x.classList.toggle("on", x === b)); return; } }
+    ppCounter(PPC.id); }
+  else if (a === "fexDone") { const P = ppToday(), c = P?.cards.find(x => x.id === PPC?.id); if (!c || c.done) return; const h = PPC.fx.hand; c.hands = { ...(c.hands || {}), [h]: true };
+    if (c.hands.R && c.hands.L) ppComplete(P, c); else { PPC.fx.hand = h === "R" ? "L" : "R"; save(); toast(t("fx_next")); ppCounter(c.id); } }
   else if (a === "freeDone") { const P = ppToday(), c = P?.cards.find(x => x.id === PPC?.id); if (!c) return; c.note = (document.getElementById("ppNote")?.value || "").slice(0, 300); if (c.done) { save(); toast(t("saved")); } else ppComplete(P, c); }
   else if (a === "copy") { const y = S.pplan; S.pplan = { date: TK, cards: y.cards.map(c => ({ ...c, id: uid(), streak: 0, tries: 0, done: false })) }; save(); refresh(); }
   else if (a === "set") { ppReadForm(); PPE[b.dataset.f] = b.dataset.f === "reps" ? +b.dataset.v : b.dataset.v; ppEdit(); }

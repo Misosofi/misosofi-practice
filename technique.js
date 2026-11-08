@@ -5,10 +5,12 @@ const TECH = [
   { id: "line", em: "🚪", pic: "line" },
   { id: "ball", em: "🤲", pic: "ball" },
   { id: "thumb", em: "😌", pic: "thumb" },
+  /* Atsuko's own model videos (level 3): right hand and left hand separately */
+  { id: "fex", em: "🎬", lv: 3, vid: { R: "assets/video/finger_R.mp4", L: "assets/video/finger_L.mp4" } },
 ];
 const techOf = id => TECH.find(x => x.id === id) || TECH[0];
 /* the technique for today rotates, so small children get a different one each day */
-const techToday = () => TECH[DAYNO % TECH.length];
+const techToday = () => { const b = TECH.filter(x => !x.vid); return b[DAYNO % b.length]; };
 
 /* side view: a piano key (white key with its black neighbour behind) and a finger with a nail.
    good = the joint next to the nail stays firm; bad = it collapses backwards */
@@ -64,4 +66,31 @@ function techPic(id) {
    <path d="M38 34 Q22 56 20 82" stroke="${SKIN}" stroke-width="14" stroke-linecap="round" fill="none"/><ellipse cx="20" cy="83" rx="4.5" ry="3.2" fill="#FBE3E3" stroke="#E8B9B4" transform="rotate(-20 20 83)"/>
    <path d="M2 60 q5 -7 10 0 q5 7 10 0" stroke="#2BB673" stroke-width="2.2" fill="none"/><text x="10" y="50" font-size="13">😌</text></svg>`;
   return keys([0, 1, 2, 3, 4].map(i => `<circle cx="${18 + i * 20.5}" cy="54" r="7" fill="${i === 2 ? "#6C5CE7" : "#F2C7A5"}"/><text x="${18 + i * 20.5}" y="58" text-anchor="middle" font-size="9" font-weight="800" fill="${i === 2 ? "#fff" : "#7a5a44"}">${i + 1}</text>`).join("") + `<path d="M59 36 L59 24 M54 29 L59 24 L64 29" stroke="#6C5CE7" stroke-width="2.5" fill="none" stroke-linecap="round"/>`);
+}
+
+/* ---------- level-3 finger exercise with the teacher's model videos ----------
+   hands: right / left (each its own video). ways: with the video, on my own, singing (video silent).
+   speed: slow / normal / fast. The microphone does not count while the video plays with sound
+   (it would hear the video), so coins still come only from the child's own playing. */
+const FEX_RATES = { slow: .75, mid: 1, fast: 1.25 };
+function fexSheet(c) {
+  const T = techOf(c.tech), F = PPC.fx ||= { hand: (c.hands?.R && !c.hands?.L) ? "L" : "R", mode: "with", rate: "mid" }, H = c.hands || {};
+  const tab = h => `<button class="seg ${F.hand === h ? "on" : ""}" data-pp="fexHand" data-v="${h}">${H[h] ? "✓ " : ""}${t("fx_" + h)}</button>`;
+  const ch = (f, v, l) => `<button class="chip ${F[f] === v ? "on" : ""}" data-pp="fexSet" data-f="${f}" data-v="${v}">${l}</button>`;
+  const vid = F.mode !== "alone";
+  return `<div class="stack pp-counter"><div class="act-head"><h2>${T.em} ${t("tc_fex")} <span class="lv-badge">Lv ${T.lv}</span></h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
+  <div class="segtabs fex-hands">${tab("R")}${tab("L")}</div>
+  <div class="chips fex-modes">${ch("mode", "with", "🎬 " + t("fx_with"))}${ch("mode", "alone", "🙋 " + t("fx_alone"))}${ch("mode", "sing", "🎤 " + t("fx_sing"))}</div>
+  ${vid ? `<video id="fexV" class="fex-video" src="${T.vid[F.hand]}" poster="${T.vid[F.hand].replace(".mp4", ".jpg")}" playsinline controls preload="metadata" ${F.mode === "sing" ? "muted" : ""}></video>
+  <div class="chips fex-speed"><span class="small muted">${t("fx_speed")}</span>${ch("rate", "slow", "🐢 " + t("fx_slow"))}${ch("rate", "mid", t("fx_mid"))}${ch("rate", "fast", "🐇 " + t("fx_fast"))}</div>` : ""}
+  <div class="card tech-how" id="fexHow">${t("fx_how_" + F.mode)}</div>
+  <div class="muted small" id="heardNow" style="text-align:center">${typeof smLabel === "function" && SM.on ? smLabel() : ""}</div>
+  ${c.done ? `<div class="pp-all">🎉 ${t("pp_cardDone")}</div><button class="btn block" data-act="close">OK</button>`
+    : `<button class="btn block" data-pp="fexDone">✓ ${t("fx_done_" + F.hand)}</button>`}</div>`;
+}
+function fexWire() {
+  const v = document.getElementById("fexV"); if (!v || !PPC?.fx) return;
+  const r = FEX_RATES[PPC.fx.rate] || 1; v.defaultPlaybackRate = r; v.playbackRate = r; v.preservesPitch = true; v.muted = PPC.fx.mode === "sing";
+  v.addEventListener("play", () => { v.playbackRate = FEX_RATES[PPC?.fx?.rate] || 1; });
+  v.addEventListener("ended", () => { const h = document.getElementById("fexHow"); if (h) { h.innerHTML = "🙋 " + t("fx_turn"); h.classList.add("fex-turn"); } });
 }

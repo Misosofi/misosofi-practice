@@ -70,7 +70,8 @@ function smUse(stream, own) {
     if (!SM.an) return; SM.an.getFloatTimeDomainData(SM.buf); let r = 0; for (let i = 0; i < SM.buf.length; i++) r += SM.buf[i] * SM.buf[i]; r = Math.sqrt(r / SM.buf.length);
     SM.floor = smFloor(SM.floor, r);
     const now = Date.now(), dt = Math.min(500, now - SM.at); SM.at = now;
-    if (r > Math.max(0.004, SM.floor * 3)) SM.heardMs += dt;
+    const fv = document.getElementById("fexV"); /* the teacher's video playing with sound would be heard too */
+    if (r > Math.max(0.004, SM.floor * 3) && !(fv && !fv.paused && !fv.muted)) SM.heardMs += dt;
     const e = document.getElementById("heardNow"); if (e && typeof smLabel === "function") e.textContent = smLabel();
   }, 200);
 }
