@@ -64,16 +64,16 @@ function techMigrate() {
 function ppHome() {
   techMigrate(); ppSyncActs();
   const P = ppToday(), y = S.pplan && S.pplan.date !== TK && S.pplan.cards?.length ? S.pplan : null, M = ppMode();
-  if (!P || !P.cards.length) return `<div class="section"><div class="card pp-card stack"><div class="section-head"><h2>📝 ${t("pp_title")}</h2></div>${hwBanner()}
+  if (!P || !P.cards.length) return `<div class="section"><div class="card pp-card stack"><div class="section-head"><h2>📝 ${t("pp_title")}</h2></div><div class="muted small pp-date">📅 ${esc(fmt(TK, { weekday: "long", month: "long", day: "numeric" }))}</div>${hwBanner()}
    <div class="muted">${t("pp_why")}</div>
    ${M !== "grown" ? `<button class="btn block" data-pp="help">✨ ${t("pp_help")}</button>` : ""}
    <button class="btn ${M !== "grown" ? "soft" : ""} block" data-pp="edit">✏️ ${t("pp_make")}</button>${y ? `<button class="btn soft block" data-pp="copy">↺ ${t("pp_copy")}</button>` : ""}</div></div>`;
   const done = P.cards.filter(c => c.done).length;
-  return `<div class="section"><div class="card pp-card stack"><div class="section-head"><h2>📝 ${t("pp_title")}</h2><span class="pill ${done === P.cards.length ? "g" : "m"}">${done}/${P.cards.length}</span></div>${hwBanner()}
+  return `<div class="section"><div class="card pp-card stack"><div class="section-head"><h2>📝 ${t("pp_title")}</h2><span class="pill ${done === P.cards.length ? "g" : "m"}">${done}/${P.cards.length}</span></div><div class="muted small pp-date">📅 ${esc(fmt(P.date, { weekday: "long", month: "long", day: "numeric" }))}</div>${hwBanner()}
    <div class="pp-list">${P.cards.map(c => `<button class="pp-item ${c.done ? "done" : ""}" data-pp="go" data-id="${c.id}">
      <span class="pp-chk">${c.done ? "✓" : ""}</span><span class="grow"><b>${esc(ppTitle(c))}</b><span class="muted small">${ppHow(c)}</span></span>
      ${ppDots(c)}</button>`).join("")}</div>
-   ${done === P.cards.length ? `<div class="pp-all">🎉 ${t("pp_allDone")}</div><button class="btn soft block" data-act="planOpen">🎥 ${t("pp_nextPlan")}</button>` : ""}
+   ${done === P.cards.length ? `<div class="pp-all">🎉 ${t("pp_allDone")}</div><div class="muted small" style="text-align:center">${t("pp_fresh")}</div><button class="btn soft block" data-act="planOpen">🎥 ${t("pp_nextPlan")}</button>` : ""}
    ${ppMode() !== "grown" ? `<button class="btn ${done === P.cards.length ? "" : "soft"} block" data-pp="help">✨ ${t("pp_more")}</button>` : ""}
    <button class="btn ghost sm" data-pp="edit">✏️ ${t("pp_edit")}</button></div></div>`;
 }

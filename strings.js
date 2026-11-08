@@ -122,7 +122,7 @@ const STR={en:{
  mic_heard:"I heard {n}. Try again or tap the answer.",mic_quiet:"I couldn't hear you — sing a little louder, or tap the answer.",
  mic_ncOn:"Play on my piano",mic_ncHow:"Use the microphone: play each note on your real piano, in the right octave.",mic_ncPlay:"Play this note on your piano 🎹",
  pp_title:"Today's practice plan",pp_why:"Plan first, then practise! Choose a few small jobs, then do each one until you get it right 5 times in a row.",
- pp_make:"Make my plan",pp_copy:"Use yesterday's plan",pp_more:"Plan more practice",pp_edit:"Change my plan",pp_allDone:"Plan complete! Great practising! +5 coins",pp_nextPlan:"Now plan for tomorrow",
+ pp_make:"Make my plan",pp_copy:"Use yesterday's plan",pp_more:"Plan more practice",pp_edit:"Change my plan",pp_allDone:"Plan complete! Great practising! +5 coins",pp_fresh:"Tomorrow you start with a new, empty plan ✨",pp_nextPlan:"Now plan for tomorrow",
  pp_bars:"Bars",pp_tip:"A good plan is small: a few bars and one thing to fix. Hard bars first!",pp_newCard:"New card",pp_what:"What will you practise?",pp_whatPh:"Piece, scale, …",
  pp_scales:"Scales",pp_sight:"Sight-reading",pp_hands:"Hands",pp_h_rh:"Right hand",pp_h_lh:"Left hand",pp_h_both:"Hands together",
  pp_speed:"Speed",pp_s_slow:"Slow",pp_s_mid:"Medium",pp_s_tempo:"Up to speed",pp_reps:"How many times in a row?",pp_inRow:"{n} in a row",
