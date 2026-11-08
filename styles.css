@@ -862,3 +862,11 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .zw-drops i{position:absolute;width:14px;height:18px;background:#fff;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;box-shadow:0 0 0 2px #f2e6d8;animation:drop 1.4s ease-in .6s infinite}
 .zw-drops i:nth-child(1){left:10%}.zw-drops i:nth-child(2){left:30%;animation-delay:.9s}.zw-drops i:nth-child(3){left:50%;animation-delay:1.2s}.zw-drops i:nth-child(4){left:70%;animation-delay:.75s}.zw-drops i:nth-child(5){left:88%;animation-delay:1.05s}
 @keyframes drop{from{top:20%;opacity:1}to{top:100%;opacity:0}}
+
+/* timer: timeline, metronome, what to practise */
+.ptl-bar{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;max-width:100%}
+.ptl-bar i{width:8px;height:12px;border-radius:2px;background:#d9d6e3}.ptl-bar i.on{background:#2fb36b}
+.spot-note{background:#FFF4D6;color:#5a3b00;border-radius:10px;padding:6px 10px;text-align:center}
+.ptodo{border:2px solid var(--accent)}.ptodo-c{display:flex;flex-direction:column;gap:2px;padding:6px 0;border-top:1px dashed var(--line)}.ptodo-c.done{opacity:.6}
+.tmetro .bpm{min-width:34px;text-align:center;font-weight:900}
+.ptl-t{display:flex;flex-direction:column;gap:6px}.ptl-row{display:flex;flex-direction:column;gap:3px}

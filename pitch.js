@@ -71,7 +71,8 @@ function smUse(stream, own) {
     SM.floor = smFloor(SM.floor, r);
     const now = Date.now(), dt = Math.min(500, now - SM.at); SM.at = now;
     const fv = document.getElementById("fexV"); /* the teacher's video playing with sound would be heard too */
-    if (r > Math.max(0.004, SM.floor * 3) && !(fv && !fv.paused && !fv.muted)) SM.heardMs += dt;
+    const metClick = typeof MET !== "undefined" && MET.on && now - (MET.last || 0) < 160;   /* the metronome click is not playing */
+    if (r > Math.max(0.004, SM.floor * 3) && !(fv && !fv.paused && !fv.muted) && !metClick) SM.heardMs += dt;
     const e = document.getElementById("heardNow"); if (e && typeof smLabel === "function") e.textContent = smLabel();
   }, 200);
 }

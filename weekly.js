@@ -52,3 +52,19 @@ document.addEventListener("submit", async e => {
   await Tdo(async () => { await DB.upd("recordings", { id }, { comment: c }); if (r) r.comment = c; }, t("saved")); TrenderDetail();
 }, true);
 document.addEventListener("change", e => { if (e.target.dataset?.wrcmp && typeof TS !== "undefined") { TS.wrCmp = e.target.value; TrenderDetail(); } });
+
+/* ---------- teacher: timer check (sound timeline) and optional spot-check recordings ---------- */
+function TTimerCard(st, D) {
+  const rows = (st.ptl || []).slice().reverse().slice(0, 12), spots = (st.spots || []).slice().reverse().slice(0, 8);
+  const pname = id => esc((D.pieces || []).find(p => p.id === id)?.title || "");
+  return `<div class="card stack teacher ptl-t"><div class="section-head"><h2>⏱ ${t("ptl_tH")}</h2></div>
+   <label class="toggle"><input type="checkbox" data-tptl="spot" ${st.spotChk ? "checked" : ""}> <span>🎙️ ${t("ptl_tOn")}</span></label>
+   <div class="muted small">${t("ptl_tHow")}</div>
+   ${rows.length ? rows.map(r => { const on = (r.tl.match(/#/g) || []).length; return `<div class="ptl-row"><div class="small"><b>${esc(fmt(r.date))} ${esc(r.at || "")}</b>${pname(r.piece) ? " · " + pname(r.piece) : ""} · ${t("ptl_played", { a: Math.round(on / 6), b: Math.round(r.tl.length / 6) })}</div><div class="ptl-bar" style="justify-content:flex-start">${ptlHTML(r.tl)}</div></div>`; }).join("") : `<div class="muted small">${t("ptl_tNone")}</div>`}
+   ${spots.length ? `<b class="small">🎙️ ${t("ptl_tSpots")}</b>${spots.map(s => { const R = (D.recs || []).find(x => x.id === s.id); return R ? `<div class="small">${esc(fmt(s.date))} ${esc(s.at)} · ${pname(s.piece)}</div><audio controls preload="metadata" data-trec="${R.id}" style="width:100%"></audio>` : ""; }).join("")}` : ""}
+  </div>`;
+}
+document.addEventListener("change", async e => {
+  const c = e.target.closest("[data-tptl]"); if (!c || typeof TS === "undefined" || !TS?.me) return;
+  const on = c.checked; if (await Tdo(() => TwriteState(TS.cur, d => { d.spotChk = on; }), t("saved"))) TrenderDetail();
+});

@@ -6,8 +6,8 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits"];
-const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc", "thw", "vreq"];
+const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits", "ptl", "spots"];
+const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc", "thw", "vreq", "spotChk"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
   return {
@@ -415,8 +415,11 @@ function actPiece() {
  <button class="timerbtn ${A.start ? "run" : ""}" data-act="${A.start ? "pstop" : "pstart"}" aria-label="${A.start ? t("stop") : t("start")}">${A.start ? "■" : "▶"}</button></div>
  <div class="muted small" id="keepMsg">${A.start ? (A.goal && el >= A.goal * 60 ? t("goalReached") : t("keep")) : ""}</div>
  <div class="timebox"><div><span class="muted small">${t("todayPiece")}</span><b id="tToday">${fmtDur((p.days?.[TK] || 0) + el)}</b></div><div><span class="muted small">${t("totalPiece")}</span><b id="tTotal">${fmtDur((p.sec || 0) + el)}</b></div></div>
- ${A.start ? `<div class="heard small" id="heardNow">${A.noMic ? t("heardNoMic") : smLabel()}</div>` : ""}
- <div class="muted small">${A.start ? t("timerStopHow") : t("timerStartHow")}</div></div>
+ ${A.start ? `<div class="heard small" id="heardNow">${A.noMic ? t("heardNoMic") : smLabel()}</div><div class="ptl-bar" id="ptlBar">${ptlHTML(A.tl || "")}</div>` : ""}
+ <div class="muted small">${A.start ? t("timerStopHow") : t("timerStartHow")}</div>
+ ${S.spotChk ? `<div class="spot-note small">🎙️ ${t("spotNote")}${A.spotRec ? ` <b class="live">${t("spotNow")}</b>` : ""}</div>` : ""}</div>
+ <div class="card stack tmetro"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b>🥁 ${t("metronome")}</b><span class="grow"></span><button class="btn soft sm" data-act="bpm" data-d="-4" aria-label="Slower">−</button><span class="bpm" id="bpm">${MET.bpm}</span><button class="btn soft sm" data-act="bpm" data-d="4" aria-label="Faster">+</button><button class="btn sm ${MET.on ? "" : "soft"}" data-act="metro">${MET.on ? t("mStop") : I.play + " " + t("mStart")}</button></div></div>
+ ${pieceTodo(p)}
  <div class="card stack rec-card" style="align-items:center"><div class="label">🎤 ${t("recH")}</div>${isRec ? `<span class="live">${t("recording")}</span>` : ""}
  <button class="btn block ${isRec ? "rec-on" : "rec-btn"}" data-act="recToggle">${isRec ? "■ " + t("recStopBtn") : "🎤 " + (c ? t("recTeacher") : t("recSelf"))}</button>
  <div class="muted small" style="text-align:center">${isRec ? t("recNowInfo") : c ? t("recTeacherInfo") : t("recSelfInfo")}</div>
@@ -426,14 +429,42 @@ function actPiece() {
  ${libOf(p)?.score_path ? `<button class="btn soft" data-act="score" data-id="${p.libId}">${t("score")}</button>` : ""}
  <h2>${t("sectionsH")}</h2><div class="list">${p.sections.map(s => `<div class="row"><button class="chk ${s.done ? "on" : ""}" data-act="psec" data-id="${p.id}" data-s="${s.id}" aria-label="${esc(s.name)}">✓</button><div class="grow">${esc(s.name)}</div></div>`).join("") || `<div class="empty">—</div>`}</div></div>`;
 }
+/* what to practise for this piece today (from the plan), shown while the timer runs */
+function pieceTodo(p) {
+  const P = typeof ppToday === "function" ? ppToday() : null, cards = (P?.cards || []).filter(c => !c.kind && c.what === p.title);
+  if (!cards.length) return "";
+  return `<div class="card stack ptodo"><b>📝 ${t("ptodoH")}</b>${cards.map(c => `<div class="ptodo-c ${c.done ? "done" : ""}"><b>${c.done ? "✓ " : ""}${esc(ppTitle(c))}</b><span class="small muted">${ppHow(c)}</span>${c.steps?.length ? `<span class="small">🎯 ${c.steps.map((k, i) => `${i + 1}. ${stratTxt(k)}`).join("<br>")}</span>` : ""}${c.tips?.length ? `<span class="small">💬 ${c.tips.map(k => STR_has("wz_s_" + k) ? t("wz_s_" + k) : k).join(" · ")}</span>` : ""}</div>`).join("")}</div>`;
+}
+/* timeline of the timer: one mark every 10 seconds — # = the piano was heard, . = silence */
+const ptlHTML = tl => tl.split("").map(c => `<i class="${c === "#" ? "on" : ""}"></i>`).join("");
+/* spot checks (only if the teacher switched them on for this student): a few 15-second recordings at random moments */
+function spotPlan() { A.spotAt = [60 + Math.random() * 120, 300 + Math.random() * 240, 720 + Math.random() * 360].map(s => Math.round(s)); }
+function spotRec() {
+  if (!SM.stream || A.spotRec) return; let mr; try { mr = new MediaRecorder(SM.stream, { audioBitsPerSecond: 48000 }); } catch (e) { try { mr = new MediaRecorder(SM.stream); } catch (e2) { return; } }
+  const chunks = [], t0 = Date.now(), pid = A.pid; A.spotRec = true; renderAct();
+  mr.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  mr.onstop = async () => {
+    if (A) { A.spotRec = false; renderAct(); }
+    const blob = new Blob(chunks, { type: mr.mimeType || chunks[0]?.type || "audio/mp4" }); if (blob.size < 500) return;
+    const id = uid(), row = { id, student_id: ME, kind: "audio", path: `${ME}/${id}.${extOf(blob)}`, seconds: Math.max(1, Math.round((Date.now() - t0) / 1000)), piece_id: pid || null };
+    MEM[id] = blob; try { await idbPut(id, blob); } catch (e) { }
+    S.remoteRecs ||= []; S.remoteRecs.unshift({ id, kind: "audio", date: TK, dur: row.seconds, piece: pid, listened: false, heart: false, comment: "", path: row.path, remote: true, pending: true });
+    queue({ k: "rec:" + id, t: "recordings", a: "rec", row, ctype: blob.type || "audio/mp4" }); saveOut();
+    S.spots = (S.spots || []).concat({ id, date: TK, at: new Date().toTimeString().slice(0, 5), piece: pid }).slice(-30); save();
+  };
+  mr.start(1000); setTimeout(() => { if (mr.state !== "inactive") mr.stop(); }, 15000);
+}
 function tickPiece() {
   if (!A || !A.start) return; const el = elapsed(), p = S.pieces.find(x => x.id === A.pid), $ = id => document.getElementById(id);
+  const seg = Math.floor(el / 10); A.tl ??= ""; if (seg > A.tl.length) { const h = SM.heardMs - (A.segH ?? A.h0 ?? 0); A.tl += h > 2500 ? "#" : "."; A.segH = SM.heardMs; const bar = $("ptlBar"); if (bar) bar.innerHTML = ptlHTML(A.tl); }
+  if (S.spotChk && SM.on && A.spotAt?.length && el >= A.spotAt[0]) { A.spotAt.shift(); spotRec(); }
   if ($("clock")) $("clock").textContent = clockOf(A.goal ? A.goal * 60 - el : el);
   if ($("tToday")) $("tToday").textContent = fmtDur((p.days?.[TK] || 0) + el); if ($("tTotal")) $("tTotal").textContent = fmtDur((p.sec || 0) + el);
   if (A.goal && !A.goalHit && el >= A.goal * 60) { A.goalHit = 1; ding(true); celebrate(); if ($("keepMsg")) $("keepMsg").textContent = t("goalReached"); }
 }
 function savePieceTime() {
   const el = elapsed(); clearInterval(A.timer); A.start = null; if (el < 1) return;
+  if (A.tl && A.tl.length >= 3) { S.ptl = (S.ptl || []).concat({ date: TK, at: new Date(Date.now() - el * 1000).toTimeString().slice(0, 5), piece: A.pid, tl: A.tl }).filter(x => x.date >= key(addDays(TODAY, -14))).slice(-60); } A.tl = ""; A.segH = null;
   const p = S.pieces.find(x => x.id === A.pid); if (!p) return; p.sec = (p.sec || 0) + el; p.days = p.days || {}; p.days[TK] = (p.days[TK] || 0) + el; addSec(el); save();
   /* coins only for the minutes the microphone heard playing */
   const Q = q(), heard = Math.min(el, Math.round((SM.heardMs - (A.h0 || 0)) / 1000)); if (!isRec) smStop();
@@ -588,7 +619,7 @@ function ncFinish() {
 const miniStars = n => `<span class="ministars">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= n ? "" : "off"}">${I.star}</span>`).join("")}</span>`;
 /* technique */
 let MET = { on: false, bpm: 72, int: null, beat: 0 };
-function startMetro() { stopMetro(); MET.on = true; MET.beat = 0; const f = () => { click(MET.beat % 4 === 0); document.querySelectorAll(".beat").forEach((b, i) => b.classList.toggle("on", i === MET.beat % 4)); MET.beat++; }; f(); MET.int = setInterval(f, 60000 / MET.bpm); }
+function startMetro() { stopMetro(); MET.on = true; MET.beat = 0; const f = () => { MET.last = Date.now(); click(MET.beat % 4 === 0); document.querySelectorAll(".beat").forEach((b, i) => b.classList.toggle("on", i === MET.beat % 4)); MET.beat++; }; f(); MET.int = setInterval(f, 60000 / MET.bpm); }
 function stopMetro() { clearInterval(MET.int); MET.on = false; }
 function actTech() {
   return `<div class="stack"><div class="card stack" style="align-items:center"><div class="label">${t("metronome")}</div>
@@ -751,7 +782,7 @@ function studentClick(b, e) {
     case "obDone": S.onboarded = true; OB = null; save(); document.getElementById("sheet").hidden = true; refresh(); celebrate(); return;
     case "ppick": A.pid = id; renderAct(); return;
     case "pgoal": A.goal = +b.dataset.m; renderAct(); return;
-    case "pstart": ac(); A.start = Date.now(); A.goalHit = 0; A.timer = setInterval(tickPiece, 250); A.h0 = SM.heardMs; A.noMic = false;
+    case "pstart": ac(); A.start = Date.now(); A.goalHit = 0; A.timer = setInterval(tickPiece, 250); A.h0 = SM.heardMs; A.noMic = false; A.tl = ""; A.segH = null; spotPlan();
       smStart().then(ok => { if (!ok && A) { A.noMic = true; renderAct(); } else if (A) A.h0 = SM.heardMs; }); renderAct(); return;
     case "recToggle": ac(); if (isRec) stopRec(); else startRec(A.pid); return;
     case "pstop": { const el0 = elapsed(); savePieceTime(); renderAct(); refreshTop(); if (el0 >= 60 && lastPlan()?.date !== TK) setTimeout(() => openAct("plan"), 1200); return; }
