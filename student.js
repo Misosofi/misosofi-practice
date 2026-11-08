@@ -6,7 +6,7 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen"];
+const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc", "thw"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
@@ -217,8 +217,9 @@ function award(kind, bonus, extra = 0) { const Q = q(); let n = extra; if (!Q[ki
 function markDone(kind) { const Q = q(); if (!Q[kind]) { Q[kind] = 1; save(); checkStar(); } }
 function earn(n) { if (n > 0) { S.coins += n; save(); toast(n === 1 ? t("coinGot") : t("coinsGot", { n })); } }
 function checkStar() {
-  const Q = q(), others = ORDER.filter(k => k !== "piece" && Q[k]).length;
-  if (Q.piece && others >= 3 && !S.starDays[TK]) { S.starDays[TK] = 1; S.stars++; save(); setTimeout(() => { celebrate(); toast("+1 ★ " + t("starGot")); refreshTop(); }, 900); }
+  /* today's star: the whole practice plan is done */
+  const P = typeof ppToday === "function" ? ppToday() : null;
+  if (P && P.cards.length && P.cards.every(c => c.done) && !S.starDays[TK]) { S.starDays[TK] = 1; S.stars++; save(); setTimeout(() => { celebrate(); toast("+1 ★ " + t("starGot")); refreshTop(); }, 900); }
 }
 function celebrate() {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return; const c = document.createElement("div"); c.className = "confetti";
@@ -325,9 +326,6 @@ function vHome() {
  ${bellBanner()}
  ${ev ? `<div class="section">${countdownCard(ev)}</div>` : ""}
  ${openPlan() ? `<div class="section">${planCard("start")}</div>` : ""}
- ${Q.piece && lastPlan()?.date !== TK ? `<div class="section"><button class="card plan-cta" data-act="planOpen"><b>${t("pl_title")}</b><span class="muted small">${t("pl_cta")}</span></button></div>` : ""}
- <div class="section"><div class="card quest-head">${ring(done, 7)}<div class="grow"><h2>${t("questH")}</h2><div class="muted small">${starred ? ico("star", "ic-star") + " " + t("starGot") : t("questSub")}</div></div></div>
- <div class="tiles">${ORDER.map(k => { const a = ACT[k]; return `<button class="tile ${k === "piece" ? "hero" : ""} ${Q[k] ? "done" : ""}" data-act="open" data-k="${k}"><span class="ic" style="background:${a.col}">${I[a.ic]}</span><span><span class="nm">${t("a_" + k)}</span><br><span class="sub">${k === "piece" ? t("a_piece_s") : t("s_" + k)}</span>${k === "piece" && pt > 0 ? `<br><span class="today">${t("todayTime", { t: fmtDur(pt) })}</span>` : ""}</span><span class="rw price">${I.coin}${a.coins}</span><span class="tick">✓</span></button>`; }).join("")}</div></div>
  <div class="section"><div class="section-head"><h2>${t("weekH")}</h2><span class="muted small">${t("weekSub")}</span></div><div class="list">${items.length ? items.map(i => `<div class="row"><button class="chk ${i.done?.[TK] ? "on" : ""}" data-act="toggleItem" data-id="${i.id}" aria-label="${esc(i.title)}">✓</button>${areaIc(i.area || "other")}<div class="grow"><div class="title">${esc(i.title)}</div><div class="muted small">${i.pieceId && S.pieces.find(p => p.id === i.pieceId) ? `<strong>${esc(S.pieces.find(p => p.id === i.pieceId).title)}</strong> · ` : ""}${i.source === "teacher" ? t("fromTeacher") : t("mine")}</div></div>${i.source === "teacher" ? `<span class="lock" title="${t("fromTeacher")}">${I.lock}</span>` : `<button class="x" data-act="delItem" data-id="${i.id}" aria-label="Delete">×</button>`}</div>`).join("") : `<div class="empty">${t("weekEmpty")}</div>`}</div>
  <form class="add" data-form="own"><input id="ownT" placeholder="${t("ownPh")}" required maxlength="140"><button class="btn sm" type="submit">${t("addOwn")}</button></form></div>
  ${rem.length ? `<div class="section"><h2>${t("remindersH")}</h2><div class="list">${rem.map(({ e, s }) => `<div class="row"><button class="chk ${s.done ? "on" : ""}" data-act="toggleStep" data-e="${e.id}" data-s="${s.id}" aria-label="${esc(s.text)}">✓</button><div class="grow"><div class="title">${esc(s.text)}</div><div class="muted small">${esc(e.title)}</div></div>${dueTag(s.date)}</div>`).join("")}</div></div>` : ""}

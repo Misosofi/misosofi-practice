@@ -75,7 +75,7 @@ function techPic(id) {
    (it would hear the video), so coins still come only from the child's own playing. */
 const FEX_RATES = { slow: .75, mid: 1, fast: 1.25 };
 function fexSheet(c) {
-  const T = techOf(c.tech), F = PPC.fx ||= { hand: (c.hands?.R && !c.hands?.L) ? "L" : "R", mode: "with", rate: "mid" }, H = c.hands || {};
+  const T = techOf(c.tech), F = PPC.fx ||= { hand: (c.fh?.R && !c.fh?.L) ? "L" : "R", mode: "with", rate: "mid" }, H = c.fh || {};
   const tab = h => `<button class="seg ${F.hand === h ? "on" : ""}" data-pp="fexHand" data-v="${h}">${H[h] ? "✓ " : ""}${t("fx_" + h)}</button>`;
   const ch = (f, v, l) => `<button class="chip ${F[f] === v ? "on" : ""}" data-pp="fexSet" data-f="${f}" data-v="${v}">${l}</button>`;
   const vid = F.mode !== "alone";

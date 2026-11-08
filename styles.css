@@ -630,3 +630,20 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .fex-speed{align-items:center}
 .lv-badge{display:inline-block;font-size:.7rem;font-weight:800;padding:2px 8px;border-radius:999px;background:#6C5CE7;color:#fff;vertical-align:middle}
 .fex-turn{background:#FFF4D6!important;color:#3a2a00!important;font-weight:700}
+
+/* plan first: time goal, numbered dots, rounds */
+.pp-first{font-size:1.05rem;line-height:1.5}
+.big-cta{min-height:64px;font-size:1.15rem}
+.pp-time{display:flex;flex-direction:column;gap:6px}
+.pp-time .bar{height:12px;border-radius:999px;background:var(--line);overflow:hidden}.pp-time .bar i{display:block;height:100%;background:var(--good);border-radius:999px}
+.pp-fromnext{background:#FFF4D6;color:#3a2a00;border-radius:12px;padding:8px 12px;font-weight:700}
+.pp-item .pp-dots{margin-top:6px;flex-wrap:wrap;align-items:center}
+.pp-dots i{width:22px!important;height:22px!important;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:800;color:var(--muted);background:var(--line)}
+.pp-dots i.on{color:#fff}
+.pp-sets{margin-left:8px;font-size:15px;color:#E0A100;letter-spacing:1px}.pp-sets b{font-weight:400}
+.pp-big-dots{gap:12px}.pp-big-dots i{width:50px!important;height:50px!important;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:22px;color:var(--muted)}.pp-big-dots i.on{color:#fff}
+.pp-setline{text-align:center;font-weight:800;font-size:1.05rem}
+.pp-next-ok{display:flex;flex-direction:column;gap:4px;background:#EAF7EF!important;color:#123!important}
+.pp-setchips{display:flex;align-items:center;gap:6px;margin-top:6px}.pp-setchips .chip{min-width:40px;padding:4px 10px}
+.wz-mins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pp-time-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
