@@ -5,7 +5,8 @@ const TECH = [
   { id: "line", em: "🚪", pic: "line" },
   { id: "ball", em: "🤲", pic: "ball" },
   { id: "thumb", em: "😌", pic: "thumb" },
-  /* Atsuko's own model videos (level 3): right hand and left hand separately */
+  /* Atsuko's own model videos (level 2 and level 3): right hand and left hand separately */
+  { id: "fex2", em: "🎬", lv: 2, vid: { R: "assets/video/finger2_R.mp4", L: "assets/video/finger2_L.mp4" } },
   { id: "fex", em: "🎬", lv: 3, vid: { R: "assets/video/finger_R.mp4", L: "assets/video/finger_L.mp4" } },
 ];
 const techOf = id => TECH.find(x => x.id === id) || TECH[0];
@@ -78,7 +79,7 @@ function fexSheet(c) {
   const tab = h => `<button class="seg ${F.hand === h ? "on" : ""}" data-pp="fexHand" data-v="${h}">${H[h] ? "✓ " : ""}${t("fx_" + h)}</button>`;
   const ch = (f, v, l) => `<button class="chip ${F[f] === v ? "on" : ""}" data-pp="fexSet" data-f="${f}" data-v="${v}">${l}</button>`;
   const vid = F.mode !== "alone";
-  return `<div class="stack pp-counter"><div class="act-head"><h2>${T.em} ${t("tc_fex")} <span class="lv-badge">Lv ${T.lv}</span></h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
+  return `<div class="stack pp-counter"><div class="act-head"><h2>${T.em} ${t("fx_title")} <span class="lv-badge">Lv ${T.lv}</span></h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
   <div class="segtabs fex-hands">${tab("R")}${tab("L")}</div>
   <div class="chips fex-modes">${ch("mode", "with", "🎬 " + t("fx_with"))}${ch("mode", "alone", "🙋 " + t("fx_alone"))}${ch("mode", "sing", "🎤 " + t("fx_sing"))}</div>
   ${vid ? `<video id="fexV" class="fex-video" src="${T.vid[F.hand]}" poster="${T.vid[F.hand].replace(".mp4", ".jpg")}" playsinline controls preload="metadata" ${F.mode === "sing" ? "muted" : ""}></video>
