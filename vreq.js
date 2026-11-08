@@ -7,7 +7,8 @@
 const VR_MAX = 180;
 let VR = null;
 const vrOpen = () => (S.vreq || []).filter(r => !(S.vreqDone || {})[r.id]);
-const vrLabel = r => [r.step ? stratTxt(r.step) : "", r.text ? esc(r.text) : ""].filter(Boolean).join(" — ");
+const vrSteps = r => r.steps?.length ? r.steps : r.step ? [r.step] : [];
+const vrLabel = r => [vrSteps(r).map((k, n) => (vrSteps(r).length > 1 ? `${n + 1}. ` : "") + stratTxt(k)).join(vrSteps(r).length > 1 ? "<br>" : ""), r.text ? esc(r.text) : ""].filter(Boolean).join(vrSteps(r).length > 1 ? "<br>" : " — ");
 
 /* ---------- student: banner on Today (delivered by little devil Azuki) ---------- */
 const vrReplyOf = r => r.reply || null;
@@ -98,7 +99,7 @@ let TVR = null;   /* teacher's reply recorder: { id, kind, stream, mr, chunks, b
 function TVreqCard(st, D) {
   const reqs = (st.vreq || []).slice().reverse(), dn = st.vreqDone || {};
   const recOf = r => dn[r.id] && (D.recs || []).find(x => x.id === dn[r.id].rec);
-  const F = TS.vrDraft ||= { step: "", piece: "", text: "", media: "video" };
+  const F = TS.vrDraft ||= { steps: [], piece: "", text: "", media: "video" }; F.steps ||= [];
   setTimeout(() => { vrHydrate(); const v = document.getElementById("tvrLive"); if (v && TVR?.stream) v.srcObject = TVR.stream; }, 0);
   const replyBox = (r, R) => {
     const rp = r.reply, rec = TVR && TVR.id === r.id ? TVR : null;
@@ -115,7 +116,7 @@ function TVreqCard(st, D) {
    <div class="muted small">${t("vr_tHow")}</div>
    <div class="chips">${["video", "audio"].map(m => `<button class="chip ${F.media === m ? "on" : ""}" data-tvr="media" data-v="${m}">${m === "video" ? "📹 " + t("vr_tMVideo") : "🎙️ " + t("vr_tMAudio")}</button>`).join("")}</div>
    <select id="vrPiece" aria-label="Piece"><option value="">${t("vr_tAnyPiece")}</option>${(D.pieces || []).map(p => `<option ${F.piece === p.title ? "selected" : ""}>${esc(p.title)}</option>`).join("")}</select>
-   <div class="chips">${STRATS.map(([k]) => `<button class="chip ${F.step === k ? "on" : ""}" data-tvr="step" data-v="${k}">${stratTxt(k)}</button>`).join("")}</div>
+   <div class="chips"><div class="muted small">${t("vr_tMulti")}</div>${STRATS.map(([k]) => { const n = F.steps.indexOf(k); return `<button class="chip ${n >= 0 ? "on" : ""}" data-tvr="step" data-v="${k}">${n >= 0 ? `<b>${n + 1}.</b> ` : ""}${stratTxt(k)}</button>`; }).join("")}</div>
    <input id="vrText" maxlength="200" placeholder="${t("vr_tTextPh")}" value="${esc(F.text)}">
    <button class="btn" data-tvr="send">${F.media === "audio" ? "🎙️ " + t("vr_tSendA") : "📹 " + t("vr_tSend")}</button>
    ${reqs.length ? `<div class="list">${reqs.map(r => { const R = recOf(r); return `<div class="row vr-trow"><div class="grow stack" style="gap:6px">
@@ -143,14 +144,14 @@ function tvrStart() {
 }
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-tvr]"); if (!b || typeof TS === "undefined" || !TS?.me) return; e.preventDefault();
-  const a = b.dataset.tvr, F = TS.vrDraft ||= { step: "", piece: "", text: "", media: "video" };
+  const a = b.dataset.tvr, F = TS.vrDraft ||= { steps: [], piece: "", text: "", media: "video" }; F.steps ||= [];
   if (document.getElementById("vrPiece")) { F.piece = document.getElementById("vrPiece").value || ""; F.text = (document.getElementById("vrText")?.value || "").trim().slice(0, 200); }
-  if (a === "step") { F.step = F.step === b.dataset.v ? "" : b.dataset.v; TrenderDetail(); }
+  if (a === "step") { const k = b.dataset.v; F.steps = F.steps.includes(k) ? F.steps.filter(x => x !== k) : F.steps.concat(k); TrenderDetail(); }
   else if (a === "media") { F.media = b.dataset.v; TrenderDetail(); }
   else if (a === "send") {
-    if (!F.step && !F.text && !F.piece) { toast(t("vr_tEmpty")); return; }
-    const req = { id: uid(), media: F.media, step: F.step, piece: F.piece, text: F.text, at: TK };
-    if (await Tdo(() => TwriteState(TS.cur, d => { d.vreq = (d.vreq || []).concat(req).slice(-20); }), t("vr_tSent"))) { TS.vrDraft = { step: "", piece: "", text: "", media: F.media }; TrenderDetail(); }
+    if (!F.steps.length && !F.text && !F.piece) { toast(t("vr_tEmpty")); return; }
+    const req = { id: uid(), media: F.media, steps: F.steps.slice(), piece: F.piece, text: F.text, at: TK };
+    if (await Tdo(() => TwriteState(TS.cur, d => { d.vreq = (d.vreq || []).concat(req).slice(-20); }), t("vr_tSent"))) { TS.vrDraft = { steps: [], piece: "", text: "", media: F.media }; TrenderDetail(); }
   } else if (a === "del") {
     if (await Tdo(() => TwriteState(TS.cur, d => { d.vreq = (d.vreq || []).filter(x => x.id !== b.dataset.id); }), t("saved"))) TrenderDetail();
   }

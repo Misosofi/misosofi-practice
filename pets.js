@@ -159,12 +159,28 @@ function bindRoom() {
   };
 }
 /* tapping a treat (outside decorating) gives it to your friend */
+let FEEDING = false;
 function feed(u) {
   const R = roomOf(), i = R.items.find(x => x.u === u); if (!i || itemOf(i.id)?.cat !== "food") return false;
+  if (FEEDING) return true; FEEDING = true;
   R.items = R.items.filter(x => x !== i); R.happy++; save();
-  const box = document.querySelector('[data-ri="' + u + '"]'); if (box) box.classList.add("eaten");
-  setTimeout(() => { refresh(); const h = document.getElementById("hearts"); if (h) { h.textContent = "♥ ♥ ♥"; h.classList.add("go"); } }, 350);
-  toast(t("rm_yum")); return true;
+  /* the treat flies into your character's mouth, your character munches, then hearts */
+  const box = document.querySelector('[data-ri="' + u + '"]'), me = box?.closest(".room")?.querySelector('.ri.me');
+  if (box && me) {
+    const b = box.getBoundingClientRect(), m = me.getBoundingClientRect();
+    const dx = (m.left + m.width / 2) - (b.left + b.width / 2), dy = (m.top + m.height * .42) - (b.top + b.height / 2);
+    box.style.zIndex = 999; box.style.transition = "transform .7s cubic-bezier(.3,-.5,.6,1)";
+    requestAnimationFrame(() => { box.style.transform = `translate(calc(-50% + ${dx}px), calc(-100% + ${dy}px)) scale(.3) rotate(25deg)`; });
+    setTimeout(() => {
+      box.style.opacity = 0; me.classList.add("munch");
+      const say = document.createElement("span"); say.className = "munch-say"; say.textContent = t("rm_munch"); me.appendChild(say);
+      const cr = document.createElement("span"); cr.className = "crumbs"; cr.textContent = "· ˙ · ˙ ·"; me.appendChild(cr);
+      [0, .28, .56, .84].forEach(w => { try { tone(88, w, .08, .18); } catch (e) { } });
+      setTimeout(() => { say.textContent = t("rm_yumYum"); try { tone(84, 0, .3, .25); tone(88, .12, .4, .25); } catch (e) { } const h = me.querySelector(".hearts"); if (h) { h.textContent = "♥ ♥ ♥"; h.classList.remove("go"); void h.offsetWidth; h.classList.add("go"); } }, 1150);
+      setTimeout(() => { FEEDING = false; refresh(); toast(t("rm_yum")); }, 2600);
+    }, 720);
+  } else { FEEDING = false; refresh(); toast(t("rm_yum")); }
+  return true;
 }
 /* ---------- coin actions: sing a song or play the guitar (sounds use the real piano) ---------- */
 const SING_COST = 2, GUITAR_COST = 3;
