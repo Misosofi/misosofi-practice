@@ -670,3 +670,15 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .vr-rec,.vr-stop{background:#d0233a!important;color:#fff!important}
 .vr-tcard video{width:100%;border-radius:10px;background:#000}
 .vr-tcard select{height:48px;min-height:0;padding-block:0}
+
+.vr-devil{display:flex;align-items:flex-end;gap:8px}
+.vr-devil-img{width:110px;height:auto;flex:none;animation:vrDevil 1.6s ease-in-out infinite}
+@keyframes vrDevil{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+.vr-say{position:static!important;flex:1;background:#fff!important;color:#222!important;border-radius:16px;padding:10px 12px;font-weight:700}
+.vr-mic{font-size:64px;text-align:center;padding:24px;border-radius:16px;background:#f3f0ff}
+.vr-mic.on{background:#ffe3e7;animation:vrPulse 1s infinite}
+@keyframes vrPulse{50%{transform:scale(1.04)}}
+.vr-reply{border-top:1px dashed var(--line);padding-top:8px}
+.vr-reply video,.vr-ans video{width:100%;border-radius:10px;background:#000}
+.vr-say::after{display:none}
+.vr-tcard input{height:48px;min-height:0}

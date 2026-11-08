@@ -86,7 +86,7 @@ function ppHome() {
    ${all ? `<div class="pp-all">🎉 ${t("pp_allDone")}</div>` : ""}
    ${all || done ? (nx ? `<div class="card pp-next-ok"><b>📅 ${t("pp_nextReady")}</b><span class="muted small">${nx.cards.map(c => esc(ppTitle(c))).join(" · ")}</span><button class="btn ghost sm" data-pp="next">✏️ ${t("pp_nextChange")}</button></div>`
      : `<button class="btn block ${all ? "" : "soft"}" data-pp="next">📅 ${t("pp_planTomorrow")}</button>`) : ""}
-   <button class="btn soft block" data-pp="help">＋ ${t("pp_addMore")}</button></div></div>`;
+   <button class="btn soft block" data-pp="more">🎮 ${t("pp_moreCards")}</button></div></div>`;
 }
 const ppTitle = c => c.kind === "vid" ? "📺 " + c.what : c.kind === "act" ? t("wz_x_" + c.act) : c.kind === "tech" ? techOf(c.tech).em + " " + t("tc_" + c.tech) : c.what + (c.from ? ` · ${t("pp_bars")} ${c.from}${c.to && c.to !== c.from ? "–" + c.to : ""}` : "");
 const ppHow = c => c.kind === "vid" ? t("hw_watchCard") : c.kind === "act" ? t("pp_inApp") : c.kind === "tech" ? (techOf(c.tech).vid ? t("fx_card") : t("pp_30s")) : c.kind === "free" ? t("pp_ownStep") : [t("pp_h_" + (typeof c.hands === "string" ? c.hands : "both")), t("pp_s_" + c.speed), t("pp_inRow", { n: c.reps }) + ((c.sets || 1) > 1 ? " × " + c.sets : "")].join(" · ");
@@ -273,6 +273,7 @@ document.addEventListener("click", e => {
   if (a === "edit") { PPE = null; ppEdit(); }
   else if (a === "step") { const P = ppToday(), c = P?.cards.find(x => x.id === PPC?.id); if (!c) return; const i = +b.dataset.i; c.stepDone = i < (c.stepDone || 0) ? i : i + 1; save(); ppCounter(c.id); if (c.stepDone === c.steps.length) toast(t("pp_stepsAll", { n: c.reps })); }
   else if (a === "help") { PPW = null; ppWizard(); }
+  else if (a === "more") { document.querySelector(".free-tiles")?.scrollIntoView({ behavior: "smooth", block: "start" }); }
   else if (a === "next") { PPW = null; ppWizard(true); }
   else if (a === "helpGo") {
     const v = id => (document.getElementById(id)?.value || "").trim(), from = v("hpFrom").slice(0, 4), to = v("hpTo").slice(0, 4), what = b.dataset.piece;
