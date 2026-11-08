@@ -811,3 +811,10 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 @keyframes zSensei{0%{left:0;transform:scaleX(1)}45%{left:calc(100% - 56px);transform:scaleX(1)}50%{left:calc(100% - 56px);transform:scaleX(-1)}95%{left:0;transform:scaleX(-1)}100%{left:0;transform:scaleX(1)}}
 @keyframes zHop{to{transform:translateY(-14px) rotate(8deg)}}
 .zoo-sensei.hop img{animation:zFlip .6s ease-out}@keyframes zFlip{to{transform:translateY(-30px) rotate(360deg)}}
+
+.zoo-pen.aiming{cursor:crosshair;outline:3px dashed #ff6b6b;outline-offset:-3px}
+.zoo-pen.aiming .zoo-sensei{animation-duration:7s}
+.zoo-sensei.splatted{animation-play-state:paused}.zoo-sensei.splatted img{animation:scShk .15s linear 8}
+.zoo-fly.throw{transition:transform .5s cubic-bezier(.2,-.6,.7,1)}
+.zoo-splat{position:absolute;transform:translate(-50%,-50%);font-size:30px;pointer-events:none;animation:scPop .3s ease-out}
+.zoo-aim-btn.on{background:#ff6b6b!important;color:#fff!important}

@@ -42,6 +42,7 @@ const ITEMS = [
   { id: "f_fish", cat: "food", n: "Fish", p: 8, w: 11, multi: 1 }, { id: "f_honey", cat: "food", n: "Honey", p: 10, w: 10, multi: 1 },
   { id: "c_kibble", cat: "food", n: "Cat food", p: 6, w: 12, multi: 1 }, { id: "c_tuna", cat: "food", n: "Tuna for cats", p: 10, w: 10, multi: 1 },
   { id: "c_treat", cat: "food", n: "Super-yummy cat treat", p: 20, w: 12, multi: 1 },
+  { id: "f_pie", cat: "food", n: "Party pie (for throwing!)", p: 5, w: 11, multi: 1 },
   { id: "b_backpack", cat: "bag", n: "Music backpack", p: 40, w: 13 }, { id: "b_heartpurse", cat: "bag", n: "Heart bag", p: 60, w: 13 },
   { id: "j_jewelbox", cat: "bag", n: "Jewellery box", p: 80, w: 13 }, { id: "j_crown", cat: "bag", n: "Crown", p: 120, w: 11 },
   { id: "r_bike", cat: "ride", n: "Bicycle", p: 80, w: 30 }, { id: "r_train", cat: "ride", n: "Toy train", p: 90, w: 30 }, { id: "r_car", cat: "ride", n: "Red car", p: 150, w: 28 },
@@ -286,7 +287,7 @@ function petSet(f, v) {
 
 /* ---------- keeping treats: the fridge keeps every treat, the basket keeps fruit and vegetables ---------- */
 /* what is good for whom: cats eat cat food only; sweets are for people, never for animals */
-const CATFOOD = ["c_kibble", "c_tuna", "c_treat"], SWEETS = ["f_candy", "f_donut", "f_icecream", "f_cake", "f_macarons"];
+const CATFOOD = ["c_kibble", "c_tuna", "c_treat"], SWEETS = ["f_pie", "f_candy", "f_donut", "f_icecream", "f_cake", "f_macarons"];
 const STORES = { h_fridge: { all: true }, h_basket: { only: ["f_banana", "f_apple", "f_pepper", "f_cucumber"] } };
 const storeOK = (sid, fid) => STORES[sid] && (STORES[sid].all || STORES[sid].only.includes(fid));
 function storeLook(sid, inside) {
@@ -320,6 +321,7 @@ function giftSheet(u) {
   openSheet(`<div class="stack"><div class="act-head"><h2>🎁 ${t("gf_who", { food: esc(F.n) })}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
    <div class="gift-food"><img src="${ART}${it.id}.webp" alt=""></div>
    ${SWEETS.includes(it.id) ? `<div class="card gift-warn">🍬 <b>${t("gf_sweets")}</b><br><span class="small">${t("gf_sweetsWhy")}</span></div>` : ""}
+   ${SWEETS.includes(it.id) ? `<button class="card gift-opt" data-gift="throw"><img src="${ART}z_sensei.webp" alt=""><span class="grow"><b>🎯 ${t("gf_throw")}</b><span class="muted small">${t("gf_throwWhy")}</span></span></button>` : ""}
    ${CATFOOD.includes(it.id) ? "" : fans.length ? fans.map(z => `<button class="card gift-opt" data-gift="zoo" data-a="${z.id}"><img src="${ART}z_${z.id}.webp" alt=""><span class="grow"><b>🦁 ${t("gf_zoo", { animal: t("z_" + z.id) })}</b><span class="muted small">${t("gf_zooWhy", { animal: t("z_" + z.id), food: esc(F.n) })}</span></span></button>`).join("")
      : SWEETS.includes(it.id) ? "" : `<div class="card gift-opt dim"><span class="grow"><b>🦁 ${t("gf_zooNo")}</b></span></div>`}
    ${!CATFOOD.includes(it.id) ? "" : `<button class="card gift-opt" data-gift="cats"><img src="${ART}daizu_paw.webp" alt=""><span class="grow"><b>🐾 ${t("gf_cats")}</b><span class="muted small">${t("gf_catsWhy")}</span></span></button>`}
@@ -333,4 +335,5 @@ document.addEventListener("click", e => {
   else if (a === "keep") { const x = R.items.find(i => i.u === b.dataset.u); if (!x) return; x.in = b.dataset.box; save(); closeSheet(); toast(t("st_putIn", { food: itemOf(x.id).n, box: itemOf(R.items.find(i => i.u === x.in).id).n })); refresh(); }
   else if (a === "cats") { closeSheet(); toast(t("gf_catsOk")); }
   else if (a === "zoo") zooOpen(b.dataset.a);
+  else if (a === "throw") { zooOpen("monkey"); setTimeout(() => zooAim(true), 400); }
 });
