@@ -771,3 +771,11 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 @keyframes munchPop{from{transform:translateX(-50%) scale(0)}}
 .crumbs{position:absolute;left:50%;top:44%;transform:translateX(-50%);color:#b07a3a;font-weight:900;font-size:16px;line-height:1;animation:crumbs 1.2s ease-out forwards;pointer-events:none}
 @keyframes crumbs{to{top:75%;opacity:0}}
+
+.sc.bg-ball{background:radial-gradient(circle at 50% 10%,#fff1c2,#b0577a 70%)}
+.bg-ball .sc-ground{background:#6b2a45}
+.an-dizzy{animation:scDizzy 1s linear infinite}@keyframes scDizzy{to{transform:translateX(-50%) rotate(360deg)}}
+.an-marchin{animation:scInL 3s linear both,scBob .5s ease-in-out infinite}
+.an-wobble{animation:scWobble .9s ease-in-out infinite}@keyframes scWobble{25%{transform:translateX(-40%) rotate(-8deg)}75%{transform:translateX(-60%) rotate(8deg)}}
+.an-rollaway{animation:scRoll 2s ease-in both}@keyframes scRoll{to{left:150%;transform:translateX(-50%) rotate(720deg) scale(.6)}}
+.an-waltz{animation:scWaltz 2.4s ease-in-out infinite}@keyframes scWaltz{33%{transform:translate(-40%,-6%) rotate(8deg)}66%{transform:translate(-60%,0) rotate(-8deg)}}

@@ -52,9 +52,52 @@ const STORY = [
       [{ bg: "wall", m: "accel", fx: ["wind"], a: [["sakura_paw", 60, "blownaway"]] }, { bg: "wall", fx: ["wind"], a: [["daizu_paw", 40, "bob"]] }],
       [{ bg: "wall", m: "rit", fx: ["moon", "stars"], a: [["sakura_kiss", 55, "floatin"]] }, { bg: "wall", fx: ["moon", "stars"], a: [["sakura_paw", 60, "float"]], who: "sakura" }, { bg: "stage", m: "happy", fx: ["spot", "eyes"], a: [["daizu_paw", 20, "turn"], ["matcha_paw", 45, "turn"], ["sakura_kiss", 72, "float"]] }],
       [{ bg: "wall", m: "walk", fx: ["moon"], a: [["sakura_paw", 50, "floatpast"]] }, { bg: "wall", fx: ["moon", "stars"], a: [["daizu_paw", 40, "bob"]] }]] },
+  /* ---------- week 2: Leo, the King of Rhythm ---------- */
+  { ch: 2, pic: "lion_king", opts: ["2 beats", "3 beats", "4 beats"], ok: 2,
+    intro: [
+      { bg: "stage", m: "royal", fx: ["spot"], a: [["lion_king", 55, "in-r"]], who: "lion" },
+      { bg: "stage", fx: ["spot"], a: [["daizu_angry", 22, "shiver"], ["lion_king", 62, "bob"]], who: "daizu" },
+      { bg: "stage", fx: ["spot"], a: [["daizu_angry", 22, ""], ["lion_king", 62, "sway"]], who: "lion" }],
+    end: [
+      [{ bg: "stage", m: "b2", a: [["daizu_guitar", 40, "hop"]] }, { bg: "stage", fx: ["ducks"], a: [["lion_roar", 62, "shake"]], who: "lion" }],
+      [{ bg: "stage", m: "b3", a: [["daizu_guitar", 40, "sway"]] }, { bg: "stage", fx: ["dizzy"], a: [["lion_roar", 55, "dizzy"]] }],
+      [{ bg: "stage", m: "b4", fx: ["notes"], a: [["daizu_guitar", 25, "bob"], ["kuriito_guitar", 50, "bob"], ["matcha_guitar", 75, "bob"]] }, { bg: "stage", m: "happy", fx: ["confetti"], a: [["lion_dance", 50, "jump"]], who: "lion" }]] },
+  { ch: 2, pic: "lion_king", opts: ["Moderato", "Rubato", "Prestissimo"], ok: 0,
+    intro: [
+      { bg: "day", m: "royal", fx: ["flags"], a: [["lion_king", 55, "in-r"]], who: "lion" },
+      { bg: "day", fx: ["flags"], a: [["daizu_paw", 20, "in-l"], ["kuriito_paw", 38, "in-l"], ["lion_king", 70, "bob"]] }],
+    end: [
+      [{ bg: "day", m: "mod", fx: ["flags"], a: [["lion_king", 50, "marchin"], ["daizu_paw", 25, "marchin"]] }, { bg: "day", m: "happy", fx: ["flags", "confetti"], a: [["lion_dance", 50, "jump"]] }],
+      [{ bg: "day", m: "rubato", a: [["daizu_paw", 30, "wobble"], ["kuriito_paw", 60, "zoom"]] }, { bg: "day", fx: ["bonk"], a: [["daizu_angry", 40, "shake"], ["kuriito_angry", 58, "shake"]] }],
+      [{ bg: "day", m: "fast", fx: ["wind"], a: [["lion_king", 50, "zoom"]] }, { bg: "day", fx: ["wind"], a: [["lion_roar", 50, "rollaway"]] }]] },
+  { ch: 2, pic: "azuki_kiss", opts: ["2/4", "3/4", "4/4"], ok: 1,
+    intro: [
+      { bg: "ball", m: "b3", fx: ["chandelier"], a: [["lion_king", 60, "in-r"]], who: "lion" },
+      { bg: "ball", fx: ["chandelier"], a: [["azuki_kiss", 28, "sway"], ["lion_king", 68, "bob"]], who: "azuki" },
+      { bg: "ball", fx: ["chandelier"], a: [["azuki_kiss", 28, ""], ["lion_king", 68, "sway"]], who: "lion" }],
+    end: [
+      [{ bg: "ball", m: "b2", fx: ["chandelier"], a: [["azuki_paw", 30, "hop"], ["lion_king", 65, "hop"]] }, { bg: "ball", fx: ["toes"], a: [["azuki_angry", 35, "shake"], ["lion_roar", 65, "shake"]] }],
+      [{ bg: "ball", m: "b3", fx: ["chandelier", "sparkle"], a: [["azuki_kiss", 38, "waltz"], ["lion_dance", 62, "waltz"]] }, { bg: "ball", m: "happy", fx: ["chandelier", "sparkle"], a: [["azuki_kiss", 40, "bow"], ["lion_dance", 62, "bob"]] }],
+      [{ bg: "ball", m: "b4", fx: ["chandelier", "qmarks"], a: [["azuki_paw", 35, "wobble"], ["lion_king", 65, "wobble"]] }, { bg: "ball", fx: ["cake"], a: [["azuki_angry", 45, "shake"]] }]] },
+  { ch: 2, pic: "lion_king", opts: ["Quarter rest", "Whole note", "Tie"], ok: 0,
+    intro: [
+      { bg: "stage", m: "b4", a: [["lion_king", 55, "bob"]], who: "lion" },
+      { bg: "stage", fx: ["restsign"], a: [["lion_king", 60, "sway"]], who: "lion" }],
+    end: [
+      [{ bg: "stage", m: "rest", fx: ["shh"], a: [["daizu_guitar", 30, "bob"], ["lion_king", 70, "bob"]] }, { bg: "stage", m: "happy", fx: ["tears", "sparkle"], a: [["lion_dance", 50, "jump"]] }],
+      [{ bg: "stage", m: "ferm", a: [["daizu_guitar", 45, "freeze"]] }, { bg: "stage", fx: ["blue"], a: [["daizu_angry", 45, "shiver"]] }],
+      [{ bg: "stage", m: "walk", fx: ["notes"], a: [["daizu_guitar", 30, "bob"], ["kuriito_guitar", 60, "bob"]] }, { bg: "stage", fx: ["bang"], a: [["lion_roar", 50, "shake"]], who: "lion" }]] },
+  { ch: 2, pic: "lion_dance", opts: ["Fine", "Da Capo (D.C.)", "Coda"], ok: 1,
+    intro: [
+      { bg: "stage", m: "royal", fx: ["spot"], a: [["lion_king", 55, "bob"]], who: "lion" },
+      { bg: "stage", fx: ["spot", "crowd"], a: [["lion_king", 55, "sway"]], who: "lion" }],
+    end: [
+      [{ bg: "stage", m: "sad", fx: ["crowd"], a: [["daizu_paw", 40, "runaway"]] }, { bg: "stage", fx: ["popcorn", "crowd"], a: [["lion_roar", 50, "shake"]] }],
+      [{ bg: "stage", m: "walk", fx: ["crowd", "notes"], a: [["daizu_guitar", 25, "bob"], ["kuriito_guitar", 50, "bob"], ["matcha_guitar", 75, "bob"]] }, { bg: "stage", m: "happy", fx: ["confetti", "crowd"], a: [["lion_dance", 50, "jump"]], who: "lion" }, { bg: "night", m: "night", fx: ["moon", "stars"], a: [["daizu_kiss", 30, "bob"], ["azuki_kiss", 50, "bob"], ["sakura_kiss", 72, "float"]] }],
+      [{ bg: "stage", m: "fast", fx: ["crowd"], a: [["daizu_guitar", 40, "bob"]] }, { bg: "night", fx: ["moon", "yawn"], a: [["lion_roar", 50, "shake"]], who: "lion" }]] },
 ];
-const TERM = { "Grave": "grave", "Andante": "andante", "Presto": "presto", "Fortissimo (ff)": "ff", "Mezzo forte (mf)": "mf", "Pianissimo (pp)": "pp", "Staccato": "stacc", "Legato": "legato", "Accent": "accent", "Crescendo": "cresc", "Diminuendo": "dim", "Fermata": "ferm", "Accelerando": "accel", "Ritardando": "rit", "A tempo": "atempo" };
-const CATNAME = { daizu: "Daizu", kuriito: "Kuriito", matcha: "Matcha", azuki: "Azuki", sakura: "Sakura" };
+const TERM = { "Grave": "grave", "Andante": "andante", "Presto": "presto", "Fortissimo (ff)": "ff", "Mezzo forte (mf)": "mf", "Pianissimo (pp)": "pp", "Staccato": "stacc", "Legato": "legato", "Accent": "accent", "Crescendo": "cresc", "Diminuendo": "dim", "Fermata": "ferm", "Accelerando": "accel", "Ritardando": "rit", "A tempo": "atempo", "2 beats": "b2", "3 beats": "b3", "4 beats": "b4", "Moderato": "moderato", "Rubato": "rubato", "Prestissimo": "prestissimo", "2/4": "t24", "3/4": "t34", "4/4": "t44", "Quarter rest": "qrest", "Whole note": "whole", "Tie": "tie", "Fine": "fine", "Da Capo (D.C.)": "dc", "Coda": "coda" };
+const CATNAME = { daizu: "Daizu", kuriito: "Kuriito", matcha: "Matcha", azuki: "Azuki", sakura: "Sakura", lion: "Leo, the King of Rhythm" };
 
 const storyS = () => (S.story ||= { seen: 0, last: "" });
 function storyLocked() {
@@ -94,6 +137,13 @@ const SMUS = {
   rit: { bpm: 140, n: [[72, 1], [69, 1], [67, 1], [64, 1]], v: .22, speed: .82, floor: 46 },
   ghost: { bpm: 60, n: [[72, 1.5], [74, 1.5], [76, 1.5], [78, 1.5], [80, 2]], v: .12, legato: true },
   happy: { bpm: 132, n: [[72, 1], [76, 1], [79, 1], [84, 2], [79, 1], [84, 2]], b: [48, 55], v: .3 },
+  royal: { bpm: 108, n: [[67, .5], [67, .5], [72, 1], [67, .5], [72, .5], [76, 2]], b: [48, 55], v: .35 },
+  b2: { bpm: 120, n: [[[48, 60], 1], [67, 1]], v: .32 },
+  b3: { bpm: 132, n: [[[48, 64], 1], [[64, 67], 1], [[64, 67], 1], [[43, 62], 1], [[62, 65], 1], [[62, 65], 1]], v: .26 },
+  b4: { bpm: 112, n: [[[48, 64, 67], 1], [67, 1], [[64, 67], 1], [67, 1]], v: .28 },
+  mod: { bpm: 100, n: [[67, 1], [67, 1], [69, 1], [71, 1], [72, 2], [67, 2]], b: [48, 55], v: .3 },
+  rubato: { bpm: 90, n: [[67, 1], [69, .5], [71, 2], [72, .3], [74, .3], [76, 3], [72, .5]], v: .26, speed: 1.15, floor: 60 },
+  rest: { bpm: 96, n: [[72, 1], [74, 1], [0, 1], [79, 1], [76, 1], [74, 1], [0, 1], [72, 1]], b: [48], v: .3 },
   sad: { bpm: 70, n: [[67, 1], [66, 1], [65, 1], [64, 3]], b: [43], v: .22 },
 };
 let SMU = null;
@@ -142,6 +192,14 @@ const FXE = {
   confetti: `<div class="fx fx-rain">${["🎉", "🎊", "👑", "🎉", "🎊", "✨"].map((f, i) => `<span style="left:${8 + i * 15}%;animation-delay:${i * .2}s">${f}</span>`).join("")}</div>`,
   spot: `<div class="fx fx-spot"></div>`, fade: `<div class="fx fx-fadeout"></div>`, clock: `<div class="fx fx-clock">⏰</div>`, ice: `<div class="fx fx-ice">🧊</div>`,
   eyes: `<div class="fx fx-pop" style="left:38%;top:8%">👀 …YOU?</div>`,
+  ducks: `<div class="fx fx-dogs">🦆 <b>QUACK!</b> 🦆</div>`, dizzy: `<div class="fx fx-swirl" style="left:50%;top:6%">💫</div>`,
+  flags: `<div class="fx fx-houses" style="bottom:auto;top:6%;font-size:30px">🚩🎏🚩🎏🚩</div>`, bonk: `<div class="fx fx-bang">💫 BONK!</div>`,
+  chandelier: `<div class="fx fx-moon" style="left:42%;right:auto;top:2%">🕯️✨🕯️</div>`, toes: `<div class="fx fx-pop" style="left:20%;top:62%">🦶 OUCH!</div>`,
+  cake: `<div class="fx fx-floor fx-bounce" style="left:38%">🎂💥</div>`,
+  restsign: `<div class="fx fx-bang" style="color:#fff;text-shadow:none;left:16%">𝄽 = 🤫</div>`, shh: `<div class="fx fx-pop" style="left:44%;top:10%">🤫 …</div>`,
+  tears: `<div class="fx fx-pop" style="left:60%;top:10%">😭👑</div>`, blue: `<div class="fx fx-flash" style="background:#6ea8ff;mix-blend-mode:multiply;animation:none;opacity:.35"></div>`,
+  crowd: `<div class="fx fx-houses" style="font-size:34px;bottom:2%">🐭🐰🐻🐸🐷🐨</div>`, popcorn: `<div class="fx fx-throw"><span>🍿</span><span>🍿</span><span>🍿</span></div>`,
+  yawn: `<div class="fx fx-pop" style="left:62%;top:8%">🌙 🥱</div>`,
 };
 function scHTML(B) {
   const fx = (B.fx || []).map(k => FXE[k] || "").join("");
