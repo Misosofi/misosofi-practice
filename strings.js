@@ -121,6 +121,7 @@ const STR={en:{
  mic_listening:"Listening…",mic_sing:"Start singing",mic_singNow:"Sing the note and hold it…",mic_stop:"Stop listening",mic_sungRight:"You sang it right! 🎤",
  mic_heard:"I heard {n}. Try again or tap the answer.",mic_quiet:"I couldn't hear you — sing a little louder, or tap the answer.",
  mic_ncOn:"Play on my piano",mic_ncHow:"Use the microphone: play each note on your real piano, in the right octave.",mic_ncPlay:"Play this note on your piano 🎹",
+ freeH:"Free practice — any time",freeSub:"Want to do only sight-reading or a game? Go ahead and earn coins! This is extra — your plan is above.",
  pp_firstPlan:"Before you practise, make your plan: <b>what</b> you will practise, <b>how many times</b>, and <b>how many minutes</b>.",pp_makePlan:"Make my plan",pp_timeGoal:"{a} of {b} min",pp_min:"{n} min",
  pp_fromNext:"This is the plan you made yesterday. Let's go!",pp_planTomorrow:"Plan tomorrow's practice",pp_nextReady:"Tomorrow's plan is ready",pp_nextChange:"Change",pp_addMore:"Practise more (add cards)",pp_nextSaved:"Tomorrow's plan is saved! 📅",
  pp_setOf:"Round {a} of {b}",pp_setDone:"Round done! {n} more to go 💪",
