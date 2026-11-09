@@ -14,8 +14,8 @@ const RUNITS = [
 ];
 /* beats each tile takes, its syllable and its "apple" picture */
 const RTILE = {
-  q: { b: 1, say: "Tan", on: [0] }, r: { b: 1, say: "shh", on: [] }, ee: { b: 1, say: "ta-ta", on: [0, .5] },
-  h: { b: 2, say: "ta-ah", on: [0] }, ssss: { b: 1, say: "1 2 3 4", on: [0, .25, .5, .75] }, tri: { b: 1, say: "1 2 3", on: [0, 1 / 3, 2 / 3] },
+  q: { b: 1, say: "Tan", on: [0] }, r: { b: 1, say: "rest", on: [] }, ee: { b: 1, say: "ta-ta", on: [0, .5] },
+  h: { b: 2, say: "Taa", on: [0] }, ssss: { b: 1, say: "1 2 3 4", on: [0, .25, .5, .75] }, tri: { b: 1, say: "1 2 3", on: [0, 1 / 3, 2 / 3] },
 };
 const SYL = { ee: ["ta", "ta"], ssss: ["1", "2", "3", "4"], tri: ["1", "2", "3"] };
 /* tile ids: q, r, h, ee, ssss, tri — or a glued apple "base~mask" (mask: 1 = clap this piece, 0 = glued to the piece before) */
@@ -104,8 +104,8 @@ function rsWords(pat) {
   pat.forEach(x => {
     const T = rt(x), base = T.base || x;
     if (x === "q") out.push({ t: b, w: "tan" });
-    else if (x === "r") out.push({ t: b, w: "shh", soft: true });
-    else if (x === "h") { out.push({ t: b, w: "ta" }); out.push({ t: b + 1, w: "ah" }); }
+    else if (x === "r") out.push({ t: b, w: "rest", soft: true });
+    else if (x === "h") out.push({ t: b, w: "taa" });
     else if (SYL[base]) RTILE[base].on.forEach((o, k) => out.push({ t: b + o, w: base === "ee" ? "ta" : String(k + 1), soft: T.mask ? T.mask[k] === "0" : false }));
     b += T.b;
   });
@@ -115,9 +115,9 @@ function rsWords(pat) {
 const VOICE = {}; let VOICE_TRY = false;
 async function voiceLoad() {
   if (VOICE_TRY) return; VOICE_TRY = true; const c = ac(); if (!c) return;
-  await Promise.all(["tan", "ta", "ah", "1", "2", "3", "4", "shh"].map(async w => { try { const r = await fetch(`assets/voice/${w}.m4a`); if (!r.ok) return; VOICE[w] = await c.decodeAudioData(await r.arrayBuffer()); } catch (e) { } }));
+  await Promise.all(["tan", "ta", "taa", "1", "2", "3", "4", "rest"].map(async w => { try { const r = await fetch(`assets/voice/${w}.m4a`); if (!r.ok) return; VOICE[w] = await c.decodeAudioData(await r.arrayBuffer()); } catch (e) { } }));
 }
-const SAYTXT = { tan: "Tan", ta: "ta", ah: "ah", shh: "shh", 1: "one", 2: "two", 3: "three", 4: "four" };
+const SAYTXT = { tan: "Tan", ta: "ta", taa: "Taaa", rest: "rest", 1: "one", 2: "two", 3: "three", 4: "four" };
 function sayAt(w, when, soft) {
   const c = ac(); if (!c) return;
   if (VOICE[w]) { const s = c.createBufferSource(), g = c.createGain(); s.buffer = VOICE[w]; g.gain.value = soft ? .35 : 1; s.connect(g); g.connect(outNode()); s.start(c.currentTime + when); return; }
