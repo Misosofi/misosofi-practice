@@ -888,3 +888,13 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .rs-model{position:absolute;right:-6px;top:-6px;background:#fffbe8;border:2px solid #f1d27a;border-radius:10px;padding:2px}.rs-model .rs-note{width:42px;height:50px}
 .rs-tip{background:#EEF4FF;color:#14213d;border-radius:10px;padding:6px 10px;text-align:center}
 .pp-sing{background:#EEF4FF!important;color:#14213d!important;border:2px solid #7aa2ff!important}
+
+.rs-tile{position:relative}.rs-tile.wrong{border-color:var(--bad)!important;box-shadow:0 0 0 3px #ffd0d0}
+.rs-x{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:0;background:#888;color:#fff;font-weight:900;line-height:1;cursor:pointer}
+.rs-seams{display:flex;gap:2px}.rs-seam{border:1px solid #ddd;background:#fff;border-radius:8px;font-size:11px;padding:1px 3px;opacity:.45;cursor:pointer}.rs-seam.on{opacity:1;border-color:#ff7a00;background:#fff1e0}
+.rs-tipline{background:#fff1e0;color:#5a3000;border-radius:10px;padding:6px 10px}
+
+.paper-banner{background:#FFF4D6!important;color:#4a3300!important;border:2px dashed #e0a100!important;text-align:center;font-size:1.05rem}
+.rs-photo{width:100%;max-width:360px;border-radius:12px;border:1px solid #ddd}
+.rs-rest{font-size:28px;line-height:1}.rs-tile .rs-note{width:30px;height:36px}
+.rs-paper-steps{margin:0;padding-left:18px;align-self:stretch}

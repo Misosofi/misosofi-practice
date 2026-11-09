@@ -176,6 +176,7 @@ function TrenderDetail() {
  ${typeof TWeekCard === "function" ? TWeekCard(st, D) : ""}
  ${typeof TVreqCard === "function" ? TVreqCard(st, D) : ""}
  ${typeof TTimerCard === "function" ? TTimerCard(st, D) : ""}
+ ${typeof TPaperCard === "function" ? TPaperCard(st) : ""}
  ${THwCard(st, D)}
  ${typeof TcatSendCard === "function" ? TcatSendCard(sid) : ""}
 

@@ -68,3 +68,11 @@ document.addEventListener("change", async e => {
   const c = e.target.closest("[data-tptl]"); if (!c || typeof TS === "undefined" || !TS?.me) return;
   const on = c.checked; if (await Tdo(() => TwriteState(TS.cur, d => { d.spotChk = on; }), t("saved"))) TrenderDetail();
 });
+
+/* ---------- teacher: photos of the paper rhythm writing ---------- */
+function TPaperCard(st) {
+  const P = (st.papers || []).slice().reverse().slice(0, 6); if (!P.length) return "";
+  setTimeout(() => document.querySelectorAll("[data-tpaper]").forEach(async i => { if (!i.src) try { i.src = await signed("recordings", i.dataset.tpaper); } catch (e) { } }), 0);
+  return `<div class="card stack teacher"><div class="section-head"><h2>📄 ${t("rs_tPaper")}</h2></div>
+   ${P.map(x => `<div class="small"><b>${esc(fmt(x.date))}</b> · ${t("rs_u_" + x.unit)}${x.pat ? " · " + x.pat.map(y => rt(y).say).join(" | ") : ""}</div><img class="rs-photo" data-tpaper="${esc(x.path)}" alt="">`).join("")}</div>`;
+}
