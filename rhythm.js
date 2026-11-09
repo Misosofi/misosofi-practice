@@ -14,15 +14,15 @@ const RUNITS = [
 ];
 /* beats each tile takes, its syllable and its "apple" picture */
 const RTILE = {
-  q: { b: 1, say: "ta", on: [0] }, r: { b: 1, say: "shh", on: [] }, ee: { b: 1, say: "ti-ti", on: [0, .5] },
-  h: { b: 2, say: "ta-a", on: [0] }, ssss: { b: 1, say: "ti-ka-ti-ka", on: [0, .25, .5, .75] }, tri: { b: 1, say: "tri-o-la", on: [0, 1 / 3, 2 / 3] },
+  q: { b: 1, say: "Tan", on: [0] }, r: { b: 1, say: "shh", on: [] }, ee: { b: 1, say: "ta-ta", on: [0, .5] },
+  h: { b: 2, say: "ta-ah", on: [0] }, ssss: { b: 1, say: "1 2 3 4", on: [0, .25, .5, .75] }, tri: { b: 1, say: "1 2 3", on: [0, 1 / 3, 2 / 3] },
 };
-const SYL = { ee: ["ti", "ti"], ssss: ["ti", "ka", "ti", "ka"], tri: ["tri", "o", "la"] };
+const SYL = { ee: ["ta", "ta"], ssss: ["1", "2", "3", "4"], tri: ["1", "2", "3"] };
 /* tile ids: q, r, h, ee, ssss, tri — or a glued apple "base~mask" (mask: 1 = clap this piece, 0 = glued to the piece before) */
 function rt(id) {
   if (RTILE[id]) return RTILE[id];
   const [base, mask] = String(id).split("~"), B = RTILE[base]; if (!B || !mask) return RTILE.q;
-  const on = B.on.filter((_, k) => mask[k] === "1"), say = SYL[base].map((x, k) => mask[k] === "1" ? x : "–").join(" ").replace(/ –/g, "–");
+  const on = B.on.filter((_, k) => mask[k] === "1"), say = SYL[base].map((x, k) => mask[k] === "1" ? x : "(" + x + ")").join(" ");
   return { b: 1, say, on, base, mask };
 }
 const rtBase = id => String(id).split("~")[0];
@@ -34,17 +34,18 @@ let RS = null;   /* { u, stage: "menu"|"copy"|"apple"|"write", ... } */
 /* ---------- pictures: apples and notes (SVG) ---------- */
 function appleSVG(kind) {
   if (String(kind).includes("~")) {
-    const [base, mask] = kind.split("~"), n = base === "ee" ? 2 : base === "ssss" ? 4 : 3, w = n === 2 ? 40 : n === 4 ? 44 : 42, r = n === 2 ? 15 : n === 3 ? 11 : 9, step = w / n, col = n === 4 ? "#7cc242" : n === 3 ? "#f5c518" : "#e8413c";
+    const [base, mask] = kind.split("~"), n = base === "ee" ? 2 : base === "ssss" ? 4 : 3, w = n === 2 ? 40 : n === 4 ? 44 : 42, r = n === 2 ? 15 : n === 3 ? 11 : 9, step = w / n, col = n === 4 ? "#7cc242" : n === 3 ? "#e8b10c" : "#ff2a2a";
     const xs = Array.from({ length: n }, (_, k) => step * k + step * .5 + r * .45);
     const glue = xs.map((x, k) => k && mask[k] === "0" ? `<rect x="${xs[k - 1] - r * .2}" y="${24 - r * .55}" width="${x - xs[k - 1] + r * .2}" height="${r * 1.1}" rx="${r * .5}" fill="none" stroke="#ff7a00" stroke-width="2.4"/>` : "").join("");
     return `<svg viewBox="0 0 ${w} 40" width="${w * .9}" height="36" aria-hidden="true">${xs.map((x, k) => `<g opacity="${mask[k] === "1" ? 1 : .55}"><path d="M${x} ${24 - r} A${r} ${r} 0 0 0 ${x} ${24 + r} Z" fill="${col}"/><path d="M${x} ${24 - r} A${r * .8} ${r} 0 0 0 ${x} ${24 + r} Z" fill="#fff3cf"/></g>`).join("")}${glue}</svg>`;
   }
-  const whole = `<circle cx="20" cy="24" r="15" fill="#e8413c"/><path d="M20 10 q2-6 7-7" stroke="#6b3a1e" stroke-width="2.5" fill="none"/><ellipse cx="27" cy="8" rx="5" ry="2.6" fill="#4caf50" transform="rotate(-25 27 8)"/><ellipse cx="14" cy="19" rx="3" ry="5" fill="#fff" opacity=".35"/>`;
+  const whole = `<circle cx="20" cy="24" r="15" fill="#9b1020"/><path d="M20 10 q2-6 7-7" stroke="#6b3a1e" stroke-width="2.5" fill="none"/><ellipse cx="27" cy="8" rx="5" ry="2.6" fill="#4caf50" transform="rotate(-25 27 8)"/><ellipse cx="14" cy="19" rx="3" ry="5" fill="#fff" opacity=".35"/>`;
   /* a cut apple: n pieces side by side (each piece = red skin + cream inside) */
   const piece = (cx, r, col = "#e8413c") => `<path d="M${cx} ${24 - r} A${r} ${r} 0 0 0 ${cx} ${24 + r} Z" fill="${col}"/><path d="M${cx} ${24 - r} A${r * .8} ${r} 0 0 0 ${cx} ${24 + r} Z" fill="#fff3cf"/><circle cx="${cx - r * .35}" cy="24" r="${Math.max(1, r * .12)}" fill="#5a3b1e"/>`;
-  const cut = (x, w, n) => { const r = n === 2 ? 15 : n === 3 ? 11 : 9, step = w / n; return `<svg viewBox="0 0 ${w} 40" width="${w * .9}" height="36" aria-hidden="true">${Array.from({ length: n }, (_, k) => piece(x + step * k + step * .5 + r * .45, r, n === 4 ? "#7cc242" : n === 3 ? "#f5c518" : "#e8413c")).join("")}</svg>`; };
+  const cut = (x, w, n) => { const r = n === 2 ? 15 : n === 3 ? 11 : 9, step = w / n; return `<svg viewBox="0 0 ${w} 40" width="${w * .9}" height="36" aria-hidden="true">${Array.from({ length: n }, (_, k) => piece(x + step * k + step * .5 + r * .45, r, n === 4 ? "#7cc242" : n === 3 ? "#e8b10c" : "#ff2a2a")).join("")}</svg>`; };
   if (kind === "q") return `<svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true">${whole}</svg>`;
-  if (kind === "h") return `<svg viewBox="0 0 80 40" width="72" height="36" aria-hidden="true">${whole}<g transform="translate(40 0)">${whole}</g><path d="M28 24 h24" stroke="#5a3b1e" stroke-width="3" stroke-dasharray="3 3"/></svg>`;
+  /* half note: two dark-red apples stuck together (two quarter notes are two apples side by side, not stuck) */
+  if (kind === "h") return `<svg viewBox="0 0 68 40" width="62" height="36" aria-hidden="true">${whole}<g transform="translate(28 0)">${whole}</g><rect x="22" y="18" width="24" height="12" rx="6" fill="#9b1020" stroke="#ff7a00" stroke-width="2.4"/></svg>`;
   if (kind === "r") return `<svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true"><ellipse cx="20" cy="26" rx="16" ry="7" fill="#fff" stroke="#bbb" stroke-width="2"/><ellipse cx="20" cy="25" rx="10" ry="4" fill="none" stroke="#ddd"/></svg>`;
   if (kind === "ee") return cut(0, 40, 2);
   if (kind === "ssss") return cut(0, 44, 4);
