@@ -870,3 +870,20 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .ptodo{border:2px solid var(--accent)}.ptodo-c{display:flex;flex-direction:column;gap:2px;padding:6px 0;border-top:1px dashed var(--line)}.ptodo-c.done{opacity:.6}
 .tmetro .bpm{min-width:34px;text-align:center;font-weight:900}
 .ptl-t{display:flex;flex-direction:column;gap:6px}.ptl-row{display:flex;flex-direction:column;gap:3px}
+
+/* rhythm school */
+.rs-card{border:2px solid #f2b9b0}
+.rs-unit-row{display:flex;gap:12px;align-items:center}.rs-note{width:54px;height:64px;object-fit:contain;flex:none;background:#fff;border-radius:10px}
+.rs-step{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;cursor:pointer}.rs-step .grow{display:flex;flex-direction:column}
+.rs-step-n{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#ffe3df;font-weight:900;flex:none}.rs-step.done .rs-step-n{background:#fff4c2}
+.rs-pat,.rs-line,.rs-pick{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:flex-end}
+.rs-tile{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;color:#222;border:2px solid #f0d6d0;border-radius:12px;padding:4px 6px;font:inherit;cursor:pointer;min-width:52px}
+.rs-tile small{font-weight:800;font-size:11px}.rs-tile.on{border-color:#e8413c}.rs-tile[disabled]{opacity:.4}
+.rs-slot{width:52px;height:56px;border:2px dashed #e0c9c4;border-radius:12px}
+.rs-line{min-height:64px;background:#fff8f4;border-radius:14px;padding:6px;width:100%}
+.rs-res{display:flex;gap:6px}.rs-res i{font-style:normal;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:900}.rs-res i.ok{background:var(--good)}.rs-res i.no{background:var(--bad)}
+.rs-beat{font-size:2rem;font-weight:900;color:#e8413c}
+.rs-pad{position:relative;width:min(80vw,300px);aspect-ratio:200/240;background:#fff;border:2px solid #ddd;border-radius:16px;touch-action:none}
+.rs-pad canvas{position:absolute;inset:0;width:100%;height:100%}#rsCanvas{touch-action:none}
+.rs-model{position:absolute;right:-6px;top:-6px;background:#fffbe8;border:2px solid #f1d27a;border-radius:10px;padding:2px}.rs-model .rs-note{width:42px;height:50px}
+.rs-tip{background:#EEF4FF;color:#14213d;border-radius:10px;padding:6px 10px;text-align:center}

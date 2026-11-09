@@ -6,7 +6,7 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits", "ptl", "spots"];
+const PERSIST = ["v", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits", "ptl", "spots", "rs"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc", "thw", "vreq", "spotChk"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
@@ -398,7 +398,7 @@ function vMe() {
 
 /* ===== activities ===== */
 function openSheet(html, full) { const sh = document.getElementById("sheet"); sh.classList.toggle("full", !!full); const p = document.getElementById("panel"); p.innerHTML = html; sh.hidden = false; if (S) { hydrateMedia(p); hydratePlans(p); } }
-function closeSheet() { silenceAll(); if (typeof smStop === "function" && !isRec && !(A && A.start)) smStop(); if (typeof micStop === "function") micStop(); if (typeof FOLLOW !== "undefined") FOLLOW = null; if (isRec) stopRec(); stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
+function closeSheet() { silenceAll(); if (typeof ccStop === "function") ccStop(); if (typeof smStop === "function" && !isRec && !(A && A.start)) smStop(); if (typeof micStop === "function") micStop(); if (typeof FOLLOW !== "undefined") FOLLOW = null; if (isRec) stopRec(); stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
 function actHead(k) { return `<div class="act-head"><span class="ic" style="background:${ACT[k].col}">${I[ACT[k].ic]}</span><h2>${t("a_" + k)}</h2>${q()[k] ? `<span class="pill g">✓</span>` : `<span class="price">${I.coin}${ACT[k].coins}</span>`}<button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>`; }
 function openAct(k, opt = {}) { A = { k, ...opt }; renderAct(); if (k === "ear") setTimeout(() => A && A.qs && tone(A.qs[0].midi), 300); }
 function renderAct() { if (!A) return; const k = A.k; if (k === "plan") { openSheet(`<div class="act-head"><span class="ic" style="background:#5C6BC0">${I.book}</span><h2>${t("pl_title")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>` + actPlan(), true); return; } const b = k === "piece" ? actPiece() : k === "sight" ? actSight() : k === "nr" ? actNR() : k === "tech" ? actTech() : k === "theory" ? actTheory() : actQuiz(); openSheet(actHead(k) + b, true); }
@@ -670,7 +670,7 @@ function actTheory() {
   if (A.more) return actQuiz();
   if (!A.daily) { const ty = theoryTypes(); A.daily = theoryQ(ty[DAYNO % ty.length]); }
   const Q = A.daily, vids = S.videos || [];
-  return `<div class="stack"><div class="card stack"><div class="section-head"><h2>${t("theoryQ")}</h2><span class="pill a">${gradeName(S.profile.grade)}</span></div>
+  return `<div class="stack">${typeof rsCard === "function" ? rsCard() : ""}<div class="card stack"><div class="section-head"><h2>${t("theoryQ")}</h2><span class="pill a">${gradeName(S.profile.grade)}</span></div>
  <h3 style="font-size:1.05rem">${esc(Q.p)}</h3>${Q.vis ? `<div class="staffbox">${Q.vis}</div>` : ""}
  <div class="opts">${Q.opts.map(o => `<button class="opt ${A.picked != null ? (o === Q.ans ? "right" : o === A.picked ? "wrong" : "") : ""}" data-act="dAns" data-o="${esc(o)}" ${A.picked != null ? "disabled" : ""}>${esc(o)}</button>`).join("")}</div>
  ${A.picked != null ? `<div style="text-align:center;font-weight:800;color:${A.picked === Q.ans ? "var(--good)" : "var(--bad)"}">${A.picked === Q.ans ? t("correct") : t("notQuite", { a: esc(Q.ans) })}</div><button class="btn soft" data-act="theoryMore">${t("more")}</button><div class="muted small" style="text-align:center">${t("moreSub")}</div>` : ""}
@@ -731,7 +731,7 @@ function onboarding() {
   const s = OB.step; let b = "";
   if (s === 0) b = `<div class="mascot">${mascotSVG()}<div class="bubble">${t("ob0")}</div></div><h1>${t("ob1")}</h1><input id="obName" value="${esc(S.profile.name)}" autocomplete="off" maxlength="40" style="font-size:1.2rem;flex:none"><div class="muted small">${t("ob1b")}</div><button class="btn block" data-act="ob1">${t("cont")}</button>`;
   if (s === 1) b = `<h1>${t("ob2")}</h1><div class="bigchoice"><button class="${S.profile.gender === "boy" ? "on" : ""}" data-act="obG" data-v="boy"><span class="face">${avatarSVG({ animal: "dog", fur: 4, outfit: "tee", oc: 4, acc: "none", bg: 4 }, { head: true })}</span>${t("boy")}</button><button class="${S.profile.gender === "girl" ? "on" : ""}" data-act="obG" data-v="girl"><span class="face">${avatarSVG({ animal: "bunny", fur: 0, outfit: "dress", oc: 1, acc: "bow", bg: 1 }, { head: true })}</span>${t("girl")}</button></div><button class="btn soft block" data-act="obG" data-v="">${t("skip")}</button>`;
-  if (s === 2) b = `<h1>${t("ob3")}</h1><div class="agepick">${Array.from({ length: 13 }, (_, i) => i + 6).map(n => `<button class="${S.profile.age === n ? "on" : ""}" data-act="obAge" data-v="${n}">${n}</button>`).join("")}</div><button class="btn block" data-act="obNext">${t("cont")}</button>`;
+  if (s === 2) b = `<h1>${t("ob3")}</h1><div class="agepick">${Array.from({ length: 15 }, (_, i) => i + 4).map(n => `<button class="${S.profile.age === n ? "on" : ""}" data-act="obAge" data-v="${n}">${n}</button>`).join("")}</div><button class="btn block" data-act="obNext">${t("cont")}</button>`;
   if (s === 3) b = `<h1>${t("ob4")}</h1>${avatarEditor()}<button class="btn block" data-act="obNext">${t("cont")}</button>`;
   if (s === 4) b = `<h1>${t("ob5")}</h1><div class="muted">${t("ob5b")}</div>${skinPicker()}<button class="btn block" data-act="obDone">${t("letsgo")}</button>`;
   openSheet(`<div class="ob-step"><div class="ob-dots">${[0, 1, 2, 3, 4].map(i => `<i class="${i === s ? "on" : ""}"></i>`).join("")}</div>${b}</div>`, true);
