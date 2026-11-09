@@ -1,7 +1,7 @@
 /* Service worker: caches the app shell so the app opens offline.
    Supabase API/Auth/Storage/Functions requests are never cached (they are not intercepted at all).
    Bump VERSION on every deploy so phones pick up the new files. */
-const VERSION = "misosofi-practice-v1.38.0";
+const VERSION = "misosofi-practice-v1.38.1";
 const SHELL = [
   "./", "./index.html", "./styles.css", "./config.js", "./strings.js", "./core.js", "./data.js", "./songs.js", "./pitch.js", "./micgames.js", "./pets.js", "./zoo.js", "./rhythm.js", "./plan.js", "./technique.js", "./homework.js", "./weekly.js", "./story.js", "./practiceplan.js", "./catalogs.js", "./visits.js", "./daizu.js", "./student.js", "./vreq.js", "./teacher.js", "./install.js", "./app.js",
   "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png"
@@ -32,7 +32,7 @@ self.addEventListener("fetch", e => {
   const fonts = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
   if (!sameOrigin && !fonts && req.url !== CDN) return;
   if (sameOrigin && url.searchParams.has("join")) return;           /* invite links: always fresh */
-  if (sameOrigin && /\.(mp4|mov|webm)$/i.test(url.pathname)) return;   /* videos: Safari needs real range requests */
+  if (sameOrigin && /\.(mp4|mov|webm|m4a)$/i.test(url.pathname)) return;   /* videos: Safari needs real range requests */
   if (sameOrigin && url.pathname.includes("/assets/")) {
     e.respondWith((async () => { const c = await caches.open(ASSETS), hit = await c.match(req); if (hit) return hit; const r = await fetch(req); if (r.ok) c.put(req, r.clone()); return r; })());
     return;

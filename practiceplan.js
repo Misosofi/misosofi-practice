@@ -147,7 +147,7 @@ function ppCounter(id) {
   }
   openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
   <div class="muted" style="text-align:center">${ppHow(c)}</div>
-  ${(c.tips || []).includes("singplay") || (c.steps || []).includes("listenSing") ? hwSingBox() : ""}
+  ${(c.tips || []).includes("singplay") || (c.steps || []).includes("listenSing") || (hwFresh(S.thw) && S.thw.sing?.length && (S.thw.pieces || []).some(p => p.title === c.what)) ? hwSingBox() : ""}
   ${c.tips?.length ? `<div class="card pp-remember">💬 <b>${t("pp_remember")}</b> ${c.tips.map(k => (SAID.find(s => s[0] === k) || [0, ""])[1] + " " + esc(STR_has("wz_s_" + k) ? t("wz_s_" + k) : k)).join(" · ")}</div>` : ""}
   ${c.steps?.length ? `<div class="card pp-steps"><b>🎯 ${t("pp_howTo")}</b>${c.steps.map((k, i) => { const d = i < (c.stepDone || 0), cur = i === (c.stepDone || 0);
     return `<button class="pp-step ${d ? "done" : ""} ${cur ? "cur" : ""}" data-pp="step" data-i="${i}"><span class="pp-step-n">${d ? "✓" : i + 1}</span><span class="grow">${stratTxt(k)}</span>${cur ? `<span class="pill m">${t("pp_stepNow")}</span>` : ""}</button>`; }).join("")}
@@ -461,8 +461,12 @@ function libPicker(W) {
 function libFilter(q) { if (PPW?.lib) PPW.lib.q = q; const s = q.toLowerCase(); document.querySelectorAll(".lib-pick [data-q]").forEach(r => r.hidden = !!s && !r.dataset.q.includes(s)); }
 
 /* the teacher's own singing (her homework voice/video message) to listen to, sing along with, then play */
+/* Atsuko's own sung recordings the teacher can assign (built into the app) */
+const SINGRECS = [1, 2, 3, 4].map(n => ({ id: "sing" + n, title: "Sing & play — part " + n, src: `assets/audio/sing_${n}.m4a` }));
 function hwSingBox() {
-  const h = S.thw; if (!h?.path) return `<div class="card small pp-sing">🎧 ${t("hs_noRec")}</div>`;
+  const h = S.thw, built = (hwFresh(h) ? h.sing || [] : []).map(id => SINGRECS.find(r => r.id === id)).filter(Boolean);
+  if (built.length) return `<div class="card stack pp-sing"><b>🎧 ${t("hs_h")}</b><div class="small">${t("hs_how")}</div>${built.map(r => `<div class="small"><b>${esc(r.title)}</b></div><audio src="${r.src}" controls preload="metadata" style="width:100%"></audio>`).join("")}</div>`;
+  if (!h?.path) return `<div class="card small pp-sing">🎧 ${t("hs_noRec")}</div>`;
   setTimeout(() => document.querySelectorAll("[data-hsing]").forEach(async a => { if (!a.src) try { a.src = await signed("scores", a.dataset.hsing); } catch (e) { } }), 0);
   return `<div class="card stack pp-sing"><b>🎧 ${t("hs_h")}</b><div class="small">${t("hs_how")}</div>
    ${h.kind === "video" ? `<video class="plan-video" data-hsing="${esc(h.path)}" controls playsinline preload="metadata"></video>` : `<audio data-hsing="${esc(h.path)}" controls preload="metadata" style="width:100%"></audio>`}</div>`;

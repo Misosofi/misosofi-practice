@@ -10,7 +10,7 @@ const hwFresh = h => h && h.id && h.date && diffDays(h.date, TK) <= HW_DAYS;
 let HWREC = { mr: null };
 function THwDraft(sid, st) {
   if (TS.hw?.sid === sid) return TS.hw;
-  return TS.hw = { sid, pieces: [], bars: {}, said: [], scales: false, scaleTxt: "", tech: [], extras: [], vids: [], text: "", blob: null, kind: null, open: false };
+  return TS.hw = { sid, pieces: [], bars: {}, said: [], scales: false, scaleTxt: "", tech: [], extras: [], vids: [], sing: [], text: "", blob: null, kind: null, open: false };
 }
 function THwCard(st, D) {
   const sid = TS.cur, H = THwDraft(sid, st), cur = hwFresh(st.thw) ? st.thw : st.thw?.id ? st.thw : null;
@@ -20,7 +20,7 @@ function THwCard(st, D) {
   const summary = h => [...(h.pieces || []).map(p => "🎵 " + p.title + (p.from ? ` ${t("pp_bars")} ${p.from}${p.to && p.to !== p.from ? "–" + p.to : ""}` : "")),
     ...(h.said || []).map(k => (SAID.find(s => s[0] === k) || [0, ""])[1] + " " + t("wz_s_" + k)), h.scales ? "🎼 " + (h.scales === true ? t("pp_scales") : h.scales) : "",
     ...(h.tech || []).map(id => techOf(id).em + " " + t("tc_" + id)), ...(h.extras || []).map(k => t("wz_x_" + k)),
-    ...(h.vids || []).map(id => "📺 " + ((st.videos || []).find(v => v.id === id)?.title || ""))].filter(Boolean);
+    ...(h.vids || []).map(id => "📺 " + ((st.videos || []).find(v => v.id === id)?.title || "")), ...(h.sing || []).map(id => "🎧 " + (SINGRECS.find(r => r.id === id)?.title || ""))].filter(Boolean);
   const sent = cur ? `<div class="card stack hw-sent"><div class="section-head"><b>✓ ${t("hw_sentOn", { d: fmt(cur.date) })}</b>${cur.seen ? "" : ""}<button class="x" data-thw="del" aria-label="Delete">×</button></div>
      ${cur.path ? (cur.kind === "video" ? `<video class="plan-video" data-thwm="${esc(cur.path)}" controls playsinline preload="metadata"></video>` : `<audio data-thwm="${esc(cur.path)}" controls preload="none"></audio>`) : ""}
      ${cur.text ? `<div class="plan-text">${esc(cur.text)}</div>` : ""}<div class="small">${summary(cur).map(esc).join(" · ")}</div>
@@ -40,6 +40,7 @@ function THwCard(st, D) {
    <div class="label">${t("hw_said")}</div><div class="chips">${SAID.map(([k, e]) => chip("said", k, e + " " + t("wz_s_" + k))).join("")}</div>
    <div class="label">${t("wz_q_scales")}</div><input id="hwScale" maxlength="40" value="${esc(H.scaleTxt)}" placeholder="${t("hw_scalePh")}">
    <div class="label">${t("wz_q_tech")}</div><div class="chips">${TECH.map(x => chip("tech", x.id, x.em + " " + t("tc_" + x.id))).join("")}</div>
+   <div class="label">🎧 ${t("hw_sing")}</div><div class="chips">${SINGRECS.map(r => chip("sing", r.id, "🎧 " + esc(r.title))).join("")}</div>
    <div class="label">${t("hw_games")}</div><div class="chips">${EXTRAS.map(k => chip("extras", k, t("wz_x_" + k))).join("")}</div>
    ${(st.videos || []).length ? `<div class="label">📺 ${t("hw_vids")}</div><div class="chips">${st.videos.map(v => chip("vids", v.id, esc(v.title))).join("")}</div>` : `<div class="muted small">📺 ${t("hw_noVids")}</div>`}
    <button class="btn block" data-thw="send" ${TS.busy || recOn ? "disabled" : ""}>✓ ${t("hw_send")}</button></div>`;
@@ -76,11 +77,11 @@ async function THwRec(kind) {
 function THwStop() { if (HWREC.mr && HWREC.mr.state !== "inactive") HWREC.mr.stop(); }
 async function THwSend() {
   THwRead(); const H = TS.hw, sid = TS.cur; if (!H || H.sid !== sid) return;
-  if (!H.blob && !H.text.trim() && !H.pieces.length && !H.said.length && !H.scaleTxt && !H.tech.length && !H.extras.length && !H.vids.length) { toast(t("hw_empty")); return; }
+  if (!H.blob && !H.text.trim() && !H.pieces.length && !H.said.length && !H.scaleTxt && !H.tech.length && !H.extras.length && !H.vids.length && !H.sing.length) { toast(t("hw_empty")); return; }
   TS.busy = true; TrenderDetail();
   const id = uid(), hw = { id, date: TK, kind: H.blob ? H.kind : null, path: null, text: H.text.trim(),
     pieces: H.pieces.map(n => ({ title: n, from: H.bars[n]?.from || "", to: H.bars[n]?.to || "" })), said: H.said.slice(), scales: H.scaleTxt || "",
-    tech: H.tech.slice(), extras: H.extras.slice(), vids: H.vids.slice() };
+    tech: H.tech.slice(), extras: H.extras.slice(), vids: H.vids.slice(), sing: H.sing.slice() };
   let old = null;
   const ok = await Tdo(async () => {
     if (H.blob) { hw.path = `${TS.me.id}/hw-${sid}-${id}.${extOf(H.blob)}`; await DB.upload("scores", hw.path, H.blob, H.blob.type); }
