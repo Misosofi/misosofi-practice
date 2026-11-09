@@ -123,6 +123,7 @@ function TvSettings() {
   <div><strong>${t("tr_terms")}</strong><div class="muted small">${t("tr_termsD")}</div></div>
   <textarea id="tTerms" maxlength="2000" style="min-height:130px">${esc(TS.tset?.visit_terms || t("fl_termsDefault"))}</textarea>
   <button class="btn" data-act="tRules">${t("save")}</button></div></div>
+ <div class="section">${typeof TvoxCard === "function" ? (setTimeout(TvoxCheck, 0), TvoxCard()) : ""}</div>
  <div class="section"><div class="card stack"><h2>${t("t_keepRecs")}</h2><div class="chips">${[7, 14, 30].map(n => `<button class="chip ${TS.keep === n ? "on" : ""}" data-act="tKeep" data-n="${n}">${t("t_daysN", { n })}</button>`).join("")}</div><div class="muted small">${t("t_keepD")}</div></div></div>
  <div class="section"><div class="card stack"><div class="label">${t("languageH")}</div><div class="chips"><button class="chip on">English</button><button class="chip" disabled>日本語 · ${t("soon")}</button><button class="chip" disabled>Español · ${t("soon")}</button></div>
  <div class="muted small">${t("au_signedInAs", { e: esc(MYEMAIL) })}</div><button class="btn ghost" data-act="signOut">${t("au_signOut")}</button></div></div>`;

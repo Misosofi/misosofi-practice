@@ -115,7 +115,8 @@ function rsWords(pat) {
 const VOICE = {}; let VOICE_TRY = false;
 async function voiceLoad() {
   if (VOICE_TRY) return; VOICE_TRY = true; const c = ac(); if (!c) return;
-  await Promise.all(["tan", "ta", "taa", "1", "2", "3", "4", "rest"].map(async w => { try { const r = await fetch(`assets/voice/${w}.m4a`); if (!r.ok) return; VOICE[w] = await c.decodeAudioData(await r.arrayBuffer()); } catch (e) { } }));
+  await voiceLoadTeacher(c);   /* the teacher's own voice first */
+  await Promise.all(["tan", "ta", "taa", "1", "2", "3", "4", "rest"].map(async w => { if (VOICE[w]) return; try { const r = await fetch(`assets/voice/${w}.m4a`); if (!r.ok) return; VOICE[w] = await c.decodeAudioData(await r.arrayBuffer()); } catch (e) { } }));
 }
 const SAYTXT = { tan: "Tan", ta: "ta", taa: "Taaa", rest: "rest", 1: "one", 2: "two", 3: "three", 4: "four" };
 function sayAt(w, when, soft) {
@@ -314,4 +315,61 @@ document.addEventListener("click", async e => {
   catch (er) { b.disabled = false; toast(t("err_net")); return; }
   S.papers = (S.papers || []).concat({ id, date: TK, unit: U.id, path, pat: RS.pat.slice() }).slice(-30);
   rsDone("paper"); URL.revokeObjectURL(RS.photo); RS.photo = null; RS.blob = null; rsRender(); toast(t("rs_pDone"));
+});
+
+/* ---------- the teacher's own voice for Rhythm school ----------
+   The teacher records each word once (Settings). Files: scores/<teacher>/voice/<word>.wav — her students can read them.
+   Each take is trimmed (silence before/after removed) and saved as a small WAV. */
+const VWORDS = [["tan", "Tan"], ["ta", "ta (ta-ta)"], ["taa", "Taa"], ["1", "One"], ["2", "Two"], ["3", "Three"], ["4", "Four"], ["rest", "rest"]];
+async function voiceLoadTeacher(c) {
+  const tid = typeof PROF !== "undefined" ? PROF?.teacher_id : null; if (!tid || (typeof DEMO !== "undefined" && DEMO)) return;
+  await Promise.all(VWORDS.map(async ([w]) => { try { const u = await signed("scores", `${tid}/voice/${w}.wav`); const r = await fetch(u); if (r.ok) VOICE[w] = await c.decodeAudioData(await r.arrayBuffer()); } catch (e) { } }));
+}
+function wavOf(buf) {   /* mono 16-bit WAV */
+  const d = buf.getChannelData(0), sr = buf.sampleRate, n = d.length, ab = new ArrayBuffer(44 + n * 2), v = new DataView(ab);
+  const ws = (o, s) => [...s].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)));
+  ws(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); ws(8, "WAVE"); ws(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); ws(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, d[i])) * 32767, true);
+  return new Blob([ab], { type: "audio/wav" });
+}
+async function trimVoice(blob) {
+  const c = ac(), src = await c.decodeAudioData(await blob.arrayBuffer()), d = src.getChannelData(0), sr = src.sampleRate;
+  let peak = 0; for (const x of d) peak = Math.max(peak, Math.abs(x)); const th = peak * .12, win = Math.round(sr * .01);
+  let a = 0, b = d.length - 1; while (a < d.length && Math.abs(d[a]) < th) a++; while (b > a && Math.abs(d[b]) < th) b--;
+  a = Math.max(0, a - win); b = Math.min(d.length, b + win * 6); const len = Math.min(b - a, Math.round(sr * 1.4)), g = .9 / (peak || 1);
+  const out = c.createBuffer(1, len, sr), o = out.getChannelData(0); for (let i = 0; i < len; i++) { const fade = Math.min(1, (len - i) / (sr * .03)); o[i] = d[a + i] * g * fade; }
+  return out;
+}
+let TVOX = { has: {}, rec: null };
+async function TvoxCheck() {
+  if (!TS?.me) return; const res = {};
+  await Promise.all(VWORDS.map(async ([w]) => { try { await DB.url("scores", `${TS.me.id}/voice/${w}.wav`); res[w] = true; } catch (e) { } }));
+  TVOX.has = res; const el = document.getElementById("tVox"); if (el) el.outerHTML = TvoxCard();
+}
+function TvoxCard() {
+  return `<div class="card stack teacher" id="tVox"><h2>🗣 ${t("vx_h")}</h2><div class="muted small">${t("vx_how")}</div>
+   <div class="list">${VWORDS.map(([w, l]) => `<div class="row"><b class="grow">${esc(l)}</b>${TVOX.has[w] ? `<span class="pill g">✓</span><button class="btn sm soft" data-vox="play" data-w="${w}">▶</button>` : ""}
+     <button class="btn sm ${TVOX.rec === w ? "vr-stop" : ""}" data-vox="rec" data-w="${w}">${TVOX.rec === w ? "■ " + t("vr_stop") : "● " + (TVOX.has[w] ? t("vx_again") : t("vr_start"))}</button></div>`).join("")}</div></div>`;
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-vox]"); if (!b || typeof TS === "undefined" || !TS?.me) return; const w = b.dataset.w, path = `${TS.me.id}/voice/${w}.wav`;
+  const redraw = () => { const el = document.getElementById("tVox"); if (el) el.outerHTML = TvoxCard(); };
+  if (b.dataset.vox === "play") { try { const a = new Audio(await signed("scores", path)); a.play(); } catch (er) { } return; }
+  if (TVOX.mr) { TVOX.mr.stop(); return; }
+  try {
+    await acReady(); const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false } });
+    const mr = new MediaRecorder(st), ch = []; TVOX.mr = mr; TVOX.rec = w; redraw();
+    mr.ondataavailable = ev => { if (ev.data.size) ch.push(ev.data); };
+    mr.onstop = async () => {
+      st.getTracks().forEach(x => x.stop()); TVOX.mr = null; TVOX.rec = null; redraw();
+      try {
+        const buf = await trimVoice(new Blob(ch, { type: mr.mimeType || "audio/mp4" })), wav = wavOf(buf);
+        if (TVOX.has[w]) await DB.rmFiles("scores", [path]).catch(() => { });
+        await DB.upload("scores", path, wav, "audio/wav"); TVOX.has[w] = true; VOICE[w] = buf; redraw();
+        const s = ac().createBufferSource(); s.buffer = buf; s.connect(outNode()); s.start(); toast(t("saved"));
+      } catch (er) { toast(t("err_net")); }
+    };
+    mr.start(); setTimeout(() => { if (mr.state !== "inactive") mr.stop(); }, 2500);
+  } catch (er) { toast(t("micBlocked")); }
 });
