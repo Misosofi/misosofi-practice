@@ -74,5 +74,5 @@ function TPaperCard(st) {
   const P = (st.papers || []).slice().reverse().slice(0, 6); if (!P.length) return "";
   setTimeout(() => document.querySelectorAll("[data-tpaper]").forEach(async i => { if (!i.src) try { i.src = await signed("recordings", i.dataset.tpaper); } catch (e) { } }), 0);
   return `<div class="card stack teacher"><div class="section-head"><h2>📄 ${t("rs_tPaper")}</h2></div>
-   ${P.map(x => `<div class="small"><b>${esc(fmt(x.date))}</b> · ${t("rs_u_" + x.unit)}${x.pat ? " · " + x.pat.map(y => rt(y).say).join(" | ") : ""}</div><img class="rs-photo" data-tpaper="${esc(x.path)}" alt="">`).join("")}</div>`;
+   ${P.map(x => `<div class="small"><b>${esc(fmt(x.date))}</b> · ${t("rs_u_" + x.unit)}${x.pat ? " · " + x.pat.map(y => rt(y).say).join(" | ") : ""}</div>${x.pat && typeof noteAnswer === "function" ? `<div class="rs-pat small">${x.pat.map(y => `<span class="rs-tile">${noteAnswer(y)}</span>`).join("")}</div>` : ""}<img class="rs-photo" data-tpaper="${esc(x.path)}" alt="">`).join("")}</div>`;
 }

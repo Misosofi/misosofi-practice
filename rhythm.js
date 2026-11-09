@@ -76,6 +76,21 @@ function noteDraw(ctx, id, style) {
   });
   ctx.restore();
 }
+/* the answer for the paper step: the real note (rest = quarter rest, glued pieces = a tie between heads) */
+function noteAnswer(id) {
+  const c = document.createElement("canvas"); c.width = 200; c.height = 240; const x = c.getContext("2d");
+  if (id === "r") {
+    x.save(); x.strokeStyle = x.fillStyle = "#222"; x.lineWidth = 9; x.lineCap = x.lineJoin = "round"; x.beginPath();
+    x.moveTo(84, 50); x.lineTo(118, 96); x.lineTo(88, 128); x.lineTo(120, 170); x.stroke();
+    x.beginPath(); x.moveTo(120, 170); x.bezierCurveTo(80, 150, 70, 190, 104, 210); x.stroke(); x.restore();
+  } else {
+    const base = rtBase(id), mask = String(id).split("~")[1]; noteDraw(x, base, { c: "#222", w: 7 });
+    if (mask) { const H = NOTE_SHAPES[base].filter(p => p.head).map(p => p.head[0]);
+      x.save(); x.strokeStyle = "#c0392b"; x.lineWidth = 6; x.lineCap = "round";
+      [...mask].forEach((m, k) => { if (k && m === "0" && H[k] != null) { x.beginPath(); x.moveTo(H[k - 1] + 6, 214); x.quadraticCurveTo((H[k - 1] + H[k]) / 2, 236, H[k] - 6, 214); x.stroke(); } }); x.restore(); }
+  }
+  return `<img class="rs-note" src="${c.toDataURL()}" alt="">`;
+}
 function noteSVGsmall(id) {
   const c = document.createElement("canvas"); c.width = 200; c.height = 240; noteDraw(c.getContext("2d"), id, { c: "#222", w: 7 });
   return `<img class="rs-note" src="${c.toDataURL()}" alt="">`;
@@ -224,15 +239,17 @@ function rsRender() {
       <div class="rs-pick">${U.tiles.map(x => `<button class="rs-tile" data-rs="line" data-x="${x}" ${used + rt(x).b > 4 || RS.aRes != null ? "disabled" : ""}>${appleSVG(x)}<small>${rt(x).say}</small></button>`).join("")}</div>
       ${used === 4 && RS.aRes == null ? `<button class="btn" data-rs="acheck">✓ ${t("rs_check")}</button>` : ""}</div>`;
   } else if (RS.stage === "paper") {
-    while (!RS.pat || RS.pat.includes("r")) RS.pat = rsPattern(RS.u);   /* no rests on paper — apples only */
+    RS.pat ||= rsPattern(RS.u);   /* apples + words on the screen; the child writes the NOTES on paper */
     const P = (S.papers || []).filter(x => x.unit === U.id).slice(-1)[0];
     body = `<div class="card paper-banner">📄✏️ <b>${t("rs_paperBanner")}</b></div>
      <div class="card stack" style="align-items:center"><b>${t("rs_paperHow")}</b>
-      <div class="rs-pat rs-paperpat">${RS.pat.map(x => `<span class="rs-tile">${appleSVG(x)}</span>`).join("")}</div>
+      <div class="rs-pat rs-paperpat">${RS.pat.map(x => `<span class="rs-tile">${appleSVG(x)}<small>${rt(x).say}</small></span>`).join("")}</div>
+      <button class="btn sm soft" data-rs="listen">🔊 ${t("rs_listen")}</button><b class="rs-count" id="rsCount"></b>
       <ol class="small rs-paper-steps"><li>${t("rs_p1")}</li><li>${t("rs_p2")}</li><li>${t("rs_p3")}</li></ol>
       ${RS.photo ? `<img class="rs-photo" src="${RS.photo}" alt=""><div class="row" style="gap:8px"><label class="btn soft">↺ ${t("rs_pAgain")}<input type="file" accept="image/*" capture="environment" id="rsPhoto" hidden></label><button class="btn" data-rs="psend">📤 ${t("rs_pSend")}</button></div>`
         : `<label class="btn block">📷 ${t("rs_pTake")}<input type="file" accept="image/*" capture="environment" id="rsPhoto" hidden></label>`}
       ${P ? `<div class="small muted">✓ ${t("rs_pSent", { d: fmt(P.date) })}</div>` : ""}
+      ${RS.ans ? `<div class="card rs-answer stack" style="align-items:center"><b>✅ ${t("rs_pAns")}</b><div class="rs-pat">${RS.ans.map(x => `<span class="rs-tile">${noteAnswer(x)}</span>`).join("")}</div><div class="small muted">${t("rs_pAnsHow")}</div></div>` : ""}
       <button class="btn sm ghost" data-rs="newpat">↻ ${t("rs_newOne")}</button></div>`;
   } else if (RS.stage === "write") {
     RS.wi ??= 0; RS.wid = U.write[RS.wi]; RS.guide ??= true;
@@ -254,7 +271,7 @@ document.addEventListener("click", async e => {
   const b = e.target.closest("[data-rs]"); if (!b || !S) return; const a = b.dataset.rs;
   if (a === "open") { rsS(); rsOpen(+b.dataset.u); acReady().then(voiceLoad); }
   else if (a === "stage") { ccStop(); Object.assign(RS, { stage: b.dataset.s, pat: null, res: null, line: null, aRes: null, wi: 0, guide: true, wRes: null, busy: null }); rsRender(); }
-  else if (a === "newpat") { Object.assign(RS, { pat: null, res: null, line: null, aRes: null }); rsRender(); }
+  else if (a === "newpat") { Object.assign(RS, { pat: null, res: null, line: null, aRes: null, ans: null }); rsRender(); }
   else if (a === "listen") { await acReady(); await voiceLoad(); rsPlay(RS.pat, true, true); }
   else if (a === "clap") {
     await acReady(); const ok = CC || await ccStart(); if (!ok) { RS.noMic = true; rsRender(); return; }
@@ -317,7 +334,7 @@ document.addEventListener("click", async e => {
   try { if (typeof DEMO === "undefined" || !DEMO) await DB.upload("recordings", path, RS.blob, "image/jpeg"); }
   catch (er) { b.disabled = false; toast(t("err_net")); return; }
   S.papers = (S.papers || []).concat({ id, date: TK, unit: U.id, path, pat: RS.pat.slice() }).slice(-30);
-  rsDone("paper"); URL.revokeObjectURL(RS.photo); RS.photo = null; RS.blob = null; rsRender(); toast(t("rs_pDone"));
+  rsDone("paper"); URL.revokeObjectURL(RS.photo); RS.photo = null; RS.blob = null; RS.ans = RS.pat.slice(); rsRender(); toast(t("rs_pDone"));
 });
 
 /* ---------- the teacher's own voice for Rhythm school ----------

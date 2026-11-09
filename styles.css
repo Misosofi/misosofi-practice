@@ -901,3 +901,4 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .rs-quick{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;cursor:pointer;border:2px solid #f2b9b0;margin-bottom:10px}.rs-quick .grow{display:flex;flex-direction:column}.rs-quick-ic{font-size:30px}
 .rs-count{display:inline-block;min-width:34px;font-size:1.6rem;color:#e8413c;text-align:center}
 .rs-paperpat .rs-tile svg{transform:scale(1.4);margin:8px 6px}
+.rs-answer{background:#f3fbef;border:2px solid #9fd38a}.rs-answer .rs-note{width:46px;height:56px}
