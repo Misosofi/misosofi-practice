@@ -899,3 +899,4 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .rs-rest{font-size:28px;line-height:1}.rs-tile .rs-note{width:30px;height:36px}
 .rs-paper-steps{margin:0;padding-left:18px;align-self:stretch}
 .rs-quick{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;cursor:pointer;border:2px solid #f2b9b0;margin-bottom:10px}.rs-quick .grow{display:flex;flex-direction:column}.rs-quick-ic{font-size:30px}
+.rs-count{display:inline-block;min-width:34px;font-size:1.6rem;color:#e8413c;text-align:center}

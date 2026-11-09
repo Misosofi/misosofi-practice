@@ -88,7 +88,7 @@ function clapSound(when = 0, loud = .5) {
   const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); f.type = "bandpass"; f.frequency.value = 1400; f.Q.value = .8; g.gain.value = loud;
   s.buffer = buf; s.connect(f); f.connect(g); g.connect(outNode()); s.start(c.currentTime + when);
 }
-const RS_BPM = 80, beatS = () => 60 / RS_BPM;
+const RS_BPM = 72, beatS = () => 60 / RS_BPM;
 function rsPattern(u) {   /* 4 beats made from this unit's tiles; the new tile always appears */
   const U = RUNITS[u], ts = U.tiles, nw = ts[ts.length - 1]; let out = [], b = 0;
   while (b < 4) { const opts = ts.filter(x => b + rt(x).b <= 4); const x = opts[Math.floor(Math.random() * opts.length)]; out.push(x); b += rt(x).b; }
@@ -98,10 +98,40 @@ function rsPattern(u) {   /* 4 beats made from this unit's tiles; the new tile a
   return out;
 }
 const rsOnsets = pat => { let b = 0, on = []; pat.forEach(x => { rt(x).on.forEach(o => on.push(b + o)); b += rt(x).b; }); return on; };
-function rsPlay(pat, countIn = true) {
+/* what the voice says, beat by beat: Tan / ta ta / ta ah / 1 2 3 / 1 2 3 4 (glued pieces whispered) / shh */
+function rsWords(pat) {
+  let b = 0; const out = [];
+  pat.forEach(x => {
+    const T = rt(x), base = T.base || x;
+    if (x === "q") out.push({ t: b, w: "tan" });
+    else if (x === "r") out.push({ t: b, w: "shh", soft: true });
+    else if (x === "h") { out.push({ t: b, w: "ta" }); out.push({ t: b + 1, w: "ah" }); }
+    else if (SYL[base]) RTILE[base].on.forEach((o, k) => out.push({ t: b + o, w: base === "ee" ? "ta" : String(k + 1), soft: T.mask ? T.mask[k] === "0" : false }));
+    b += T.b;
+  });
+  return out;
+}
+/* voice: Atsuko's recorded syllables if present (assets/voice/<word>.m4a), otherwise the phone's own voice */
+const VOICE = {}; let VOICE_TRY = false;
+async function voiceLoad() {
+  if (VOICE_TRY) return; VOICE_TRY = true; const c = ac(); if (!c) return;
+  await Promise.all(["tan", "ta", "ah", "1", "2", "3", "4", "shh"].map(async w => { try { const r = await fetch(`assets/voice/${w}.m4a`); if (!r.ok) return; VOICE[w] = await c.decodeAudioData(await r.arrayBuffer()); } catch (e) { } }));
+}
+const SAYTXT = { tan: "Tan", ta: "ta", ah: "ah", shh: "shh", 1: "one", 2: "two", 3: "three", 4: "four" };
+function sayAt(w, when, soft) {
+  const c = ac(); if (!c) return;
+  if (VOICE[w]) { const s = c.createBufferSource(), g = c.createGain(); s.buffer = VOICE[w]; g.gain.value = soft ? .35 : 1; s.connect(g); g.connect(outNode()); s.start(c.currentTime + when); return; }
+  if (!("speechSynthesis" in window)) return;
+  setTimeout(() => { const u = new SpeechSynthesisUtterance(SAYTXT[w] || w); u.lang = "en-GB"; u.rate = 1.6; u.volume = soft ? .35 : 1; try { speechSynthesis.speak(u); } catch (e) { } }, Math.max(0, when * 1000 - 90));
+}
+/* count-in (4 clicks), then the rhythm said by the voice with a soft metronome underneath */
+function rsPlay(pat, countIn = true, metro = true) {
   const c = ac(); if (!c) return 0; const B = beatS(), start = countIn ? 4 * B : 0;
-  if (countIn) for (let i = 0; i < 4; i++) setTimeout(() => click(i === 0), i * B * 1000);
-  rsOnsets(pat).forEach(o => clapSound(start + o * B, .6));
+  if (countIn) for (let i = 0; i < 4; i++) setTimeout(() => { click(i === 0); const el = document.getElementById("rsCount"); if (el) el.textContent = String(i + 1); }, i * B * 1000);
+  if (metro) for (let i = 0; i < 4; i++) setTimeout(() => { click(false); const el = document.getElementById("rsCount"); if (el) el.textContent = "♪"; }, (start + i * B) * 1000);
+  rsOnsets(pat).forEach(o => clapSound(start + o * B, .55));   /* the clap sound stays: you hear the claps AND the words */
+  rsWords(pat).forEach(x => sayAt(x.w, start + x.t * B, x.soft));
+  setTimeout(() => { const el = document.getElementById("rsCount"); if (el) el.textContent = ""; }, (start + 4 * B) * 1000);
   return start;
 }
 
@@ -123,9 +153,15 @@ function ccListen(ms, done) {
   };
   requestAnimationFrame(loop);
 }
-function ccScore(expect, got) {   /* expect/got in seconds from the first beat; each expected clap matched within 0.17 s */
-  const used = new Set(); const marks = expect.map(e => { let k = -1, best = .17; got.forEach((g, i) => { if (!used.has(i) && Math.abs(g - e) < best) { best = Math.abs(g - e); k = i; } }); if (k >= 0) used.add(k); return k >= 0; });
-  const extra = got.length - used.size; return { marks, ok: marks.every(Boolean) && extra <= 1 };
+/* expect/got in seconds from the first beat. Children may start a little early or late, so the whole clapping is
+   shifted to fit best first; then each clap only has to be near its place (generous for slow notes, tighter for fast ones). */
+function ccScore(expect, got) {
+  const gaps = expect.slice(1).map((e, i) => e - expect[i]), minGap = gaps.length ? Math.min(...gaps) : 1, tol = Math.min(.26, Math.max(.07, minGap * .45));
+  const match = off => { const used = new Set(); const marks = expect.map(e => { let k = -1, best = tol; got.forEach((g, i) => { const d = Math.abs(g - off - e); if (!used.has(i) && d < best) { best = d; k = i; } }); if (k >= 0) used.add(k); return k >= 0; }); return { marks, used }; };
+  let bestOff = 0, best = match(0), score = best.marks.filter(Boolean).length;
+  got.forEach(g => expect.forEach(e => { const off = g - e; if (Math.abs(off) > .45) return; const m = match(off), n = m.marks.filter(Boolean).length; if (n > score || (n === score && Math.abs(off) < Math.abs(bestOff))) { best = m; score = n; bestOff = off; } }));
+  const extra = got.length - best.used.size;
+  return { marks: best.marks, ok: best.marks.every(Boolean) && extra <= 1, off: bestOff };
 }
 
 /* ---------- writing: trace and check ---------- */
@@ -172,13 +208,13 @@ function rsRender() {
     body = `<div class="card stack" style="align-items:center"><b>👏 ${t("rs_copyHow")}</b>
       <div class="rs-pat">${RS.pat.map(x => `<span class="rs-tile">${appleSVG(x)}<small>${rt(x).say}</small></span>`).join("")}</div>
       ${RS.res ? `<div class="rs-res">${RS.res.marks.map(m => `<i class="${m ? "ok" : "no"}">${m ? "✓" : "✗"}</i>`).join("")}</div><b style="color:${RS.res.ok ? "var(--good)" : "var(--bad)"}">${RS.res.ok ? t("rs_copyOk") : RS.res.msg || t("rs_copyNo")}</b>` : ""}
-      ${RS.busy ? `<div class="rs-beat" id="rsBeat">${RS.busy}</div>` : `<div class="row" style="gap:8px"><button class="btn soft" data-rs="listen">🔊 ${t("rs_listen")}</button><button class="btn" data-rs="clap">👏 ${t("rs_myTurn")}</button></div>`}
+      ${RS.busy ? `<div class="rs-beat" id="rsBeat">${RS.busy}</div>` : `<div class="row" style="gap:8px"><button class="btn soft" data-rs="listen">🔊 ${t("rs_listen")}</button><b class="rs-count" id="rsCount"></b><button class="btn" data-rs="clap">👏 ${t("rs_myTurn")}</button></div>`}
       ${RS.noMic ? `<div class="small muted">${t("rs_noMic")}</div><button class="btn sm ghost" data-rs="selfok">✓ ${t("rs_selfOk")}</button>` : ""}
       ${RS.res ? `<button class="btn sm ghost" data-rs="newpat">↻ ${t("rs_newOne")}</button>` : ""}</div>`;
   } else if (RS.stage === "apple") {
     RS.pat ||= rsPattern(RS.u); RS.line ||= [];
     const used = RS.line.reduce((a, x) => a + rt(x).b, 0);
-    body = `<div class="card stack" style="align-items:center"><b>🍎 ${t("rs_appleHow")}</b><button class="btn soft sm" data-rs="listen">🔊 ${t("rs_listen")}</button>
+    body = `<div class="card stack" style="align-items:center"><b>🍎 ${t("rs_appleHow")}</b><div class="row" style="gap:8px;align-items:center"><button class="btn soft sm" data-rs="listen">🔊 ${t("rs_listen")}</button><b class="rs-count" id="rsCount"></b></div>
       ${U.glue ? `<div class="small rs-tipline">🔗 ${t("rs_glueHow")}</div>` : ""}
       <div class="rs-line">${RS.line.map((x, i) => `<span class="rs-tile on ${RS.aWrong === i ? "wrong" : ""}"><button class="rs-x" data-rs="unline" data-i="${i}" aria-label="Remove">×</button>${appleSVG(x)}<small>${rt(x).say}</small>${U.glue && SYL[rtBase(x)] ? `<span class="rs-seams">${SYL[rtBase(x)].slice(1).map((_, k) => `<button class="rs-seam ${(String(x).split("~")[1] || "1111")[k + 1] === "0" ? "on" : ""}" data-rs="seam" data-i="${i}" data-k="${k + 1}">🔗</button>`).join("")}</span>` : ""}</span>`).join("")}${Array.from({ length: Math.max(0, 4 - used) }, () => `<span class="rs-slot"></span>`).join("")}</div>
       ${RS.aRes != null ? `<b style="color:${RS.aRes ? "var(--good)" : "var(--bad)"}">${RS.aRes ? t("rs_appleOk") : RS.aMsg || t("rs_appleNo")}</b>${RS.aRes ? "" : `<div class="rs-pat small">${RS.pat.map(x => `<span class="rs-tile">${appleSVG(x)}<small>${rt(x).say}</small></span>`).join("")}</div>`}<button class="btn sm ghost" data-rs="newpat">↻ ${t("rs_newOne")}</button>` : ""}
@@ -213,21 +249,22 @@ function rsDone(k) {
 }
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-rs]"); if (!b || !S) return; const a = b.dataset.rs;
-  if (a === "open") { rsS(); rsOpen(+b.dataset.u); }
+  if (a === "open") { rsS(); rsOpen(+b.dataset.u); acReady().then(voiceLoad); }
   else if (a === "stage") { ccStop(); Object.assign(RS, { stage: b.dataset.s, pat: null, res: null, line: null, aRes: null, wi: 0, guide: true, wRes: null, busy: null }); rsRender(); }
   else if (a === "newpat") { Object.assign(RS, { pat: null, res: null, line: null, aRes: null }); rsRender(); }
-  else if (a === "listen") { await acReady(); rsPlay(RS.pat, false); }
+  else if (a === "listen") { await acReady(); await voiceLoad(); rsPlay(RS.pat, true, true); }
   else if (a === "clap") {
     await acReady(); const ok = CC || await ccStart(); if (!ok) { RS.noMic = true; rsRender(); return; }
     const B = beatS(); RS.busy = t("rs_ready"); RS.res = null; rsRender();
-    for (let i = 0; i < 4; i++) setTimeout(() => { click(i === 0); const el = document.getElementById("rsBeat"); if (el) el.textContent = i < 3 ? String(4 - i) + "…" : t("rs_go2"); }, i * B * 1000);
-    setTimeout(() => ccListen((4 * B + .6) * 1000 + 300, got => {
-      const exp = rsOnsets(RS.pat).map(o => o * B), g = got.map(x => x - .02);
+    for (let i = 0; i < 4; i++) setTimeout(() => { click(i === 0); const el = document.getElementById("rsBeat"); if (el) el.textContent = i < 3 ? String(i + 1) + "…" : "4 — " + t("rs_go2"); }, i * B * 1000);
+    const lead = B - .28;   /* start listening a moment after the 4th click (so the click itself is not heard as a clap) */
+    setTimeout(() => ccListen((4 * B + lead + .5) * 1000, got => {
+      const exp = rsOnsets(RS.pat).map(o => o * B), g = got.map(x => x - lead);
       RS.busy = null; RS.res = ccScore(exp, g); RS.res.msg = rsClapWhy(RS.pat, RS.res, g, B); if (RS.res.msg) RS.res.ok = false; if (RS.res.ok) rsDone("copy"); rsRender();
     }), 4 * B * 1000 - 150);
   }
   else if (a === "selfok") { RS.res = { marks: rsOnsets(RS.pat).map(() => true), ok: true }; rsRender(); }
-  else if (a === "line") { RS.line.push(b.dataset.x); clapSound(0, .3); rsRender(); }
+  else if (a === "line") { RS.line.push(b.dataset.x); await voiceLoad(); rsOnsets([b.dataset.x]).forEach(o => clapSound(o * .45, .3)); rsWords([b.dataset.x]).forEach(x => sayAt(x.w, x.t * .45, x.soft)); rsRender(); }
   else if (a === "unline") { RS.line.splice(+b.dataset.i, 1); RS.aRes = null; RS.aWrong = null; rsRender(); }
   else if (a === "seam") { const i = +b.dataset.i, k = +b.dataset.k, x = RS.line[i], base = rtBase(x), n = SYL[base].length, m = (String(x).split("~")[1] || "1".repeat(n)).split(""); m[k] = m[k] === "1" ? "0" : "1"; const mm = m.join(""); RS.line[i] = mm === "1".repeat(n) ? base : base + "~" + mm; RS.aRes = null; RS.aWrong = null; rsRender(); }
   else if (a === "acheck") { RS.aRes = RS.line.join() === RS.pat.join(); RS.aWrong = null; RS.aMsg = ""; if (!RS.aRes) { const i = RS.line.findIndex((x, k) => x !== RS.pat[k]); RS.aWrong = i; const x = RS.line[i], y = RS.pat[i]; RS.aMsg = !y || rt(x).b !== rt(y).b ? t("rs_aBeats", { n: i + 1 }) : rtBase(x) === rtBase(y) ? t("rs_aGlue", { n: i + 1 }) : t("rs_aPieces", { n: i + 1 }); } if (RS.aRes) { rsDone("apple"); await acReady(); rsPlay(RS.pat, false); } rsRender(); }
