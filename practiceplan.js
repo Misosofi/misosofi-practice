@@ -127,7 +127,7 @@ function ppReadForm() { const v = id => (document.getElementById(id)?.value || "
 /* ---------- the counter ---------- */
 function ppCounter(id) {
   const P = ppToday(), c = P?.cards.find(x => x.id === id); if (!c) return;
-  if (c.kind === "act") { if (!c.done) openAct(c.act); return; }
+  if (c.kind === "act") { if (c.done) return; if (c.act === "rhythm") { rsS(); rsOpen(rsOpenN() - 1); } else openAct(c.act); return; }
   PPC = { id, t0: PPC?.id === id ? PPC.t0 : Date.now(), tm: PPC?.id === id ? PPC.tm : null, h0: PPC?.id === id ? PPC.h0 : SM.heardMs, fx: PPC?.id === id ? PPC.fx : null, lastTap: PPC?.id === id ? PPC.lastTap : undefined };
   if (c.kind !== "vid" && !c.done && !SM.on) smStart().then(ok => { if (ok && PPC?.id === id) PPC.h0 = SM.heardMs; });
   if (c.kind === "vid") {
@@ -147,6 +147,7 @@ function ppCounter(id) {
   }
   openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
   <div class="muted" style="text-align:center">${ppHow(c)}</div>
+  ${(c.tips || []).includes("singplay") || (c.steps || []).includes("listenSing") ? hwSingBox() : ""}
   ${c.tips?.length ? `<div class="card pp-remember">💬 <b>${t("pp_remember")}</b> ${c.tips.map(k => (SAID.find(s => s[0] === k) || [0, ""])[1] + " " + esc(STR_has("wz_s_" + k) ? t("wz_s_" + k) : k)).join(" · ")}</div>` : ""}
   ${c.steps?.length ? `<div class="card pp-steps"><b>🎯 ${t("pp_howTo")}</b>${c.steps.map((k, i) => { const d = i < (c.stepDone || 0), cur = i === (c.stepDone || 0);
     return `<button class="pp-step ${d ? "done" : ""} ${cur ? "cur" : ""}" data-pp="step" data-i="${i}"><span class="pp-step-n">${d ? "✓" : i + 1}</span><span class="grow">${stratTxt(k)}</span>${cur ? `<span class="pill m">${t("pp_stepNow")}</span>` : ""}</button>`; }).join("")}
@@ -314,12 +315,12 @@ document.addEventListener("click", e => {
 
 /* ---------- the plan interview: children often can't put their practice into words,
    so the app asks simple questions one by one and turns the answers into today's homework ---------- */
-const SAID = [["fingers", "🖐"], ["eyes", "👀"], ["count", "🥁"], ["slow", "🐢"], ["hands", "✋"], ["dyn", "🔊"], ["legato", "〰️"], ["round", "🟠"], ["pedal", "🦶"]];
-const EXTRAS = ["piece", "sight", "nr", "ear", "solf", "theory"];
+const SAID = [["singplay", "🎧"], ["fingers", "🖐"], ["eyes", "👀"], ["count", "🥁"], ["slow", "🐢"], ["hands", "✋"], ["dyn", "🔊"], ["legato", "〰️"], ["round", "🟠"], ["pedal", "🦶"]];
+const EXTRAS = ["piece", "rhythm", "sight", "nr", "ear", "solf", "theory"];
 const PP_MINS = [10, 15, 20, 30, 45, 60];
 const ppReset = c => ({ ...c, id: uid(), streak: 0, tries: 0, setsDone: 0, stepDone: 0, done: false, fh: undefined });
 /* ways to practise (Atsuko's steps). The "new piece" recipe is her order for a new piece / sight-reading. */
-const STRATS = [["clap", "👏"], ["clapSing", "👏🎤"], ["rh", "✋🎤"], ["lh", "🤚🎤"], ["rhythm1", "🥁"], ["bothSing", "🙌🎤"], ["lhSingRH", "🤚🎶"], ["part", "🧩"], ["notStart", "⏭"], ["slow", "🐢"], ["stop", "⏸"], ["count", "🔢"]];
+const STRATS = [["listenSing", "🎧🎤"], ["clap", "👏"], ["clapSing", "👏🎤"], ["rh", "✋🎤"], ["lh", "🤚🎤"], ["rhythm1", "🥁"], ["bothSing", "🙌🎤"], ["lhSingRH", "🤚🎶"], ["part", "🧩"], ["notStart", "⏭"], ["slow", "🐢"], ["stop", "⏸"], ["count", "🔢"]];
 const RECIPE_NEW = ["clap", "clapSing", "rh", "lh", "rhythm1", "bothSing", "lhSingRH"];
 const stratEm = k => (STRATS.find(x => x[0] === k) || [0, "🎯"])[1];
 const stratTxt = k => stratEm(k) + " " + t("st_w_" + k);
@@ -458,3 +459,11 @@ function libPicker(W) {
    <div class="muted small">${t("lb_hint")}</div>`;
 }
 function libFilter(q) { if (PPW?.lib) PPW.lib.q = q; const s = q.toLowerCase(); document.querySelectorAll(".lib-pick [data-q]").forEach(r => r.hidden = !!s && !r.dataset.q.includes(s)); }
+
+/* the teacher's own singing (her homework voice/video message) to listen to, sing along with, then play */
+function hwSingBox() {
+  const h = S.thw; if (!h?.path) return `<div class="card small pp-sing">🎧 ${t("hs_noRec")}</div>`;
+  setTimeout(() => document.querySelectorAll("[data-hsing]").forEach(async a => { if (!a.src) try { a.src = await signed("scores", a.dataset.hsing); } catch (e) { } }), 0);
+  return `<div class="card stack pp-sing"><b>🎧 ${t("hs_h")}</b><div class="small">${t("hs_how")}</div>
+   ${h.kind === "video" ? `<video class="plan-video" data-hsing="${esc(h.path)}" controls playsinline preload="metadata"></video>` : `<audio data-hsing="${esc(h.path)}" controls preload="metadata" style="width:100%"></audio>`}</div>`;
+}

@@ -24,8 +24,8 @@ let RS = null;   /* { u, stage: "menu"|"copy"|"apple"|"write", ... } */
 function appleSVG(kind) {
   const whole = `<circle cx="20" cy="24" r="15" fill="#e8413c"/><path d="M20 10 q2-6 7-7" stroke="#6b3a1e" stroke-width="2.5" fill="none"/><ellipse cx="27" cy="8" rx="5" ry="2.6" fill="#4caf50" transform="rotate(-25 27 8)"/><ellipse cx="14" cy="19" rx="3" ry="5" fill="#fff" opacity=".35"/>`;
   /* a cut apple: n pieces side by side (each piece = red skin + cream inside) */
-  const piece = (cx, r) => `<path d="M${cx} ${24 - r} A${r} ${r} 0 0 0 ${cx} ${24 + r} Z" fill="#e8413c"/><path d="M${cx} ${24 - r} A${r * .8} ${r} 0 0 0 ${cx} ${24 + r} Z" fill="#fff3cf"/><circle cx="${cx - r * .35}" cy="24" r="${Math.max(1, r * .12)}" fill="#5a3b1e"/>`;
-  const cut = (x, w, n) => { const r = n === 2 ? 15 : n === 3 ? 11 : 9, step = w / n; return `<svg viewBox="0 0 ${w} 40" width="${w * .9}" height="36" aria-hidden="true">${Array.from({ length: n }, (_, k) => piece(x + step * k + step * .5 + r * .45, r)).join("")}</svg>`; };
+  const piece = (cx, r, col = "#e8413c") => `<path d="M${cx} ${24 - r} A${r} ${r} 0 0 0 ${cx} ${24 + r} Z" fill="${col}"/><path d="M${cx} ${24 - r} A${r * .8} ${r} 0 0 0 ${cx} ${24 + r} Z" fill="#fff3cf"/><circle cx="${cx - r * .35}" cy="24" r="${Math.max(1, r * .12)}" fill="#5a3b1e"/>`;
+  const cut = (x, w, n) => { const r = n === 2 ? 15 : n === 3 ? 11 : 9, step = w / n; return `<svg viewBox="0 0 ${w} 40" width="${w * .9}" height="36" aria-hidden="true">${Array.from({ length: n }, (_, k) => piece(x + step * k + step * .5 + r * .45, r, n === 4 ? "#7cc242" : n === 3 ? "#f5c518" : "#e8413c")).join("")}</svg>`; };
   if (kind === "q") return `<svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true">${whole}</svg>`;
   if (kind === "h") return `<svg viewBox="0 0 80 40" width="72" height="36" aria-hidden="true">${whole}<g transform="translate(40 0)">${whole}</g><path d="M28 24 h24" stroke="#5a3b1e" stroke-width="3" stroke-dasharray="3 3"/></svg>`;
   if (kind === "r") return `<svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true"><ellipse cx="20" cy="26" rx="16" ry="7" fill="#fff" stroke="#bbb" stroke-width="2"/><ellipse cx="20" cy="25" rx="10" ry="4" fill="none" stroke="#ddd"/></svg>`;
@@ -177,7 +177,7 @@ function rsRender() {
 }
 function rsDone(k) {
   const U = RUNITS[RS.u], st = rsS(); st.done[U.id] ||= {};
-  if (!st.done[U.id][k]) { st.done[U.id][k] = TK; earn(3); celebrate(); toast(t("rs_star")); } save(); refreshTop();
+  if (!st.done[U.id][k]) { st.done[U.id][k] = TK; earn(3); celebrate(); toast(t("rs_star")); } if (typeof markDone === "function") markDone("rhythm"); save(); refreshTop();
 }
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-rs]"); if (!b || !S) return; const a = b.dataset.rs;
