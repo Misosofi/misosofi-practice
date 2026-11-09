@@ -140,16 +140,18 @@ function rsPlay(pat, countIn = true, metro = true) {
 let CC = null;
 async function ccStart() {
   try { const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-    const c = ac(), src = c.createMediaStreamSource(st), an = c.createAnalyser(); an.fftSize = 512; src.connect(an);
-    CC = { st, an, buf: new Float32Array(512), on: [], last: 0, floor: .01, run: false }; return true; } catch (e) { return false; }
+    const c = ac(), src = c.createMediaStreamSource(st), an = c.createAnalyser(); an.fftSize = 2048; src.connect(an);
+    CC = { st, an, sr: c.sampleRate, buf: new Float32Array(2048), on: [], last: -1, floor: .02, run: false }; return true; } catch (e) { return false; }
 }
 function ccStop() { if (CC) { CC.run = false; CC.st.getTracks().forEach(x => x.stop()); CC = null; } }
 function ccListen(ms, done) {
   if (!CC) return; CC.on = []; CC.run = true; const t0 = performance.now();
   const loop = () => {
-    if (!CC || !CC.run) return; CC.an.getFloatTimeDomainData(CC.buf); let r = 0; for (const v of CC.buf) r += v * v; r = Math.sqrt(r / CC.buf.length);
-    const now = performance.now(); if (r < CC.floor * 2) CC.floor = CC.floor * .95 + r * .05;
-    if (r > Math.max(.05, CC.floor * 6) && now - CC.last > 110) { CC.last = now; CC.on.push((now - t0) / 1000); }
+    /* the window (≈43 ms) is longer than one frame, so no clap slips between frames; the clap time comes from where its peak is */
+    if (!CC || !CC.run) return; CC.an.getFloatTimeDomainData(CC.buf); let pk = 0, pi = 0; for (let i = 0; i < CC.buf.length; i++) { const v = Math.abs(CC.buf[i]); if (v > pk) { pk = v; pi = i; } }
+    const now = performance.now(), at = now - (CC.buf.length - pi) / CC.sr * 1000;
+    if (pk < CC.floor * 2.5) CC.floor = Math.max(.01, CC.floor * .9 + pk * .1);
+    if (pk > Math.max(.06, CC.floor * 4) && at - CC.last > 120) { CC.last = at; CC.on.push((at - t0) / 1000); }
     if (now - t0 < ms) requestAnimationFrame(loop); else { CC.run = false; done(CC.on.slice()); }
   };
   requestAnimationFrame(loop);
@@ -157,10 +159,10 @@ function ccListen(ms, done) {
 /* expect/got in seconds from the first beat. Children may start a little early or late, so the whole clapping is
    shifted to fit best first; then each clap only has to be near its place (generous for slow notes, tighter for fast ones). */
 function ccScore(expect, got) {
-  const gaps = expect.slice(1).map((e, i) => e - expect[i]), minGap = gaps.length ? Math.min(...gaps) : 1, tol = Math.min(.26, Math.max(.07, minGap * .45));
+  const gaps = expect.slice(1).map((e, i) => e - expect[i]), minGap = gaps.length ? Math.min(...gaps) : 1, tol = Math.min(.35, Math.max(.1, minGap * .48));
   const match = off => { const used = new Set(); const marks = expect.map(e => { let k = -1, best = tol; got.forEach((g, i) => { const d = Math.abs(g - off - e); if (!used.has(i) && d < best) { best = d; k = i; } }); if (k >= 0) used.add(k); return k >= 0; }); return { marks, used }; };
   let bestOff = 0, best = match(0), score = best.marks.filter(Boolean).length;
-  got.forEach(g => expect.forEach(e => { const off = g - e; if (Math.abs(off) > .45) return; const m = match(off), n = m.marks.filter(Boolean).length; if (n > score || (n === score && Math.abs(off) < Math.abs(bestOff))) { best = m; score = n; bestOff = off; } }));
+  got.forEach(g => expect.forEach(e => { const off = g - e; if (Math.abs(off) > .7) return; const m = match(off), n = m.marks.filter(Boolean).length; if (n > score || (n === score && Math.abs(off) < Math.abs(bestOff))) { best = m; score = n; bestOff = off; } }));
   const extra = got.length - best.used.size;
   return { marks: best.marks, ok: best.marks.every(Boolean) && extra <= 1, off: bestOff };
 }
@@ -222,11 +224,11 @@ function rsRender() {
       <div class="rs-pick">${U.tiles.map(x => `<button class="rs-tile" data-rs="line" data-x="${x}" ${used + rt(x).b > 4 || RS.aRes != null ? "disabled" : ""}>${appleSVG(x)}<small>${rt(x).say}</small></button>`).join("")}</div>
       ${used === 4 && RS.aRes == null ? `<button class="btn" data-rs="acheck">✓ ${t("rs_check")}</button>` : ""}</div>`;
   } else if (RS.stage === "paper") {
-    RS.pat ||= rsPattern(RS.u);
+    while (!RS.pat || RS.pat.includes("r")) RS.pat = rsPattern(RS.u);   /* no rests on paper — apples only */
     const P = (S.papers || []).filter(x => x.unit === U.id).slice(-1)[0];
     body = `<div class="card paper-banner">📄✏️ <b>${t("rs_paperBanner")}</b></div>
      <div class="card stack" style="align-items:center"><b>${t("rs_paperHow")}</b>
-      <div class="rs-pat">${RS.pat.map(x => `<span class="rs-tile">${appleSVG(x)}${NOTE_SHAPES[x] ? noteSVGsmall(x) : x === "r" ? `<span class="rs-rest">𝄽</span>` : ""}<small>${rt(x).say}</small></span>`).join("")}</div>
+      <div class="rs-pat rs-paperpat">${RS.pat.map(x => `<span class="rs-tile">${appleSVG(x)}</span>`).join("")}</div>
       <ol class="small rs-paper-steps"><li>${t("rs_p1")}</li><li>${t("rs_p2")}</li><li>${t("rs_p3")}</li></ol>
       ${RS.photo ? `<img class="rs-photo" src="${RS.photo}" alt=""><div class="row" style="gap:8px"><label class="btn soft">↺ ${t("rs_pAgain")}<input type="file" accept="image/*" capture="environment" id="rsPhoto" hidden></label><button class="btn" data-rs="psend">📤 ${t("rs_pSend")}</button></div>`
         : `<label class="btn block">📷 ${t("rs_pTake")}<input type="file" accept="image/*" capture="environment" id="rsPhoto" hidden></label>`}
@@ -288,6 +290,7 @@ document.addEventListener("click", async e => {
 
 /* why the clapping was not right: a missed clap, or a clap on a glued piece (that is held, not clapped) */
 function rsClapWhy(pat, res, got, B) {
+  if (!got.length) return t("rs_cNone");
   let beat = 0; const exp = [], glued = [];
   pat.forEach(x => { const T = rt(x); T.on.forEach(o => exp.push(beat + o)); if (T.mask) RTILE[T.base].on.forEach((o, k) => { if (T.mask[k] === "0") glued.push(beat + o); }); beat += T.b; });
   const tie = got.some(g => glued.some(o => Math.abs(g - o * B) < .12) && !exp.some(o => Math.abs(g - o * B) < .12));
