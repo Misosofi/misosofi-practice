@@ -903,3 +903,5 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .rs-paperpat .rs-tile svg{transform:scale(1.4);margin:8px 6px}
 .rs-answer{background:#f3fbef;border:2px solid #9fd38a}.rs-answer .rs-note{width:46px;height:56px}
 .rs-ear{font-size:64px;line-height:1;margin:6px 0}
+.fex-quick{display:flex;align-items:flex-start;gap:12px;border:2px solid #b9c8f2;margin-bottom:10px}.fex-quick .grow{display:flex;flex-direction:column}
+.wz-piece{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:6px;align-items:stretch;width:100%}.wz-piece .wz-opt{flex:1 1 auto;min-width:0;width:auto}.wz-piece .wz-del{flex:0 0 52px;width:52px;margin:0;border:2px solid var(--line,#e5e2f0);border-radius:14px;background:#fff;font-size:18px;cursor:pointer}

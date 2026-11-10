@@ -89,6 +89,18 @@ function fexSheet(c) {
   ${c.done ? `<div class="pp-all">🎉 ${t("pp_cardDone")}</div><button class="btn block" data-act="close">OK</button>`
     : `<button class="btn block" data-pp="fexDone">✓ ${t("fx_done_" + F.hand)}</button>`}</div>`;
 }
+/* free use from the home screen (no plan needed): the same video sheet */
+let FEXF = null;
+function fexFree(id, fresh) {
+  if (fresh || !FEXF || FEXF.tech !== id || FEXF.done) FEXF = { tech: id, fh: {}, done: false };
+  PPC = { id: "__fex", free: true, fx: (!fresh && PPC?.free && PPC.fx) || null }; openSheet(fexSheet(FEXF)); fexWire();
+}
+function fexHome() {
+  const V = TECH.filter(x => x.vid); if (!V.length) return "";
+  return `<div class="card fex-quick"><span class="rs-quick-ic">🎬</span><span class="grow"><b>${t("fx_homeH")}</b><span class="small muted">${t("fx_homeSub")}</span>
+   <span class="chips" style="margin-top:6px">${V.map(x => `<button class="btn sm" data-fexfree="${x.id}">▶ Lv ${x.lv}</button>`).join("")}</span></span></div>`;
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-fexfree]"); if (b) fexFree(b.dataset.fexfree, true); });
 function fexWire() {
   const v = document.getElementById("fexV"); if (!v || !PPC?.fx) return;
   const r = FEX_RATES[PPC.fx.rate] || 1; v.defaultPlaybackRate = r; v.playbackRate = r; v.preservesPitch = true; v.muted = PPC.fx.mode === "sing";
