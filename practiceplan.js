@@ -89,7 +89,7 @@ function ppHome() {
    <button class="btn soft block" data-pp="more">🎮 ${t("pp_moreCards")}</button></div></div>`;
 }
 const ppTitle = c => c.kind === "vid" ? "📺 " + c.what : c.kind === "act" ? t("wz_x_" + c.act) : c.kind === "tech" ? techOf(c.tech).em + " " + t("tc_" + c.tech) : c.what + (c.from ? ` · ${t("pp_bars")} ${c.from}${c.to && c.to !== c.from ? "–" + c.to : ""}` : "");
-const ppHow = c => c.kind === "vid" ? t("hw_watchCard") : c.kind === "act" ? t("pp_inApp") : c.kind === "tech" ? (techOf(c.tech).vid ? t("fx_card") : t("pp_30s")) : c.kind === "free" ? t("pp_ownStep") : [t("pp_h_" + (typeof c.hands === "string" ? c.hands : "both")), t("pp_s_" + c.speed), t("pp_inRow", { n: c.reps }) + ((c.sets || 1) > 1 ? " × " + c.sets : "")].join(" · ");
+const ppHow = c => c.kind === "vid" ? t("hw_watchCard") : c.kind === "act" ? t("pp_inApp") : c.kind === "tech" ? (techOf(c.tech).vid ? t("fx_card") : c.tech === "tip" ? t("tp_card") : t("pp_30s")) : c.kind === "free" ? t("pp_ownStep") : [t("pp_h_" + (typeof c.hands === "string" ? c.hands : "both")), t("pp_s_" + c.speed), t("pp_inRow", { n: c.reps }) + ((c.sets || 1) > 1 ? " × " + c.sets : "")].join(" · ");
 const ppDots = c => { if (c.kind) return ""; const n = c.sets || 1, d = c.done ? n : (c.setsDone || 0);
   return `<span class="pp-dots">${Array.from({ length: c.reps }, (_, i) => `<i class="${c.done || i < c.streak ? "on" : ""}">${i + 1}</i>`).join("")}${n > 1 ? `<span class="pp-sets">${Array.from({ length: n }, (_, i) => `<b class="${i < d ? "on" : ""}">${i < d ? "★" : "☆"}</b>`).join("")}</span>` : ""}</span>`; };
 /* "help me plan" for younger children: their piece, the hard bars, hands separately, then together, and today's technique */
@@ -128,7 +128,7 @@ function ppReadForm() { const v = id => (document.getElementById(id)?.value || "
 function ppCounter(id) {
   const P = ppToday(), c = P?.cards.find(x => x.id === id); if (!c) return;
   if (c.kind === "act") { if (c.done) return; if (c.act === "rhythm") { rsS(); rsOpen(rsOpenN() - 1); } else openAct(c.act); return; }
-  PPC = { id, t0: PPC?.id === id ? PPC.t0 : Date.now(), tm: PPC?.id === id ? PPC.tm : null, h0: PPC?.id === id ? PPC.h0 : SM.heardMs, fx: PPC?.id === id ? PPC.fx : null, lastTap: PPC?.id === id ? PPC.lastTap : undefined };
+  PPC = { id, t0: PPC?.id === id ? PPC.t0 : Date.now(), tm: PPC?.id === id ? PPC.tm : null, h0: PPC?.id === id ? PPC.h0 : SM.heardMs, fx: PPC?.id === id ? PPC.fx : null, tp: PPC?.id === id ? PPC.tp : null, lastTap: PPC?.id === id ? PPC.lastTap : undefined };
   if (c.kind !== "vid" && !c.done && !SM.on) smStart().then(ok => { if (ok && PPC?.id === id) PPC.h0 = SM.heardMs; });
   if (c.kind === "vid") {
     openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
@@ -137,6 +137,7 @@ function ppCounter(id) {
     return;
   }
   if (c.kind === "tech" && techOf(c.tech).vid) { openSheet(fexSheet(c)); fexWire(); return; }
+  if (c.kind === "tech" && c.tech === "tip") { openSheet(tipSheet(c)); return; }
   if (c.kind === "tech" || c.kind === "free") {
     openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
     ${c.kind === "tech" ? `<div class="tech-pic">${techPic(c.tech)}</div><div class="card tech-how">${t("tc_" + c.tech + "_how")}</div>
@@ -147,6 +148,7 @@ function ppCounter(id) {
   }
   openSheet(`<div class="stack pp-counter"><div class="act-head"><h2>${esc(ppTitle(c))}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
   <div class="muted" style="text-align:center">${ppHow(c)}</div>
+  ${c.yt ? `<a class="btn soft block" href="${esc(c.yt)}" target="_blank" rel="noopener">▶ ${t("sc_model")}</a>` : ""}
   ${(c.tips || []).includes("singplay") || (c.steps || []).includes("listenSing") || (hwFresh(S.thw) && S.thw.sing?.length && (S.thw.pieces || []).some(p => p.title === c.what)) ? hwSingBox() : ""}
   ${c.tips?.length ? `<div class="card pp-remember">💬 <b>${t("pp_remember")}</b> ${c.tips.map(k => (SAID.find(s => s[0] === k) || [0, ""])[1] + " " + esc(STR_has("wz_s_" + k) ? t("wz_s_" + k) : k)).join(" · ")}</div>` : ""}
   ${c.steps?.length ? `<div class="card pp-steps"><b>🎯 ${t("pp_howTo")}</b>${c.steps.map((k, i) => { const d = i < (c.stepDone || 0), cur = i === (c.stepDone || 0);
@@ -294,6 +296,9 @@ document.addEventListener("click", e => {
   else if (a === "fexHand" || a === "fexSet") { if (!PPC?.fx) return; if (a === "fexHand") PPC.fx.hand = b.dataset.v; else PPC.fx[b.dataset.f] = b.dataset.v;
     if (a === "fexSet" && b.dataset.f === "rate") { const v = document.getElementById("fexV"); if (v) { v.playbackRate = v.defaultPlaybackRate = FEX_RATES[b.dataset.v]; document.querySelectorAll('[data-f="rate"]').forEach(x => x.classList.toggle("on", x === b)); return; } }
     if (PPC.free) fexFree(FEXF.tech); else ppCounter(PPC.id); }
+  else if (a === "tipSet") { if (!PPC?.tp) return; PPC.tp[b.dataset.f] = b.dataset.v; ppCounter(PPC.id); }
+  else if (a === "tipOk") { const P = ppToday(), c = P?.cards.find(x => x.id === PPC?.id); if (!c || c.done) return; if (PPC.tp?.url) URL.revokeObjectURL(PPC.tp.url); PPC.tp.url = null; ppComplete(P, c); }
+  else if (a === "tipNo") { toast(t("tp_again")); if (PPC.tp?.url) URL.revokeObjectURL(PPC.tp.url); PPC.tp.url = null; ppCounter(PPC.id); }
   else if (a === "fexDone" && PPC?.free) { const h = PPC.fx.hand; FEXF.fh[h] = true;
     if (FEXF.fh.R && FEXF.fh.L) { FEXF.done = true; celebrate(); toast(t("fx_freeDone")); } else { PPC.fx.hand = h === "R" ? "L" : "R"; toast(t("fx_next")); }
     fexFree(FEXF.tech); }
@@ -343,7 +348,7 @@ function ppWizard(next) {
     ${titles.length ? `<div class="muted small">🗑 = ${t("wz_delPiece")}</div>` : ""}
     <button class="btn soft" data-pp="wLib">📚 ${t("lb_choose")}</button>
     <div class="add"><input id="wzNewPiece" maxlength="60" placeholder="${t("wz_otherPiece")}"><button class="btn ghost sm" data-pp="wAddPiece">＋ ${t("add")}</button></div>`;
-  if (st === "pieces" && W.lib) body = libPicker(W);
+  if (st === "pieces" && W.lib) body = pkHTML(W);
   if (st === "bars") body = `<h2>${t("wz_q_bars")}</h2>${W.pieces.map(n => { const b = W.bars[n] || {}; return `<div class="card stack"><b>🎵 ${esc(n)}</b>
     <div class="pp-bars"><label class="label">${t("pp_bars")}</label><input type="number" min="1" inputmode="numeric" data-wbar="${esc(n)}" data-k="from" value="${esc(b.from || "")}" placeholder="7"><span>–</span><input type="number" min="1" inputmode="numeric" data-wbar="${esc(n)}" data-k="to" value="${esc(b.to || "")}" placeholder="8"></div>
     <button class="chip ${b.whole ? "on" : ""}" data-pp="wWhole" data-v="${esc(n)}">${t("wz_whole")}</button></div>`; }).join("")}`;
@@ -351,7 +356,7 @@ function ppWizard(next) {
     <input id="wzSaid" maxlength="80" value="${esc(W.saidTxt)}" placeholder="${t("wz_saidOther")}">`;
   else if (st === "said") body = `<h2>${t("wz_q_said")}</h2><div class="wz-opts">${SAID.map(([k, e]) => `<button class="wz-opt ${W.said.includes(k) ? "on" : ""}" data-pp="wTog" data-f="said" data-v="${k}">${e} ${t("wz_s_" + k)}</button>`).join("")}</div>
     <input id="wzSaid" maxlength="80" value="${esc(W.saidTxt)}" placeholder="${t("wz_saidOther")}">`;
-  if (st === "scales") body = `<h2>${t("wz_q_scales")}</h2><div class="wz-yn">${yn("scales", true)}${yn("scales", false)}</div>${W.scales ? `<input id="wzScale" maxlength="40" value="${esc(W.scaleTxt)}" placeholder="${t("wz_scalePh")}">` : ""}`;
+  if (st === "scales") body = `<h2>${t("wz_q_scales")}</h2><div class="wz-yn">${yn("scales", true)}${yn("scales", false)}</div>${W.scales ? scHTML(W) : ""}`;
   if (st === "tech") body = `<h2>${t("wz_q_tech")}</h2><div class="wz-yn">${yn("tech", true)}${yn("tech", false)}</div>${W.tech ? `<div class="wz-opts">${TECH.map(x => `<button class="wz-opt ${W.techIds.includes(x.id) ? "on" : ""}" data-pp="wTog" data-f="techIds" data-v="${x.id}">${x.em} ${t("tc_" + x.id)}</button>`).join("")}</div>` : ""}`;
   if (st === "extras") body = `<h2>${t("wz_q_extras")}</h2><div class="wz-opts">${EXTRAS.map(k => `<button class="wz-opt ${W.extras.includes(k) ? "on" : ""}" data-pp="wTog" data-f="extras" data-v="${k}">${t("wz_x_" + k)}</button>`).join("")}${(W.hwVids || []).map(v => `<button class="wz-opt ${W.vids.some(x => x.id === v.id) ? "on" : ""}" data-pp="wVid" data-v="${esc(v.id)}">📺 ${esc(v.title)}</button>`).join("")}</div>`;
   if (st === "done" && W.stepFor != null && W.cards?.[W.stepFor]) { const c = W.cards[W.stepFor], cur = c.steps || [];
@@ -392,7 +397,8 @@ function wzCards() {
     else out.push(mk(n, "", "", "both", "mid", 3));
   });
   tips = [];
-  if (W.scales) out.push({ ...mk(W.scaleTxt || t("pp_scales"), "", "", "both", "mid", 3), tips: [] });
+  if (W.scales && (W.scPick || []).length) W.scPick.forEach(id => { const [g, cat, it] = id.split("|"); out.push({ ...mk("🎼 " + scaleTitle(cat, it), "", "", "both", "mid", 3), tips: [], yt: scaleYT(+g, cat, it) }); });
+  if (W.scales && (!(W.scPick || []).length || W.scaleTxt)) out.push({ ...mk(W.scaleTxt || t("pp_scales"), "", "", "both", "mid", 3), tips: [] });
   const tech = W.tech ? (W.techIds.length ? W.techIds : [techToday().id]) : W.said.includes("round") ? ["tip"] : [];
   [...new Set(tech)].forEach(id => out.push({ id: uid(), kind: "tech", tech: id, what: "", streak: 0, reps: 1, done: false }));
   W.extras.forEach(k => out.push({ id: uid(), kind: "act", act: k, what: "", streak: 0, reps: 1, done: false }));
@@ -424,7 +430,19 @@ document.addEventListener("click", e => {
   else if (a === "wAddPiece") { const i = document.getElementById("wzNewPiece"), v = (i?.value || "").trim().slice(0, 60); if (v && !W.pieces.includes(v)) W.pieces.push(v); wzRead(); ppWizard(); }
   else if (a === "wDelPiece") { wzRead(); const n = b.dataset.v; if (!confirm(t("wz_delAsk", { p: n }))) return;
     S.pieces.forEach(p => { if (p.title === n) p.status = "done"; }); W.pieces = W.pieces.filter(x => x !== n); if (W.hw?.pieces) W.hw.pieces = W.hw.pieces.filter(p => p.title !== n); save(); toast(t("wz_deleted")); ppWizard(); }
-  else if (a === "wLib") { wzRead(); W.lib = { g: libDefaultGrade(), b: "", q: "" }; ppWizard(); }
+  else if (a === "wLib") { wzRead(); W.lib = { mode: "home", q: "" }; ppWizard(); }
+  else if (a === "wpkHome") { W.lib = { mode: "home", q: "" }; ppWizard(); }
+  else if (a === "wpkMode") { W.lib = { mode: b.dataset.v, q: "" }; ppWizard(); }
+  else if (a === "wpkSet") { const k = b.dataset.k, v = b.dataset.v; W.lib[k] = String(W.lib[k]) === v && ["comp", "coll"].includes(k) ? null : v; if (k === "lv") { W.lib.comp = null; W.lib.coll = null; } if (k === "comp") W.lib.coll = null; ppWizard(); }
+  else if (a === "wpkAdd") { const p = pkFind(b.dataset.id); if (!p) return; const i = W.pieces.indexOf(p.title);
+    if (i < 0) { W.pieces.push(p.title); pkRemember(p); const real = !/^(cat|pl|rc):/.test(p.id);
+      if (!S.pieces.some(x => x.title === p.title && x.status !== "done")) { const old = S.pieces.find(x => x.title === p.title); if (old) old.status = "learning"; else S.pieces.push({ id: uid(), libId: real ? p.id : null, title: p.title, composer: p.composer || "", status: "learning", sec: 0, days: {}, sections: [] }); }
+      save(); toast(t("pk_added")); }
+    else W.pieces.splice(i, 1);
+    const y = document.querySelector(".sheet")?.scrollTop; ppWizard(); if (y != null) { const sh = document.querySelector(".sheet"); if (sh) sh.scrollTop = y; } }
+  else if (a === "wscG") { wzRead(); W.scG = +b.dataset.v; ppWizard(); }
+  else if (a === "wscTog") { wzRead(); const v = b.dataset.v, i = W.scPick.indexOf(v); if (i < 0) W.scPick.push(v); else W.scPick.splice(i, 1); const y = document.querySelector(".sheet")?.scrollTop; ppWizard(); const sh = document.querySelector(".sheet"); if (sh && y != null) sh.scrollTop = y; }
+  else if (a === "wscRand") { wzRead(); const all = []; (SCALES[W.scG] || []).forEach(([k, cat, items]) => items.forEach(it => all.push(W.scG + "|" + cat + "|" + it))); W.scPick = all.sort(() => Math.random() - .5).slice(0, 3); ppWizard(); }
   else if (a === "wLibBack") { W.lib = null; ppWizard(); }
   else if (a === "wLibG") { W.lib.g = b.dataset.v; W.lib.b = ""; ppWizard(); }
   else if (a === "wLibB") { W.lib.b = W.lib.b === b.dataset.v ? "" : b.dataset.v; ppWizard(); }

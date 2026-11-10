@@ -22,16 +22,19 @@ function keySide(y) {
    <rect x="4" y="${y}" width="136" height="9" rx="1.5" fill="url(#wkg)" stroke="#BDB6CC"/><rect x="4" y="${y + 9}" width="136" height="14" fill="#DAD5E3" stroke="#BDB6CC"/>`;
 }
 function fingerSVG(bad) {
-  const K = [62, 34], J = bad ? [92, 64] : [88, 54], T = bad ? [116, 70] : [96, 76];
-  const ang = Math.atan2(T[1] - J[1], T[0] - J[0]) * 180 / Math.PI;
-  return `<svg viewBox="0 0 144 104" class="tech-svg ${bad ? "bad" : "good"}" aria-hidden="true">${keySide(77)}
-   <path d="M0 26 Q30 20 ${K[0]} ${K[1]}" fill="none" stroke="${SKIN}" stroke-width="22" stroke-linecap="round"/>
-   <path d="M${K[0]} ${K[1]} L${J[0]} ${J[1]} L${T[0]} ${T[1]}" fill="none" stroke="${SKIN}" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
-   <path d="M${K[0]} ${K[1]} L${J[0]} ${J[1]} L${T[0]} ${T[1]}" fill="none" stroke="${SKIN_D}" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" opacity=".25" transform="translate(1.5 1.5)"/>
-   <ellipse cx="${(J[0] + T[0]) / 2 + 2}" cy="${(J[1] + T[1]) / 2 - 2}" rx="7" ry="3.6" fill="#FBE3E3" stroke="#E8B9B4" transform="rotate(${ang} ${(J[0] + T[0]) / 2 + 2} ${(J[1] + T[1]) / 2 - 2})"/>
-   <path d="M${K[0] - 3} ${K[1] - 5} q3 4 6 0 M${J[0] - 3} ${J[1] - 6} q3 4 6 1" stroke="${SKIN_D}" stroke-width="1.3" fill="none"/>
-   ${bad ? `<circle cx="${J[0]}" cy="${J[1]}" r="9" fill="none" stroke="#E5484D" stroke-width="2.5"/>` : ""}
-   <text x="72" y="14" text-anchor="middle" font-size="16" font-weight="900" fill="${bad ? "#E5484D" : "#2BB673"}">${bad ? "✗" : "✓"}</text></svg>`;
+  /* close side view of ONE finger on one key: knuckle → middle joint → nail joint → tip.
+     good: the finger is a round arch and stands on its tip; bad: the nail joint caves in (bends backwards) */
+  const P = bad ? [[14, 30], [46, 32], [64, 80], [94, 76]] : [[14, 30], [46, 34], [68, 58], [74, 84]];
+  const seg = P.map(p => p.join(" ")).join(" L");
+  const [dx, dy] = [P[3][0] - P[2][0], P[3][1] - P[2][1]], ang = Math.atan2(dy, dx) * 180 / Math.PI, L = Math.hypot(dx, dy), nx = P[2][0] + dx * .6 + dy / L * 4.5, ny = P[2][1] + dy * .6 - dx / L * 4.5;
+  return `<svg viewBox="0 0 110 118" class="tech-svg finger ${bad ? "bad" : "good"}" aria-hidden="true">
+   <rect x="0" y="88" width="110" height="10" rx="2" fill="#fff" stroke="#BDB6CC"/><rect x="0" y="98" width="110" height="10" fill="#DAD5E3" stroke="#BDB6CC"/>
+   <path d="M-6 22 Q4 18 ${P[0][0]} ${P[0][1]}" stroke="${SKIN}" stroke-width="26" stroke-linecap="round" fill="none"/>
+   <path d="M${seg}" fill="none" stroke="${SKIN}" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+   <ellipse cx="${nx}" cy="${ny}" rx="7" ry="3.8" fill="#FBE3E3" stroke="#E8B9B4" transform="rotate(${ang} ${nx} ${ny})"/>
+   ${P.slice(0, 3).map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2.2" fill="${SKIN_D}"/>`).join("")}
+   ${bad ? `<circle cx="${P[2][0]}" cy="${P[2][1]}" r="11" fill="none" stroke="#E5484D" stroke-width="3"/>` : `<path d="M${P[1][0] - 6} ${P[1][1] - 16} Q${P[2][0] + 14} ${P[1][1] - 8} ${P[3][0] + 10} ${P[3][1] - 10}" fill="none" stroke="#2BB673" stroke-width="2" stroke-dasharray="4 3"/>`}
+   <text x="96" y="20" text-anchor="middle" font-size="20" font-weight="900" fill="${bad ? "#E5484D" : "#2BB673"}">${bad ? "✗" : "✓"}</text></svg>`;
 }
 /* side view of the forearm and hand: good = one straight line from the elbow to the knuckles (like turning a doorknob); bad = the wrist sags */
 function armSVG(bad) {
@@ -53,7 +56,7 @@ function hangSVG() {
    <svg viewBox="0 0 100 100" class="tech-svg good" aria-hidden="true"><rect x="4" y="66" width="92" height="16" rx="2" fill="#fff" stroke="#c9c4d6"/><g transform="translate(28 20) rotate(-62)"><path d="M0 0 L0 30" stroke="${SKIN}" stroke-width="14" stroke-linecap="round"/><path d="M-6 30 Q-10 44 -2 52 M0 32 Q-2 48 6 54 M6 30 Q8 44 13 50" fill="none" stroke="${SKIN}" stroke-width="6" stroke-linecap="round"/></g><text x="50" y="96" text-anchor="middle" font-size="11" font-weight="800" fill="#6C5CE7">2. same shape</text></svg></div>`;
 }
 function techPic(id) {
-  if (id === "tip") return `<div class="tech-pics">${fingerSVG(false)}${fingerSVG(true)}</div>`;
+  if (id === "tip") return `<div class="tech-pics fingers"><div>${fingerSVG(false)}<div class="tp-cap good">${t("tc_tipGood")}</div></div><div>${fingerSVG(true)}<div class="tp-cap bad">${t("tc_tipBad")}</div></div></div>`;
   if (id === "line") return `<div class="tech-pics">${armSVG(false)}${armSVG(true)}</div>`;
   if (id === "ball") return hangSVG();
   if (id === "ball_old") return `<svg viewBox="0 0 160 90" class="tech-svg" aria-hidden="true"><rect x="0" y="72" width="160" height="16" rx="3" fill="#fff" stroke="#c9c4d6"/><circle cx="80" cy="52" r="20" fill="#FFB44D"/><path d="M28 72 Q36 20 80 18 Q124 20 132 72" fill="none" stroke="${SKIN}" stroke-width="14" stroke-linecap="round"/></svg>`;
@@ -89,6 +92,28 @@ function fexSheet(c) {
   ${c.done ? `<div class="pp-all">🎉 ${t("pp_cardDone")}</div><button class="btn block" data-act="close">OK</button>`
     : `<button class="btn block" data-pp="fexDone">✓ ${t("fx_done_" + F.hand)}</button>`}</div>`;
 }
+/* "fingertips don't bend": play with the teacher's finger-exercise video, film your own hand from the side, then watch it and check */
+function tipSheet(c) {
+  const F = PPC.tp ||= { hand: "R", lv: (+(PROF?.grade ?? 1)) <= 1 ? "fex2" : "fex", url: null }, T = techOf(F.lv);
+  const ch = (f, v, l) => `<button class="chip ${F[f] === v ? "on" : ""}" data-pp="tipSet" data-f="${f}" data-v="${v}">${l}</button>`;
+  return `<div class="stack pp-counter"><div class="act-head"><h2>☝️ ${t("tc_tip")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>
+   <div class="tech-pic">${techPic("tip")}</div>
+   <div class="card stack tp-step"><b>1. ${t("tp_s1")}</b>
+    <div class="chips">${ch("lv", "fex2", "Lv 2")}${ch("lv", "fex", "Lv 3")}${ch("hand", "R", t("fx_R"))}${ch("hand", "L", t("fx_L"))}</div>
+    <video class="fex-video" src="${T.vid[F.hand]}" poster="${T.vid[F.hand].replace(".mp4", ".jpg")}" playsinline controls preload="metadata"></video></div>
+   <div class="card stack tp-step"><b>2. ${t("tp_s2")}</b><div class="small muted">📱 ${t("tp_s2how")}</div>
+    <label class="btn block">📹 ${t("tp_rec")}<input type="file" accept="video/*" capture="environment" id="tipRec" hidden></label></div>
+   <div class="card stack tp-step ${F.url ? "" : "tp-wait"}"><b>3. ${t("tp_s3")}</b>
+    ${F.url ? `<video class="fex-video" src="${F.url}" playsinline controls></video><div class="small">${t("tp_q")}</div>
+      ${c.done ? `<div class="pp-all">🎉 ${t("pp_cardDone")}</div>` : `<button class="btn block" data-pp="tipOk">✓ ${t("tp_ok")}</button><button class="btn ghost block" data-pp="tipNo">✗ ${t("tp_no")}</button>`}`
+      : `<div class="small muted">${t("tp_after")}</div>`}</div>
+   ${c.done ? `<button class="btn block" data-act="close">OK</button>` : ""}</div>`;
+}
+document.addEventListener("change", e => {
+  if (e.target.id !== "tipRec" || !PPC?.tp) return; const f = e.target.files?.[0]; if (!f) return;
+  if (PPC.tp.url) URL.revokeObjectURL(PPC.tp.url); PPC.tp.url = URL.createObjectURL(f); ppCounter(PPC.id);
+  setTimeout(() => document.querySelector(".tp-step:last-of-type video, .tp-step video[src^='blob']")?.scrollIntoView({ behavior: "smooth", block: "center" }), 200);
+});
 /* free use from the home screen (no plan needed): the same video sheet */
 let FEXF = null;
 function fexFree(id, fresh) {
