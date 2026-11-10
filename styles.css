@@ -902,3 +902,4 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .rs-count{display:inline-block;min-width:34px;font-size:1.6rem;color:#e8413c;text-align:center}
 .rs-paperpat .rs-tile svg{transform:scale(1.4);margin:8px 6px}
 .rs-answer{background:#f3fbef;border:2px solid #9fd38a}.rs-answer .rs-note{width:46px;height:56px}
+.rs-ear{font-size:64px;line-height:1;margin:6px 0}

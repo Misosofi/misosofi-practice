@@ -153,23 +153,33 @@ function rsPlay(pat, countIn = true, metro = true) {
 
 /* ---------- clap detection (microphone) ---------- */
 let CC = null;
+/* The microphone for claps. iPhone notes: reuse a microphone that is already open (two open mics can make one go silent),
+   rebuild when the sound engine was restarted, and keep the analyser connected (silently) to the speaker so it really runs. */
 async function ccStart() {
-  try { const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-    const c = ac(), src = c.createMediaStreamSource(st), an = c.createAnalyser(); an.fftSize = 2048; src.connect(an);
-    CC = { st, an, sr: c.sampleRate, buf: new Float32Array(2048), on: [], last: -1, floor: .02, run: false }; return true; } catch (e) { return false; }
+  const c = await acReady() || ac(); if (!c) return false;
+  if (CC && CC.c === c && CC.st.getAudioTracks().some(x => x.readyState === "live")) return true;
+  ccStop();
+  try {
+    let st = null, own = true;
+    if (typeof SM !== "undefined" && SM.on && SM.stream && SM.stream.getAudioTracks().some(x => x.readyState === "live")) { st = SM.stream; own = false; }
+    else st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const c2 = await acReady() || ac(), src = c2.createMediaStreamSource(st), an = c2.createAnalyser(), mute = c2.createGain();
+    an.fftSize = 2048; mute.gain.value = 0; src.connect(an); an.connect(mute); mute.connect(c2.destination);
+    CC = { c: c2, st, own, src, an, mute, sr: c2.sampleRate, buf: new Float32Array(2048), on: [], last: -1, floor: .01, run: false, max: 0 }; return true;
+  } catch (e) { return false; }
 }
-function ccStop() { if (CC) { CC.run = false; CC.st.getTracks().forEach(x => x.stop()); CC = null; } }
+function ccStop() { if (CC) { CC.run = false; clearInterval(CC.tm); try { CC.src.disconnect(); CC.mute.disconnect(); } catch (e) { } if (CC.own) CC.st.getTracks().forEach(x => x.stop()); CC = null; } }
 function ccListen(ms, done) {
-  if (!CC) return; CC.on = []; CC.run = true; const t0 = performance.now();
-  const loop = () => {
-    /* the window (≈43 ms) is longer than one frame, so no clap slips between frames; the clap time comes from where its peak is */
+  if (!CC) return; CC.on = []; CC.max = 0; CC.run = true; const t0 = performance.now();
+  if (CC.c.state !== "running") CC.c.resume().catch(() => { });
+  /* a timer, not animation frames (those can pause); the window (≈43 ms) is longer than the tick, so no clap slips through */
+  CC.tm = setInterval(() => {
     if (!CC || !CC.run) return; CC.an.getFloatTimeDomainData(CC.buf); let pk = 0, pi = 0; for (let i = 0; i < CC.buf.length; i++) { const v = Math.abs(CC.buf[i]); if (v > pk) { pk = v; pi = i; } }
-    const now = performance.now(), at = now - (CC.buf.length - pi) / CC.sr * 1000;
-    if (pk < CC.floor * 2.5) CC.floor = Math.max(.01, CC.floor * .9 + pk * .1);
-    if (pk > Math.max(.06, CC.floor * 4) && at - CC.last > 120) { CC.last = at; CC.on.push((at - t0) / 1000); }
-    if (now - t0 < ms) requestAnimationFrame(loop); else { CC.run = false; done(CC.on.slice()); }
-  };
-  requestAnimationFrame(loop);
+    const now = performance.now(), at = now - (CC.buf.length - pi) / CC.sr * 1000; CC.max = Math.max(CC.max, pk);
+    if (pk < CC.floor * 2.5) CC.floor = Math.max(.004, CC.floor * .9 + pk * .1);
+    if (pk > Math.max(.03, CC.floor * 3.5) && at - CC.last > 120) { CC.last = at; CC.on.push((at - t0) / 1000); }
+    if (now - t0 >= ms) { CC.run = false; clearInterval(CC.tm); done(CC.on.slice(), CC.max); }
+  }, 20);
 }
 /* expect/got in seconds from the first beat. Children may start a little early or late, so the whole clapping is
    shifted to fit best first; then each clap only has to be near its place (generous for slow notes, tighter for fast ones). */
@@ -224,8 +234,8 @@ function rsRender() {
   } else if (RS.stage === "copy") {
     RS.pat ||= rsPattern(RS.u);
     body = `<div class="card stack" style="align-items:center"><b>👏 ${t("rs_copyHow")}</b>
-      <div class="rs-pat">${RS.pat.map(x => `<span class="rs-tile">${appleSVG(x)}<small>${rt(x).say}</small></span>`).join("")}</div>
-      ${RS.res ? `<div class="rs-res">${RS.res.marks.map(m => `<i class="${m ? "ok" : "no"}">${m ? "✓" : "✗"}</i>`).join("")}</div><b style="color:${RS.res.ok ? "var(--good)" : "var(--bad)"}">${RS.res.ok ? t("rs_copyOk") : RS.res.msg || t("rs_copyNo")}</b>` : ""}
+      <div class="rs-ear">👂</div><div class="small muted">${t("rs_copyEar")}</div>
+      ${RS.res ? `<div class="rs-res">${RS.res.marks.map(m => `<i class="${m ? "ok" : "no"}">${m ? "✓" : "✗"}</i>`).join("")}</div><b style="color:${RS.res.ok ? "var(--good)" : "var(--bad)"}">${RS.res.ok ? t("rs_copyOk") : RS.res.msg || t("rs_copyNo")}</b>${!RS.res.ok && RS.res.lvl != null ? `<div class="small muted">🎤 ${Math.round(RS.res.lvl * 1000)}</div>` : ""}` : ""}
       ${RS.busy ? `<div class="rs-beat" id="rsBeat">${RS.busy}</div>` : `<div class="row" style="gap:8px"><button class="btn soft" data-rs="listen">🔊 ${t("rs_listen")}</button><b class="rs-count" id="rsCount"></b><button class="btn" data-rs="clap">👏 ${t("rs_myTurn")}</button></div>`}
       ${RS.noMic ? `<div class="small muted">${t("rs_noMic")}</div><button class="btn sm ghost" data-rs="selfok">✓ ${t("rs_selfOk")}</button>` : ""}
       ${RS.res ? `<button class="btn sm ghost" data-rs="newpat">↻ ${t("rs_newOne")}</button>` : ""}</div>`;
@@ -274,13 +284,13 @@ document.addEventListener("click", async e => {
   else if (a === "newpat") { Object.assign(RS, { pat: null, res: null, line: null, aRes: null, ans: null }); rsRender(); }
   else if (a === "listen") { await acReady(); await voiceLoad(); rsPlay(RS.pat, true, true); }
   else if (a === "clap") {
-    await acReady(); const ok = CC || await ccStart(); if (!ok) { RS.noMic = true; rsRender(); return; }
+    const ok = await ccStart(); if (!ok) { RS.noMic = true; rsRender(); return; }
     const B = beatS(); RS.busy = t("rs_ready"); RS.res = null; rsRender();
     for (let i = 0; i < 4; i++) setTimeout(() => { click(i === 0); const el = document.getElementById("rsBeat"); if (el) el.textContent = i < 3 ? String(i + 1) + "…" : "4 — " + t("rs_go2"); }, i * B * 1000);
     const lead = B - .28;   /* start listening a moment after the 4th click (so the click itself is not heard as a clap) */
-    setTimeout(() => ccListen((4 * B + lead + .5) * 1000, got => {
+    setTimeout(() => ccListen((4 * B + lead + .5) * 1000, (got, mx) => {
       const exp = rsOnsets(RS.pat).map(o => o * B), g = got.map(x => x - lead);
-      RS.busy = null; RS.res = ccScore(exp, g); RS.res.msg = rsClapWhy(RS.pat, RS.res, g, B); if (RS.res.msg) RS.res.ok = false; if (RS.res.ok) rsDone("copy"); rsRender();
+      RS.busy = null; RS.res = ccScore(exp, g); RS.res.msg = rsClapWhy(RS.pat, RS.res, g, B); if (RS.res.msg) RS.res.ok = false; RS.res.lvl = mx; if (RS.res.ok) rsDone("copy"); rsRender();
     }), 4 * B * 1000 - 150);
   }
   else if (a === "selfok") { RS.res = { marks: rsOnsets(RS.pat).map(() => true), ok: true }; rsRender(); }
