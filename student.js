@@ -6,7 +6,7 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "recentP", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits", "ptl", "spots", "rs", "papers"];
+const PERSIST = ["v", "recentP", "flash", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits", "ptl", "spots", "rs", "papers"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc", "thw", "vreq", "spotChk"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
@@ -323,6 +323,7 @@ function vHome() {
  ${typeof ppHome === "function" ? ppHome() : ""}
  <div class="section"><div class="section-head"><h2>🎮 ${t("freeH")}</h2></div><div class="muted small" style="margin:-6px 0 10px">${t("freeSub")}</div>
  <button class="card rs-quick" data-rs="open" data-u="${typeof rsOpenN === "function" ? (rsS(), rsOpenN() - 1) : 0}"><span class="rs-quick-ic">🍎</span><span class="grow"><b>${t("rs_h")}</b><span class="small muted">${t("rs_quickSub")}</span></span><span>→</span></button>
+ ${typeof flHome === "function" ? flHome() : ""}
  ${typeof fexHome === "function" ? fexHome() : ""}
  <div class="tiles free-tiles">${ORDER.map(k => { const a = ACT[k]; return `<button class="tile ${k === "piece" ? "hero" : ""}" data-act="open" data-k="${k}"><span class="ic" style="background:${a.col}">${I[a.ic]}</span><span><span class="nm">${t("a_" + k)}</span><br><span class="sub">${k === "piece" ? t("a_piece_s") : t("s_" + k)}</span>${k === "piece" && pt > 0 ? `<br><span class="today">${t("todayTime", { t: fmtDur(pt) })}</span>` : ""}</span><span class="rw price">${I.coin}${a.coins}</span></button>`; }).join("")}</div></div>
  ${typeof storyCard === "function" ? storyCard() : ""}

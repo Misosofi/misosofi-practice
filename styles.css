@@ -910,3 +910,13 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .tp-wait{opacity:.6}.tp-step .fex-video{width:100%;border-radius:12px;background:#000;max-height:260px}
 .pk-cat{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;cursor:pointer;border:2px solid var(--line,#e5e2f0)}.pk-cat .grow{display:flex;flex-direction:column}.pk-ic{font-size:28px}
 .sc-items{display:flex;flex-wrap:wrap;gap:6px}.sc-item{display:flex;align-items:center;gap:2px}.sc-yt{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#ffecec;color:#d33;text-decoration:none;font-size:13px}
+.fl-quick{border-color:#f5c86b}
+.fl-top{display:flex;justify-content:space-between;font-weight:800;color:var(--muted,#777)}
+.fl-card{background:#fff;border-radius:20px;border:3px solid #ece8f6;min-height:170px;display:flex;align-items:center;justify-content:center;padding:8px}
+.fl-card.show{border-color:#f5c86b;box-shadow:0 0 0 4px #fff3d6}.fl-card.reveal{border-color:#9fd38a}
+.fl-count{font-size:72px;font-weight:900;color:#6b5bd6}
+.fl-msg{text-align:center;font-weight:800;font-size:1.15rem;min-height:1.6em}
+.fl-prog{text-align:center}.fl-got{display:inline-block;background:#e8f7e1;border-radius:10px;padding:2px 8px;margin:0 2px}
+.fl-names{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.fl-names .btn{padding:14px 4px;font-weight:800}
+.fl-stars{font-size:48px}.fl-self{display:grid;gap:8px}
+.fl-coins{justify-content:center;font-size:1.3rem}.fl-coins svg{width:26px;height:26px}
