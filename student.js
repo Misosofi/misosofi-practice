@@ -6,7 +6,7 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "recentP", "flash", "consent", "numb", "numbLog", "numbRecs", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits", "ptl", "spots", "rs", "papers"];
+const PERSIST = ["v", "recentP", "flash", "consent", "numb", "numbLog", "numbRecs", "cplace", "cplaceLog", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits", "ptl", "spots", "rs", "papers"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc", "thw", "vreq", "spotChk"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
@@ -337,9 +337,9 @@ function vHome() {
  <div class="section"><div class="section-head"><h2>🎮 ${t("freeH")}</h2></div><div class="muted small" style="margin:-6px 0 10px">${t("freeSub")}</div>
  <button class="card rs-quick" data-rs="open" data-u="${typeof rsOpenN === "function" ? (rsS(), rsOpenN() - 1) : 0}"><span class="rs-quick-ic">🍎</span><span class="grow"><b>${t("rs_h")}</b><span class="small muted">${t("rs_quickSub")}</span></span><span>→</span></button>
  ${typeof flHome === "function" ? flHome() : ""}
- ${typeof nbHome === "function" ? nbHome() : ""}
+ ${pitchSections()}
  ${typeof fexHome === "function" ? fexHome() : ""}
- <div class="tiles free-tiles">${ORDER.map(k => { const a = ACT[k]; return `<button class="tile ${k === "piece" ? "hero" : ""}" data-act="open" data-k="${k}"><span class="ic" style="background:${a.col}">${I[a.ic]}</span><span><span class="nm">${t("a_" + k)}</span><br><span class="sub">${k === "piece" ? t("a_piece_s") : t("s_" + k)}</span>${k === "piece" && pt > 0 ? `<br><span class="today">${t("todayTime", { t: fmtDur(pt) })}</span>` : ""}</span><span class="rw price">${I.coin}${a.coins}</span></button>`; }).join("")}</div></div>
+ <div class="tiles free-tiles">${ORDER.filter(k => !["ear", "solf"].includes(k)).map(k => { const a = ACT[k]; return `<button class="tile ${k === "piece" ? "hero" : ""}" data-act="open" data-k="${k}"><span class="ic" style="background:${a.col}">${I[a.ic]}</span><span><span class="nm">${t("a_" + k)}</span><br><span class="sub">${k === "piece" ? t("a_piece_s") : t("s_" + k)}</span>${k === "piece" && pt > 0 ? `<br><span class="today">${t("todayTime", { t: fmtDur(pt) })}</span>` : ""}</span><span class="rw price">${I.coin}${a.coins}</span></button>`; }).join("")}</div></div>
  ${typeof storyCard === "function" ? storyCard() : ""}
  ${typeof weekCard === "function" ? weekCard() : ""}
  ${typeof ppGrowth === "function" && ppMode() === "grown" ? ppGrowth() : ""}
@@ -351,6 +351,12 @@ function vHome() {
  ${rem.length ? `<div class="section"><h2>${t("remindersH")}</h2><div class="list">${rem.map(({ e, s }) => `<div class="row"><button class="chk ${s.done ? "on" : ""}" data-act="toggleStep" data-e="${e.id}" data-s="${s.id}" aria-label="${esc(s.text)}">✓</button><div class="grow"><div class="title">${esc(s.text)}</div><div class="muted small">${esc(e.title)}</div></div>${dueTag(s.date)}</div>`).join("")}</div></div>` : ""}
  <div class="section"><div class="card stack"><h2>${t("howToday")}</h2><div class="chips">${["hard", "ok", "great"].map(f => `<button class="chip ${(feelPick ?? tl?.feel) === f ? "on" : ""}" data-act="feel" data-f="${f}">${t("feel_" + f)}</button>`).join("")}</div>
  <form class="add" data-form="log"><textarea id="logNote" placeholder="${t("notePh")}" maxlength="1000">${esc(tl?.note || "")}</textarea><button class="btn" type="submit">${t("save")}</button></form></div></div>`;
+}
+/* ear training in two groups: perfect pitch (note names) and relative pitch (numbers, chords 1·4·5) */
+function pitchSections() {
+  const btn = (attr, ic, nm, sub) => `<button class="card pk-cat pp-sec" ${attr}><span class="pk-ic">${ic}</span><span class="grow"><b>${nm}</b><span class="small muted">${sub}</span></span><span>→</span></button>`;
+  return `<div class="pitch-sec"><h3>🎯 ${t("ps_abs")}</h3>${btn('data-act="open" data-k="ear"', "👂", t("a_ear"), t("ps_earSub"))}${btn('data-act="open" data-k="solf"', "🎤", t("a_solf"), t("ps_solfSub"))}</div>
+   <div class="pitch-sec"><h3>🔁 ${t("ps_rel")}</h3>${btn('data-nb="open"', "🔢", t("nb_h"), t("nb_sub"))}${typeof cpHome === "function" ? cpHome() : ""}</div>`;
 }
 function vStudentLib() {
   const L = S.library; if (!L.length) return "";

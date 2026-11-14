@@ -2,7 +2,16 @@
    The app sets the key (I–IV–V–I and "1"), then plays a note or a short tune.
    The child SAYS the numbers (1–8) and PLAYS them on the piano (the microphone checks), or taps the numbers.
    The same numbers work in every key. Optional: the whole round is recorded and sent to the teacher. */
-const NB_KEYS = [["C", 60], ["G", 55], ["F", 65], ["D", 62], ["B♭", 58], ["A", 57], ["E♭", 63], ["E", 64], ["A♭", 56]];
+const NB_KEYS = [["C", 60], ["G", 55], ["D", 62], ["A", 57], ["E", 64], ["B", 59], ["F♯", 66], ["D♭", 61], ["A♭", 56], ["E♭", 63], ["B♭", 58], ["F", 65]];
+/* steps from easy to hard: always starting on 1 at first, with clear shapes (1 3 5, 1 2 3), then 4, then anything */
+const NB_LV = [
+  { n: "1 3 5", pool: [1, 3, 5], from1: true, len: [2, 3] },
+  { n: "1 2 3", pool: [1, 2, 3], from1: true, len: [2, 3] },
+  { n: "1 2 3 4 5", pool: [1, 2, 3, 4, 5], from1: true, len: [2, 3] },
+  { n: "1–5 · any start", pool: [1, 2, 3, 4, 5], from1: false, len: [1, 3] },
+  { n: "1–8 · from 1", pool: [1, 2, 3, 4, 5, 6, 7, 8], from1: true, len: [2, 3] },
+  { n: "1–8 · any start", pool: [1, 2, 3, 4, 5, 6, 7, 8], from1: false, len: [1, 3] },
+];
 const NB_STEP = [0, 0, 2, 4, 5, 7, 9, 11, 12], NB_N = 8;
 let NB = null;
 const nbKey = () => NB_KEYS.find(k => k[0] === NB.k) || NB_KEYS[0];
@@ -13,13 +22,14 @@ function nbHome() {
 }
 function nbOpen() {
   const st = S.numb || {};
-  NB = { key: st.key || "C", top: st.top || 5, len: st.len || 1, ans: st.ans || "piano", rec: !!st.rec, phase: "set" };
+  NB = { key: st.key || "C", lv: st.lv ?? 0, ans: st.ans || "piano", rec: !!st.rec, phase: "set" };
   nbRender();
 }
-/* a question: 1–3 numbers inside 1…top, moving mostly by small steps */
+/* a question: a little tune from this step's numbers — starting on 1 in the easy steps */
 function nbQ() {
-  const r = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), top = NB.top, ds = [r(1, top)];
-  for (let i = 1; i < NB.len; i++) { let d; do d = ds[i - 1] + [-2, -1, 1, 2, 3][r(0, 4)]; while (d < 1 || d > top); ds.push(d); }
+  const r = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), L = NB_LV[NB.lv] || NB_LV[0], P = L.pool, len = r(L.len[0], L.len[1]);
+  const ds = [L.from1 ? 1 : P[r(0, P.length - 1)]];
+  for (let i = 1; i < len; i++) { const near = P.filter(d => d !== ds[i - 1] && Math.abs(d - ds[i - 1]) <= (P.length > 5 ? 7 : 4)); ds.push(near[r(0, near.length - 1)]); }
   if (NB.key === "mix") { const k = NB_KEYS[r(0, NB_KEYS.length - 1)][0]; NB.newKey = k !== NB.k; NB.k = k; }
   return ds;
 }
@@ -39,8 +49,7 @@ function nbRender() {
     const ch = (k, v, l) => `<button class="chip ${String(F[k]) === String(v) ? "on" : ""}" data-nb="set" data-k="${k}" data-v="${v}">${l}</button>`;
     openSheet(`<div class="stack nb">${head}<div class="muted small">${t("nb_how")}</div>
       <div class="label">${t("nb_key")}</div><div class="chips">${NB_KEYS.map(k => ch("key", k[0], esc(k[0]) + " " + t("nb_major"))).join("")}${ch("key", "mix", "🔀 " + t("nb_mix"))}</div>
-      <div class="label">${t("nb_range")}</div><div class="chips">${ch("top", 3, "1 2 3")}${ch("top", 5, "1 – 5")}${ch("top", 8, "1 – 8")}</div>
-      <div class="label">${t("nb_len")}</div><div class="chips">${ch("len", 1, t("fl_k1"))}${ch("len", 2, t("nb_l2"))}${ch("len", 3, t("fl_k3"))}</div>
+      <div class="label">${t("nb_step")}</div><div class="chips">${NB_LV.map((l, i) => ch("lv", i, `${i + 1}. ${l.n}`)).join("")}</div>
       <div class="label">${t("fl_ans")}</div><div class="chips">${ch("ans", "piano", "🎹 " + t("nb_aPiano"))}${ch("ans", "tap", "👆 " + t("fl_aTap"))}</div>
       <label class="nb-rec"><input type="checkbox" data-nb="recTog" ${F.rec ? "checked" : ""}> 🎙 ${t("nb_rec")}</label>
       <button class="btn block" data-nb="start" style="padding:18px;font-size:1.2rem">▶ ${t("nb_start")}</button></div>`);
@@ -60,13 +69,13 @@ function nbRender() {
     <div class="nb-key">🔑 ${esc(k[0])} ${t("nb_major")} · 1 = ${esc(pcName(k[1]))}</div>
     <div class="nb-slots">${slots}</div>
     <div class="fl-msg">${F.phase === "listen" ? "👂 " + t("nb_listen") : F.phase === "reveal" ? (F.lastOk ? "✅ " : "❌ ") + F.q.join(" – ") : F.ans === "piano" ? "🗣🎹 " + t("nb_sayPlay") : "🗣👆 " + t("nb_sayTap")}</div>
-    ${F.ans === "tap" && F.phase === "ask" ? `<div class="nb-pad">${[1, 2, 3, 4, 5, 6, 7, 8].filter(n => n <= F.top).map(n => `<button class="btn soft" data-nb="tap" data-v="${n}">${n}</button>`).join("")}</div>` : ""}
+    ${F.ans === "tap" && F.phase === "ask" ? `<div class="nb-pad">${[1, 2, 3, 4, 5, 6, 7, 8].filter(n => n <= Math.max(F.top, 5)).map(n => `<button class="btn soft" data-nb="tap" data-v="${n}">${n}</button>`).join("")}</div>` : ""}
     <div class="row" style="gap:8px"><button class="btn soft grow" data-nb="again">🔁 ${t("nb_again")}</button><button class="btn soft grow" data-nb="one">🎵 ${t("nb_one")}</button></div>
     ${F.ans === "piano" ? micLiveHTML() : ""}</div>`);
 }
 async function nbStart() {
   const F = NB; Object.assign(F, { i: 0, ok: 0, got: [], q: null, k: F.key === "mix" ? NB_KEYS[0][0] : F.key, run: (F.run || 0) + 1, sent: false, recOn: false });
-  S.numb = { key: F.key, top: F.top, len: F.len, ans: F.ans, rec: F.rec }; save();
+  S.numb = { key: F.key, lv: F.lv, ans: F.ans, rec: F.rec }; save(); F.top = Math.max(...NB_LV[F.lv].pool);
   if (F.ans === "piano") { const ok = await micStart("numbers", o => micShow(o), nbHeard); if (!ok) F.ans = "tap"; }
   if (F.rec) await nbRecStart();
   nbNext(true);
@@ -93,7 +102,7 @@ function nbJudge(ok) {
 }
 async function nbDone() {
   const F = NB; F.phase = "done"; earn(Math.floor(F.ok / 2)); if (typeof refreshTop === "function") refreshTop(); if (F.ok >= 7) celebrate();
-  S.numbLog = (S.numbLog || []).concat({ date: TK, key: F.key, top: F.top, len: F.len, ok: F.ok, of: NB_N }).slice(-60); save();
+  S.numbLog = (S.numbLog || []).concat({ date: TK, key: F.key, lv: F.lv + 1, ok: F.ok, of: NB_N }).slice(-60); save();
   if (F.recOn) await nbRecStop(true);
   micStop(); nbRender();
 }
@@ -126,7 +135,7 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-nb]"); if (!b) return; const a = b.dataset.nb, F = NB;
   if (a === "open") return nbOpen();
   if (!F) return;
-  if (a === "set") { F[b.dataset.k] = ["top", "len"].includes(b.dataset.k) ? +b.dataset.v : b.dataset.v; nbRender(); }
+  if (a === "set") { F[b.dataset.k] = b.dataset.k === "lv" ? +b.dataset.v : b.dataset.v; nbRender(); }
   else if (a === "recTog") F.rec = b.checked;
   else if (a === "start") nbStart();
   else if (a === "settings") { micStop(); F.phase = "set"; nbRender(); }
