@@ -6,9 +6,9 @@
 const CP_PLACES = [{ d: 1, ic: "🛋️", k: "cp_home" }, { d: 4, ic: "🛒", k: "cp_shop" }, { d: 5, ic: "🗾", k: "cp_japan" }];
 const CP_SCENES = [
   { d: 1, bg: "#FFF1D6", art: "🛋️🧒🥔", side: "😠👨 👩😠", k: "cp_s1" },
-  { d: 4, bg: "#E3F4FF", art: "🛒🧒", side: "🥔🥔🥔", k: "cp_s2" },
+  { d: 4, bg: "linear-gradient(#3b3a7a,#7a5aa8)", art: "🛒🧒", side: "🌙🥔🥔", k: "cp_s2", night: true },
   { d: 1, bg: "#FFF1D6", art: "🛋️🧒🥔", side: "😋", k: "cp_s3" },
-  { d: 4, bg: "#E3F4FF", art: "🛒🧒", side: "🍪🥤", k: "cp_s4" },
+  { d: 4, bg: "linear-gradient(#3b3a7a,#7a5aa8)", art: "🛒🧒", side: "🌙🍪🥤", k: "cp_s4", night: true },
   { d: 1, bg: "#FFF1D6", art: "🛋️🧒😐", side: "💤", k: "cp_s5" },
   { d: 5, bg: "#FFE3EA", art: "✈️🧒🗾", side: "🏯🍣🗻", k: "cp_s6" },
   { d: 1, bg: "#FFF1D6", art: "🛋️🧒😊", side: "🏠", k: "cp_s7" },
@@ -16,7 +16,7 @@ const CP_SCENES = [
 const CP_LV = [
   { n: "cp_lv1", ref: true, len: 1 },     /* home first, then one chord */
   { n: "cp_lv2", ref: false, len: 1 },    /* one chord, no home first */
-  { n: "cp_lv3", ref: true, len: 3 },     /* home, then a little trip of 3 chords */
+  { n: "cp_lv3", ref: false, len: 1, trip: true },   /* the music travels by itself: tap where he is whenever it moves */
 ];
 const CP_N = 10;
 let CP = null;
@@ -26,6 +26,27 @@ function cpChord(d, when = 0, dur = 1.1) {
   const b = cpBase(), V = { 1: [0, 4, 7], 4: [0, 5, 9], 5: [-1, 2, 7] }[d], bass = { 1: 0, 4: 5, 5: 7 }[d];
   V.forEach(x => tone(b + x, when, dur, .17)); tone(b - 12 + bass, when, dur, .16);
 }
+/* ---------- the groove: a little pop band that keeps playing the current chord ----------
+   left hand: bass in quarters and eighths (root · root-5th · octave · 5th-root), right hand: the chord (1 in first inversion,
+   4 and 5 voiced close to it) in a syncopated pop rhythm. Changing the chord happens on the next eighth — the music never stops. */
+const GV = { on: false, d: 1, bpm: 96, step: 0, next: 0, tm: null };
+const GV_BASS = { 0: [0, .9, .2], 2: [0, .4, .15], 3: [7, .4, .13], 4: [12, .9, .17], 6: [7, .4, .13], 7: [0, .4, .14] };   /* eighth → [interval, beats, vol] */
+const GV_RH = { 0: [.9, .12], 3: [.45, .09], 5: [.45, .09], 6: [.9, .11] };
+function gvVoice(d) { const b = cpBase(); return { 1: [b + 4, b + 7, b + 12], 4: [b + 5, b + 9, b + 12], 5: [b + 2, b + 7, b + 11] }[d]; }
+function gvRoot(d) { const b = cpBase(); return { 1: b - 12, 4: b - 7, 5: b - 5 }[d]; }
+function gvTick() {
+  const c = ac(); if (!c || !GV.on) return; const e = 60 / GV.bpm / 2;
+  while (GV.next < c.currentTime + .25) {
+    const i = GV.step % 8, w = Math.max(0, GV.next - c.currentTime), bs = GV_BASS[i], rh = GV_RH[i];
+    if (bs) tone(gvRoot(GV.d) + bs[0], w, bs[1] * e * 2, bs[2]);
+    if (rh) gvVoice(GV.d).forEach(m => tone(m, w, rh[0] * e * 2, rh[1]));
+    GV.next += e; GV.step++;
+  }
+}
+function gvPlay(d) { const c = ac(); if (!c) return; GV.d = d; if (GV.on) return; if (!PIANO.loading) pianoLoad(); GV.on = true; GV.step = 0; GV.next = c.currentTime + .08; clearInterval(GV.tm); GV.tm = setInterval(gvTick, 60); gvTick(); }
+function gvStop() { GV.on = false; clearInterval(GV.tm); GV.tm = null; }
+/* "pin-pon!" */
+function pinpon() { const c = ac(); if (!c) return; [[1319, 0], [1047, .18]].forEach(([f, w]) => { const o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + w; o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.35, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + .5); o.connect(g); g.connect(outNode()); o.start(t0); o.stop(t0 + .55); }); }
 function cpHome() {
   return `<button class="card pk-cat pp-sec" data-cp="open"><span class="pk-ic">🏠</span><span class="grow"><b>${t("cp_h")}</b><span class="small muted">${t("cp_sub")}</span></span><span>→</span></button>`;
 }
@@ -40,7 +61,7 @@ function cpRender() {
       <div class="cp-text">${t(s.k)}</div>
       <div class="cp-dots">${CP_SCENES.map((x, i) => `<i class="${i === F.sc ? "on" : ""}"></i>`).join("")}</div>
       <div class="row" style="gap:8px">${F.sc ? `<button class="btn ghost" data-cp="prev">←</button>` : ""}<button class="btn grow" data-cp="next">${F.sc < CP_SCENES.length - 1 ? t("cp_next") + " →" : "🎧 " + t("cp_quiz")}</button></div></div>`);
-    F.k = "C"; setTimeout(() => cpStoryChord(), 250); return;
+    F.k = "C"; cpStoryChord(); return;
   }
   if (F.phase === "set") {
     const ch = (k, v, l) => `<button class="chip ${String(F[k]) === String(v) ? "on" : ""}" data-cp="set" data-k="${k}" data-v="${v}">${l}</button>`;
@@ -59,62 +80,59 @@ function cpRender() {
       <button class="btn block" data-cp="start">🔁 ${t("fl_again")}</button><button class="btn ghost block" data-cp="settings">⚙️ ${t("fl_change")}</button></div>`);
     return;
   }
-  const L = CP_LV[F.lv], P = d => CP_PLACES.find(p => p.d === d), shown = F.q.map((d, i) => `<span class="cp-slot ${i < F.got.length ? "ok" : ""} ${F.phase === "reveal" && !F.lastOk ? "bad" : ""}">${i < F.got.length || F.phase === "reveal" ? P(d).ic : "?"}</span>`).join("");
+  const L = CP_LV[F.lv];
   openSheet(`<div class="stack cp">${head}
-    <div class="fl-top"><span>${F.i + 1} / ${CP_N}</span><span>✓ ${F.ok}</span></div>
-    <div class="nb-key">🔑 ${esc(CP.k)} ${t("nb_major")}</div>
-    <div class="cp-where">${F.phase === "listen" ? "👂 " + t("nb_listen") : F.phase === "reveal" ? (F.lastOk ? "✅ " : "❌ ") + F.q.map(d => P(d).ic + " " + d).join(" → ") : "🤔 " + t(L.len > 1 ? "cp_whereN" : "cp_where")}</div>
-    <div class="nb-slots">${shown}</div>
-    <div class="cp-btns">${CP_PLACES.map(p => `<button class="cp-ans" data-cp="ans" data-v="${p.d}" ${F.phase !== "ask" ? "disabled" : ""}><b>${p.ic}</b><span>${t(p.k)}</span><small>${p.d}</small></button>`).join("")}</div>
-    <div class="row" style="gap:8px"><button class="btn soft grow" data-cp="again">🔁 ${t("nb_again")}</button><button class="btn soft grow" data-cp="home1">🛋️ ${t("cp_hearHome")}</button></div></div>`);
+    <div class="fl-top"><span>${Math.min(F.i + 1, CP_N)} / ${CP_N}</span><span>✓ ${F.ok}</span></div>
+    <div class="nb-key">🔑 ${esc(CP.k)} ${t("nb_major")} · 🎶</div>
+    <div class="cp-where">${F.phase === "home" ? "🛋️ " + t("cp_atHome") : F.phase === "got" ? "✅ " + t("cp_gotIt") : "🤔 " + t(L.trip ? "cp_whereNow" : "cp_where")}</div>
+    <div class="cp-btns">${CP_PLACES.map(p => `<button class="cp-ans ${F.phase === "got" && F.cur === p.d ? "hit" : ""}" data-cp="ans" data-v="${p.d}"><b>${p.ic}</b><span>${t(p.k)}</span><small>${p.d}</small></button>`).join("")}</div>
+    <div class="muted small" style="text-align:center">${t("cp_keepTrying")}</div></div>`);
 }
-function cpStoryChord() {
-  const F = CP; if (!F || F.phase !== "story") return; const d = CP_SCENES[F.sc].d;
-  [0, .75, 1.5].forEach(w => cpChord(d, w, .7));        /* the chord again and again (like the crisps…) */
-}
+function cpStoryChord() { const F = CP; if (!F || F.phase !== "story") return; gvPlay(CP_SCENES[F.sc].d); }
 function cpQ() {
-  const r = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), L = CP_LV[F_lv()], prev = CP.q?.[0];
-  if (CP.key === "mix") { const k = NB_KEYS[r(0, NB_KEYS.length - 1)][0]; CP.newKey = k !== CP.k; CP.k = k; }
-  if (L.len === 1) { let d; do d = [1, 4, 5][r(0, 2)]; while (d === prev && Math.random() < .6); return [d]; }
-  const q = []; for (let i = 0; i < L.len; i++) { let d; do d = [1, 4, 5][r(0, 2)]; while (i && d === q[i - 1]); q.push(d); } return q;
+  const r = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), prev = CP.cur;
+  if (CP.key === "mix") { const k = NB_KEYS[r(0, NB_KEYS.length - 1)][0]; CP.k = k; }
+  let d; do d = [1, 4, 5][r(0, 2)]; while (d === prev && (CP_LV[CP.lv].trip || Math.random() < .6)); return d;
 }
-const F_lv = () => CP.lv;
-function cpPlay(after = 0) {
-  const L = CP_LV[CP.lv]; let w = after / 1000;
-  if (L.ref) { cpChord(1, w, .9); w += 1.1; }
-  CP.q.forEach(d => { cpChord(d, w, .9); w += 1.05; });
-  return w * 1000 + 200;
-}
+/* the music never stops: a question = the band moves to a chord and stays there until you find it */
 function cpStart() {
-  const F = CP; Object.assign(F, { phase: "listen", i: 0, ok: 0, q: null, got: [], k: F.key === "mix" ? "C" : F.key, run: (F.run || 0) + 1 });
-  S.cplace = { ...(S.cplace || {}), seen: true, lv: F.lv, key: F.key }; save(); cpNext();
+  const F = CP; Object.assign(F, { phase: "ask", i: 0, ok: 0, cur: 1, miss: false, k: F.key === "mix" ? "C" : F.key, run: (F.run || 0) + 1 });
+  S.cplace = { ...(S.cplace || {}), seen: true, lv: F.lv, key: F.key }; save();
+  gvStop(); gvPlay(1); F.phase = "home"; cpRender(); const run = F.run;
+  clearTimeout(F.tm); F.tm = setTimeout(() => { if (CP?.run === run) cpNext(); }, cpBars(2));
 }
+const cpBars = n => n * 4 * 60 / GV.bpm * 1000;
 function cpNext() {
   const F = CP; if (!F) return; if (F.i >= CP_N) return cpDone();
-  F.q = cpQ(); F.got = []; F.phase = "listen"; cpRender(); const run = F.run, end = cpPlay(300);
-  clearTimeout(F.tm); F.tm = setTimeout(() => { if (CP?.run === run && CP.phase === "listen") { CP.phase = "ask"; cpRender(); } }, end);
+  const L = CP_LV[F.lv], run = F.run, go = () => { if (CP?.run !== run) return; F.cur = cpQ(); F.miss = false; F.phase = "ask"; gvPlay(F.cur); F.asked = Date.now(); cpRender();
+    if (L.trip) { clearTimeout(F.tm); F.tm = setTimeout(() => { if (CP?.run === run && CP.phase === "ask") { F.i++; cpNext(); } }, cpBars(2)); } };
+  if (L.ref && F.cur !== 1) { F.cur = 1; F.phase = "home"; gvPlay(1); cpRender(); clearTimeout(F.tm); F.tm = setTimeout(go, cpBars(1)); }
+  else go();
 }
-function cpJudge(ok) {
-  const F = CP; F.lastOk = ok; if (ok) F.ok++; F.phase = "reveal"; cpRender(); try { ding(ok); } catch (e) { }
-  F.i++; clearTimeout(F.tm); F.tm = setTimeout(cpNext, ok ? 1000 : 2600);
-  if (!ok) setTimeout(() => cpPlay(0), 500);
+function cpAnswer(v) {
+  const F = CP; if (F.phase !== "ask") return; const L = CP_LV[F.lv];
+  if (v === F.cur) {
+    pinpon(); if (!F.miss) F.ok++; F.i++; F.lastOk = true; F.flash = v; clearTimeout(F.tm);
+    if (F.i >= CP_N) { F.phase = "got"; cpRender(); return setTimeout(cpDone, 700); }
+    if (L.trip) { F.phase = "got"; cpRender(); const run = F.run; F.tm = setTimeout(() => { if (CP?.run === run) cpNext(); }, Math.max(400, cpBars(2) - (Date.now() - F.asked))); }
+    else cpNext();
+  } else {                       /* not yet: the music just keeps going — listen again and try */
+    F.miss = true; const b = document.querySelector(`[data-cp="ans"][data-v="${v}"]`); if (b) { b.classList.add("nope"); setTimeout(() => b.classList.remove("nope"), 500); }
+  }
 }
-function cpDone() { const F = CP; F.phase = "done"; earn(Math.floor(F.ok / 2)); if (typeof refreshTop === "function") refreshTop(); if (F.ok >= 9) celebrate();
+function cpDone() { const F = CP; F.phase = "done"; gvStop(); clearTimeout(F.tm); earn(Math.floor(F.ok / 2)); if (typeof refreshTop === "function") refreshTop(); if (F.ok >= 9) celebrate();
   S.cplaceLog = (S.cplaceLog || []).concat({ date: TK, key: F.key, lv: F.lv + 1, ok: F.ok, of: CP_N }).slice(-60); save(); cpRender(); }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-cp]"); if (!b) return; const a = b.dataset.cp, F = CP;
   if (a === "open") return cpOpen();
   if (!F) return;
-  if (a === "next") { if (F.sc < CP_SCENES.length - 1) { F.sc++; cpRender(); } else { S.cplace = { ...(S.cplace || {}), seen: true }; save(); F.phase = "set"; cpRender(); } }
+  if (a === "next") { if (F.sc < CP_SCENES.length - 1) { F.sc++; cpRender(); } else { gvStop(); S.cplace = { ...(S.cplace || {}), seen: true }; save(); F.phase = "set"; cpRender(); } }
   else if (a === "prev") { F.sc = Math.max(0, F.sc - 1); cpRender(); }
   else if (a === "replay") cpStoryChord();
-  else if (a === "story") { F.phase = "story"; F.sc = 0; cpRender(); }
+  else if (a === "story") { gvStop(); F.phase = "story"; F.sc = 0; cpRender(); }
   else if (a === "set") { F[b.dataset.k] = b.dataset.k === "lv" ? +b.dataset.v : b.dataset.v; cpRender(); }
   else if (a === "start") cpStart();
-  else if (a === "settings") { F.phase = "set"; cpRender(); }
-  else if (a === "again") { if (F.q) cpPlay(0); }
-  else if (a === "home1") cpChord(1, 0, 1.2);
-  else if (a === "ans") { if (F.phase !== "ask") return; const v = +b.dataset.v, want = F.q[F.got.length];
-    if (v === want) { F.got.push(v); if (F.got.length === F.q.length) cpJudge(true); else cpRender(); } else cpJudge(false); }
+  else if (a === "settings") { gvStop(); F.phase = "set"; cpRender(); }
+  else if (a === "ans") cpAnswer(+b.dataset.v);
 });
-document.addEventListener("click", e => { if (e.target.closest('[data-act="close"]') && CP) { CP.run = -1; clearTimeout(CP.tm); CP = null; } }, true);
+document.addEventListener("click", e => { if (e.target.closest('[data-act="close"]') && CP) { CP.run = -1; clearTimeout(CP.tm); gvStop(); CP = null; } }, true);
