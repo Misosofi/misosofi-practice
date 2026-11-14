@@ -23,6 +23,22 @@ function hideBoot() { document.getElementById("boot").hidden = true; }
 })();
 const pendingJoin = () => { try { return localStorage.getItem("mp-join"); } catch (e) { return null; } };
 
+/* remember ?code=<login code> (the QR the teacher shows) until we sign in with it */
+const pendingCode = () => { try { return localStorage.getItem("mp-code"); } catch (e) { return null; } };
+(function captureCode() {
+  const c = PARAMS.get("code"); if (!c) return;
+  try { localStorage.setItem("mp-code", c.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20)); } catch (e) { }
+  PARAMS.delete("code");
+  try { history.replaceState(null, "", location.pathname + (PARAMS.toString() ? "?" + PARAMS : "") + location.hash); } catch (e) { }
+})();
+async function codeLogin(raw) {
+  const code = String(raw || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+  try { localStorage.removeItem("mp-code"); } catch (e) { }
+  if (code.length < 8) throw dbError({ message: t("au_codeBad") });
+  const email = await DB.rpc("login_for_code", { p_code: code });
+  if (!email) throw dbError({ message: t("au_codeBad") });
+  enter(await DB.signIn(email, code));
+}
 async function boot() {
   applyBase();
   if ("serviceWorker" in navigator && !DEMO && location.protocol === "https:") {
@@ -47,6 +63,9 @@ async function boot() {
   try { user = await DB.session(); } catch (e) { console.warn(e); }
   if (HASH_ERR) AUTH.err = HASH_ERR;
   if (user && RECOVERY_URL) { AUTH.mode = "setpw"; showAuth(); return; }
+  const pc = pendingCode();
+  if (pc && user && !confirm(t("au_codeSwitch"))) { try { localStorage.removeItem("mp-code"); } catch (e) { } }
+  else if (pc) { if (user) { try { await DB.signOut(); } catch (e) { } user = null; } AUTH.mode = "code"; showAuth(); authRun(() => codeLogin(pc)); return; }
   if (!user) { AUTH.mode = pendingJoin() ? "up" : "in"; showAuth(); return; }
   enter(user);
 }
@@ -107,9 +126,12 @@ function showAuth() {
   if (A_.mode === "in") body = `<h1>${t("au_signIn")}</h1><form class="stack" data-form="aIn">${field("aE", "email", t("au_email"), 'autocomplete="email" required')}${field("aP", "password", t("au_pw"), 'autocomplete="current-password" required')}
    <button class="btn block" type="submit" ${busy}>${A_.busy ? t("wait") : t("au_signIn")}</button></form>
    <button class="linkbtn" data-act="aMode" data-m="reset">${t("au_forgot")}</button><button class="linkbtn" data-act="aMode" data-m="up">${t("au_toSignUp")}</button>`;
+  if (A_.mode === "in") body = `<button class="btn soft block code-btn" data-act="aMode" data-m="code">🔑 ${t("au_haveCode")}</button>` + body;
   if (A_.mode === "up") body = `<h1>${t("au_signUp")}</h1><form class="stack" data-form="aUp">${field("aN", "text", t("au_childName"), 'autocomplete="off" maxlength="40" required')}<div class="muted small">${t("au_childNameD")}</div>
    ${field("aE", "email", t("au_email"), 'autocomplete="email" required')}${field("aP", "password", t("au_pwNew"), 'autocomplete="new-password" minlength="8" required')}
    <button class="btn block" type="submit" ${busy}>${A_.busy ? t("wait") : t("au_signUp")}</button></form><button class="linkbtn" data-act="aMode" data-m="in">${t("au_toSignIn")}</button>`;
+  if (A_.mode === "code") body = `<h1>🔑 ${t("au_codeH")}</h1><div class="muted">${t("au_codeD")}</div><form class="stack" data-form="aCode">${field("aC", "text", t("au_code"), 'autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" required')}
+   <button class="btn block" type="submit" ${busy}>${A_.busy ? t("wait") : t("au_signIn")}</button></form><button class="linkbtn" data-act="aMode" data-m="in">${t("au_back")}</button>`;
   if (A_.mode === "reset") body = `<h1>${t("au_resetH")}</h1><div class="muted">${t("au_resetD")}</div><form class="stack" data-form="aReset">${field("aE", "email", t("au_email"), 'autocomplete="email" required')}
    <button class="btn block" type="submit" ${busy}>${A_.busy ? t("wait") : t("au_sendReset")}</button></form><button class="linkbtn" data-act="aMode" data-m="in">${t("au_back")}</button>`;
   if (A_.mode === "setpw") body = `<h1>${t("au_setPw")}</h1><form class="stack" data-form="aSetPw">${field("aP", "password", t("au_pwNew"), 'autocomplete="new-password" minlength="8" required')}
@@ -142,6 +164,7 @@ function authSubmit(e) {
   const f = e.target.dataset.form, v = id => (document.getElementById(id)?.value || "").trim();
   const email = v("aE"), pw = document.getElementById("aP")?.value || "";
   const bad = m => { AUTH.err = m; showAuth(); };
+  if (f === "aCode") { const c = v("aC"); return authRun(() => codeLogin(c)); }
   if (f !== "aSetPw" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad(t("err_email"));
   if (f === "aIn") return authRun(async () => { try { enter(await DB.signIn(email, pw)); } catch (e) { if (/not confirmed/i.test(e?.message || "")) AUTH.unconf = email; throw e; } });
   if (f === "aUp") {

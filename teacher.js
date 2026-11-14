@@ -86,7 +86,25 @@ function TvStudents() {
    <span class="muted small" style="display:block">${t("weekH")}: ${t("t_days", { n: w.days })} · ${t("t_min", { n: w.mins })} · ${t("t_tasks", { a: w.done, b: w.total })}</span>
    <span class="muted small" style="display:block">${w.last ? t("t_last", { d: fmt(w.last, { weekday: "short", month: "short", day: "numeric" }) }) : t("t_never")}</span></span></button>`;
   }).join("") : `<div class="empty">${t("t_noStudents")}</div>`}</div></div>
+ <div class="section">${TaddStuCard()}</div>
  <div class="section">${TinviteCard()}</div>`;
+}
+/* the teacher registers a student herself: name → login QR for the student's phone/iPad (no e-mail for the family) */
+function TaddStuCard() {
+  return `<form class="card stack teacher tp-new" data-form="tAddStu"><div class="section-head"><h2>➕ ${t("t_addStu")}</h2></div><div class="muted small">${t("t_addStuD")}</div>
+   <input id="asN" placeholder="${t("t_addStuName")}" maxlength="40" required><select id="asG">${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(g => `<option value="${g}" ${g === 1 ? "selected" : ""}>${gradeName(g)}</option>`).join("")}</select>
+   <button class="btn block" type="submit">${t("t_addStuGo")}</button></form>`;
+}
+const loginUrl = code => APP_URL + "?" + (DB.demo ? "demo=1&" : "") + "code=" + code;
+const codeFmt = c => String(c).replace(/(.{4})(?=.)/g, "$1-");
+function TqrSheet(name, sid, code) {
+  let qr = ""; try { const q = qrcode(0, "M"); q.addData(loginUrl(code)); q.make(); qr = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); } catch (e) { }
+  TopenSheet(`<div class="stack qr-sheet"><div class="act-head"><h2>🔑 ${esc(name)}</h2><button class="icon-btn" data-act="tClose" aria-label="Close">${I.close}</button></div>
+   <div class="muted small">${t("t_qrHow")}</div>
+   <div class="qr-box">${qr || ""}</div>
+   <div class="qr-code">${codeFmt(code)}</div><div class="muted small" style="text-align:center">${t("t_qrCodeHow")}</div>
+   <button class="btn soft block" data-act="tCopyLogin" data-c="${code}">${I.link} ${t("t_qrCopy")}</button>
+   <button class="btn ghost block" data-act="tNewCode" data-id="${sid}">🔄 ${t("t_qrNew")}</button></div>`);
 }
 /* ready-made exam lists: add one grade at a time to the library (pieces already there are skipped) */
 function TcatalogCard() {
@@ -163,6 +181,7 @@ function TrenderDetail() {
   const hist = D.days.filter(d => +d.seconds > 0 || d.note || d.feel).sort((a, b) => a.day < b.day ? 1 : -1).slice(0, 14);
   const P = TS.plan;
   const html = `<div class="stack">${TdetHead()}
+ <button class="btn soft block" data-act="tQr" data-id="${sid}">🔑 ${t("t_qrBtn")}</button>
  <div class="card stack"><div class="chips"><span class="pill m">${t("t_starsN", { n: +st.stars || 0 })}</span><span class="pill m">${t("t_coinsN", { n: +st.coins || 0 })}</span>${+st.profile?.age ? `<span class="pill m">${t("t_age", { n: +st.profile.age })}</span>` : ""}</div>
   <label class="toggle" style="border:0;padding:0"><strong>${t("t_grade")}</strong><select id="tGrade" style="flex:0 1 170px">${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(g => `<option value="${g}" ${s.grade === g ? "selected" : ""}>${gradeName(g)}</option>`).join("")}</select></label>
   <div><strong>${t("t_plan")}</strong><div class="chips" style="margin-top:6px">${["free", "coach"].map(p => `<button class="chip ${s.plan === p ? "on" : ""}" data-act="tPlanSet" data-v="${p}">${t("plan_" + p)}</button>`).join("")}</div><div class="muted small" style="margin-top:4px">${t("planD_" + s.plan)}</div></div></div>
@@ -313,6 +332,9 @@ function teacherClick(b) {
   switch (a) {
     case "tTab": TS.tab = b.dataset.t; Trefresh(); scrollTo(0, 0); return;
     case "signOut": signOutNow(); return;
+    case "tQr": (async () => { try { const r = (await DB.sel("student_logins", { eq: { student_id: id } }))[0]; if (!r) { toast(t("t_qrNone")); return; } TqrSheet(tStu(id)?.display_name || "", id, r.code); } catch (e) { toast(t("err_generic")); } })(); return;
+    case "tNewCode": if (!confirm(t("t_qrNewAsk"))) return; (async () => { try { const r = await DB.rpc("teacher_new_code", { p_student: id }); TqrSheet(tStu(id)?.display_name || "", id, r.code); toast(t("saved")); } catch (e) { toast(t("err_generic")); } })(); return;
+    case "tCopyLogin": { const u = loginUrl(b.dataset.c); (navigator.clipboard?.writeText ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => toast(t("t_copied")), () => toast(u)); return; }
     case "tCopyInvite": {
       const u = inviteUrl(), done = () => toast(t("t_copied"));
       if (navigator.clipboard?.writeText) navigator.clipboard.writeText(u).then(done, () => { const i = document.getElementById("tInviteUrl"); i.select(); try { document.execCommand("copy"); done(); } catch (e) { } });
@@ -384,6 +406,8 @@ async function teacherSubmit(e) {
     if (await Tdo(() => DB.ins("library", rows), t("libAdded", { n: rows.length }))) { TS.library.push(...rows.map(r => ({ ...r, score_path: null }))); TS.library.sort((a, b) => a.title.localeCompare(b.title)); Trefresh(); }
     return;
   }
+  if (f === "tAddStu") { const name = v("asN"); if (!name) return; let r = null;
+    if (await Tdo(async () => { r = await DB.rpc("teacher_add_student", { p_name: name, p_grade: +v("asG") || 0 }); }, t("saved")) && r) { await TloadAll(); Trefresh(); TqrSheet(r.name, r.id, r.code); } return; }
   if (f === "tReward") { const title = v("rT"); if (!title) return; const row = { id: uid(), teacher_id: me, title, price: Math.max(1, Math.round(+v("rP") || 100)) }; if (await Tdo(() => DB.ins("rewards", [row]), t("saved"))) { TS.rewards.push(row); TS.rewards.sort((a, b) => a.price - b.price); Trefresh(); } return; }
   if (f === "tName") { const n = v("tNm"); if (!n) return; if (await Tdo(() => DB.upd("profiles", { id: me }, { display_name: n }), t("saved"))) { TS.prof.display_name = n; Trefresh(); } return; }
   const sid = TS.cur; if (!sid) return;

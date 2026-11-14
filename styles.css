@@ -921,3 +921,6 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .fl-stars{font-size:48px}.fl-self{display:grid;gap:8px}
 .fl-coins{justify-content:center;font-size:1.3rem}.fl-coins svg{width:26px;height:26px}
 .tp-new input{width:100%;flex:none;min-height:0;height:46px}.tp-new{margin-top:8px}
+.qr-box{background:#fff;border-radius:18px;padding:14px;max-width:280px;margin:0 auto;width:100%}.qr-box svg{width:100%;height:auto;display:block}
+.qr-code{text-align:center;font-family:ui-monospace,Menlo,monospace;font-size:1.5rem;font-weight:800;letter-spacing:.06em}
+.code-btn{margin-bottom:6px}.consent ul{margin:0;padding-left:1.2em;line-height:1.6}

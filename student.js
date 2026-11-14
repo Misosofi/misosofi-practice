@@ -6,7 +6,7 @@
 
 let S = null, ME = null, PROF = null, MYEMAIL = "";
 /* keys stored in student_state.data; the teacher owns TEACHER_KEYS (the student only reads them) */
-const PERSIST = ["v", "recentP", "flash", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits", "ptl", "spots", "rs", "papers"];
+const PERSIST = ["v", "recentP", "flash", "consent", "onboarded", "profile", "skin", "avatar", "owned", "cards", "coins", "stars", "hearts", "starDays", "quest", "drills", "drillsDel", "goals", "events", "nr", "ncBest", "ncNames", "ncLvl", "earSet", "videos", "vw", "recs", "recOn", "taskPaid", "starredPieces", "abc", "room", "songsPlayed", "plans", "pplan", "ppDays", "thief", "gift", "ppHist", "comeback", "sangOn", "micOk", "weekRec", "wrPick", "story", "thw", "thwSeen", "ppNext", "vreq", "vreqDone", "zoo", "zooHits", "ptl", "spots", "rs", "papers"];
 const TEACHER_KEYS = ["earSet", "hearts", "videos", "abc", "thw", "vreq", "spotChk"];
 const clone = x => JSON.parse(JSON.stringify(x ?? null));
 function defaultData() {
@@ -192,7 +192,8 @@ async function studentBoot(user, prof) {
   }
   document.getElementById("app").hidden = false;
   refresh();
-  if (!S.onboarded) { OB = { step: 0 }; onboarding(); }
+  if (!S.consent) consentSheet();
+  else if (!S.onboarded) { OB = { step: 0 }; onboarding(); }
   if (OUT.length || isDirty()) scheduleFlush(300);
   window.addEventListener("online", () => scheduleFlush(100));
   window.addEventListener("offline", () => setNet(false));
@@ -208,6 +209,17 @@ async function studentBoot(user, prof) {
     try { await loadStudent(); setNet(true); if (!A && !OB) refresh(); } catch (e) { if (e.net) setNet(false); }
   });
 }
+/* the first time on a device: a parent agrees once (the date is kept with the child's data) */
+function consentSheet() {
+  openSheet(`<div class="stack consent"><h2>👋 ${t("cs_h")}</h2><div>${t("cs_1")}</div><ul class="small">${["cs_a", "cs_b", "cs_c", "cs_d"].map(k => `<li>${t(k)}</li>`).join("")}</ul>
+   <button class="btn block" data-act="consentYes" style="padding:16px">✓ ${t("cs_yes")}</button><div class="muted small" style="text-align:center">${t("cs_q")}</div></div>`);
+  const sh = document.getElementById("sheet"); sh.dataset.lock = "1";
+}
+document.addEventListener("click", e => {
+  if (!e.target.closest('[data-act="consentYes"]')) return;
+  S.consent = { at: new Date().toISOString(), v: 1 }; save(); const sh = document.getElementById("sheet"); delete sh.dataset.lock; closeSheet();
+  if (!S.onboarded) { OB = { step: 0 }; onboarding(); }
+}, true);
 async function flushOpsOnly() { while (OUT.length) { try { await runOp(OUT[0]); } catch (e) { if (e.net) throw e; console.warn(e); } OUT.shift(); saveOut(); } }
 
 /* ===== rewards (coin rules from the prototype) ===== */
@@ -402,7 +414,7 @@ function vMe() {
 
 /* ===== activities ===== */
 function openSheet(html, full) { const sh = document.getElementById("sheet"); sh.classList.toggle("full", !!full); const p = document.getElementById("panel"); p.innerHTML = html; sh.hidden = false; if (S) { hydrateMedia(p); hydratePlans(p); } }
-function closeSheet() { silenceAll(); if (typeof ccStop === "function") ccStop(); if (typeof smStop === "function" && !isRec && !(A && A.start)) smStop(); if (typeof micStop === "function") micStop(); if (typeof FOLLOW !== "undefined") FOLLOW = null; if (isRec) stopRec(); stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
+function closeSheet() { if (document.getElementById("sheet")?.dataset.lock) return; silenceAll(); if (typeof ccStop === "function") ccStop(); if (typeof smStop === "function" && !isRec && !(A && A.start)) smStop(); if (typeof micStop === "function") micStop(); if (typeof FOLLOW !== "undefined") FOLLOW = null; if (isRec) stopRec(); stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
 function actHead(k) { return `<div class="act-head"><span class="ic" style="background:${ACT[k].col}">${I[ACT[k].ic]}</span><h2>${t("a_" + k)}</h2>${q()[k] ? `<span class="pill g">✓</span>` : `<span class="price">${I.coin}${ACT[k].coins}</span>`}<button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>`; }
 function openAct(k, opt = {}) { A = { k, ...opt }; renderAct(); if (k === "ear") setTimeout(() => A && A.qs && tone(A.qs[0].midi), 300); }
 function renderAct() { if (!A) return; const k = A.k; if (k === "plan") { openSheet(`<div class="act-head"><span class="ic" style="background:#5C6BC0">${I.book}</span><h2>${t("pl_title")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>` + actPlan(), true); return; } const b = k === "piece" ? actPiece() : k === "sight" ? actSight() : k === "nr" ? actNR() : k === "tech" ? actTech() : k === "theory" ? actTheory() : actQuiz(); openSheet(actHead(k) + b, true); }

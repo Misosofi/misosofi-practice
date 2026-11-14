@@ -104,7 +104,8 @@ function demoDB() {
     recordings: () => ({ id: uid(), kind: "audio", seconds: 0, piece_id: null, listened: false, heart: false, comment: "", created_at: now() }),
     rewards: () => ({ id: uid() }),
     redemptions: () => ({ id: uid(), given: false, created_at: now() }),
-    teacher_settings: () => ({ keep_recordings_days: 30 })
+    teacher_settings: () => ({ keep_recordings_days: 30 }),
+    student_logins: () => ({ created_at: now() })
   };
   const seed = () => {
     const T = DEMO_TEACHER, lib = (title, composer, grade, label) => ({ ...DEF.library(), teacher_id: T, title, composer, grade, label });
@@ -115,7 +116,7 @@ function demoDB() {
         student_state: [{ student_id: T, data: {}, updated_at: now() }],
         library: [lib("Minuet in G, BWV Anh. 114", "Petzold", 2, "Book 1"), lib("Arabesque, Op. 100 No. 2", "Burgmüller", 3, "Book 2"),
           lib("Sonatina in C, Op. 36 No. 1, 1st mvt", "Clementi", 3, "Book 2"), lib("The Wild Horseman, Op. 68 No. 8", "Schumann", 3, "Book 2")],
-        pieces: [], tasks: [], practice_days: [], recordings: [], redemptions: [], teacher_settings: [],
+        student_logins: [], pieces: [], tasks: [], practice_days: [], recordings: [], redemptions: [], teacher_settings: [],
         rewards: [{ id: uid(), teacher_id: T, title: "Choose a sticker at your lesson", price: 100 }, { id: uid(), teacher_id: T, title: "Teacher plays your favourite song", price: 150 }, { id: uid(), teacher_id: T, title: "Pick your next fun piece", price: 300 }]
       }
     };
@@ -207,6 +208,18 @@ function demoDB() {
           { area: "theory", title: "Watch the key signature video", piece: null, tempo: null }
         ], earNotes: ["Do", "Re", "Mi", "Fa", "So"]
       };
+    },
+    /* the teacher registers a student (same as the database functions) */
+    rpc: async (fn, a = {}) => {
+      await delay(); D.t.student_logins ||= [];
+      const code = () => [...Array(12)].map(() => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 31)]).join(""), s = me();
+      if (fn === "teacher_add_student") { const c = code(), em = "s-" + uid().slice(0, 8) + "@students.misosofi.app", u = newUser(em, c, a.p_name);
+        const p = D.t.profiles.find(x => x.id === u.id); p.teacher_id = s.id; p.grade = +a.p_grade || 0; D.t.student_logins.push({ student_id: u.id, teacher_id: s.id, login_email: em, code: c, created_at: now() }); persist();
+        return { id: u.id, email: em, code: c, name: a.p_name }; }
+      if (fn === "teacher_new_code") { const r = D.t.student_logins.find(x => x.student_id === a.p_student && x.teacher_id === s?.id); if (!r) throw dbError({ message: "Not your student" });
+        r.code = code(); const u = D.users.find(x => x.id === a.p_student); u.pw = r.code; persist(); return { id: r.student_id, email: r.login_email, code: r.code }; }
+      if (fn === "login_for_code") { const c = String(a.p_code || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase(); return D.t.student_logins.find(x => x.code === c)?.login_email || null; }
+      throw dbError({ message: "unknown function " + fn });
     },
     /* demo helpers */
     demoNewStudent: () => { const n = D.users.length + 1; return { email: `student${n}@demo.test`, pw: "demo1234" }; },
