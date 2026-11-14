@@ -194,6 +194,7 @@ function pkHTML(W) {
      ${R.length ? `<div class="card stack"><b>🕘 ${t("pk_recent")}</b><div class="list">${R.map((r, i) => pkRow({ id: "rc:" + i, ...r }, on(r))).join("")}</div></div>` : ""}
      ${pkTeacher().length ? `<button class="card pk-cat pk-teacher" data-pp="wpkMode" data-v="teacher"><span class="pk-ic">👩‍🏫</span><span class="grow"><b>${t("pk_teacher")}</b><span class="small muted">${t("pk_teacherSub")}</span></span><span>→</span></button>` : ""}
      <button class="card pk-cat" data-pp="wpkMode" data-v="lib"><span class="pk-ic">🎹</span><span class="grow"><b>${t("pk_lib")}</b><span class="small muted">${t("pk_libSub")}</span></span><span>→</span></button>
+     <button class="card pk-cat" data-pp="wpkMode" data-v="abrsm"><span class="pk-ic">📘</span><span class="grow"><b>ABRSM</b><span class="small muted">${t("pk_abrsmSub")}</span></span><span>→</span></button>
      ${pkBooks().length ? `<button class="card pk-cat" data-pp="wpkMode" data-v="books"><span class="pk-ic">📘</span><span class="grow"><b>${t("pk_books")}</b><span class="small muted">${esc(pkBooks().join(" · "))}</span></span><span>→</span></button>` : ""}
      <div class="muted small">${t("pk_hint")}</div>`;
   }
@@ -209,6 +210,12 @@ function pkHTML(W) {
      <div class="small muted">${t("pk_composers")}</div>${pkChips("comp", comps, P.comp)}
      ${P.comp ? `<div class="label">② ${t("pk_coll")}</div>${pkChips("coll", colls, P.coll)}` : ""}
      ${rows.length ? `<div class="label">③ ${t("pk_piece")}</div><div class="list lib-pick">${rows.map(p => pkRow({ ...p, coll: "≈ " + gradeName(p.lv) }, on(p))).join("")}</div>` : ""}`;
+  }
+  if (P.mode === "abrsm") {
+    const C = CATALOGS; P.cy ||= C[0].id; const c = C.find(x => x.id === P.cy) || C[0]; P.g ??= Math.max(0, Math.min(8, +(PROF?.grade ?? 1))); P.li ||= "A";
+    const rows = c.rows.map((r, i) => ({ r, i })).filter(x => x.r[0] === +P.g && x.r[1] === P.li).map(({ r, i }) => ({ id: "cat:" + c.id + ":" + i, title: r[3], composer: r[2], label: r[4] ? "📘 " + t("pk_inBook") : "" }));
+    return `${back}${pkChips("cy", C.map(x => x.id), P.cy, v => esc(C.find(x => x.id === v).short))}${pkChips("g", PLIB_LEVELS, P.g, v => gradeName(v))}${pkChips("li", ["A", "B", "C"], P.li, v => "List " + v)}
+     <div class="list lib-pick">${rows.map(p => pkRow(p, on(p), `<a class="btn sm soft" href="${esc(listenUrl(p))}" target="_blank" rel="noopener">▶</a>`)).join("") || `<div class="empty">${t("lb_none")}</div>`}</div>`;
   }
   if (P.mode === "books") {
     /* the books the teacher brought in (exam lists, method books…): book → grade → list → piece */

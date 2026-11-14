@@ -463,6 +463,8 @@ const listenUrl = l => /^https?:\/\//.test(l.yt_url || "") ? l.yt_url : "https:/
 /* everything a child can pick: the teacher's library first, then the built-in ABRSM lists (2025–26, 2027–28) */
 function libAll() {
   const L = (S.library || []).slice(), seen = new Set(L.map(l => (l.title + "|" + (+l.grade || 0)).toLowerCase()));
+  if (typeof CATALOGS !== "undefined") CATALOGS.forEach(c => c.rows.forEach((r, i) => { const k = (r[3] + "|" + r[0]).toLowerCase(); if (seen.has(k)) return; seen.add(k);
+    L.push({ id: "cat:" + c.id + ":" + i, cat: true, title: r[3], composer: r[2], grade: r[0], label: `${c.short} · List ${r[1]}${r[4] ? " 📘" : ""}` }); }));
   return L;
 }
 function libDefaultGrade() {
