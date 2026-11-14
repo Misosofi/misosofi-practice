@@ -92,6 +92,54 @@ const PLIB = [
   [8, "Debussy", "Pieces", ["Clair de lune (Suite bergamasque)", "Prélude (Pour le piano)"]],
   [5, "Joplin", "Rags", ["The Entertainer", "The Easy Winners"]],
   [8, "Joplin", "Rags", ["Maple Leaf Rag"]],
+  /* ===== more repertoire (Nov 15) ===== */
+  [8, "Chopin", "Études, Op. 10", ["No. 1 in C", "No. 2 in A minor", "No. 3 in E ('Tristesse')", "No. 4 in C♯ minor", "No. 5 in G♭ ('Black Keys')", "No. 6 in E♭ minor", "No. 7 in C", "No. 8 in F", "No. 9 in F minor", "No. 10 in A♭", "No. 11 in E♭", "No. 12 in C minor ('Revolutionary')"]],
+  [8, "Chopin", "Études, Op. 25", ["No. 1 in A♭ ('Aeolian Harp')", "No. 2 in F minor", "No. 3 in F", "No. 4 in A minor", "No. 5 in E minor", "No. 6 in G♯ minor", "No. 7 in C♯ minor", "No. 8 in D♭", "No. 9 in G♭ ('Butterfly')", "No. 10 in B minor", "No. 11 in A minor ('Winter Wind')", "No. 12 in C minor ('Ocean')"]],
+  [7, "Chopin", "Nocturnes", ["Op. 9 No. 1 in B♭ minor", "Op. 9 No. 3 in B", "Op. 15 No. 1 in F", "Op. 15 No. 2 in F♯", "Op. 15 No. 3 in G minor", "Op. 27 No. 1 in C♯ minor", "Op. 27 No. 2 in D♭", "Op. 32 No. 1 in B", "Op. 32 No. 2 in A♭", "Op. 37 No. 1 in G minor", "Op. 37 No. 2 in G", "Op. 48 No. 1 in C minor", "Op. 48 No. 2 in F♯ minor", "Op. 55 No. 1 in F minor", "Op. 55 No. 2 in E♭", "Op. 62 No. 1 in B", "Op. 62 No. 2 in E", "Nocturne in C minor, B. 108"]],
+  [7, "Chopin", "Waltzes", ["Op. 18 in E♭ ('Grande valse brillante')", "Op. 34 No. 1 in A♭", "Op. 34 No. 2 in A minor", "Op. 34 No. 3 in F", "Op. 42 in A♭", "Op. 64 No. 3 in A♭", "Op. 70 No. 1 in G♭", "Op. 70 No. 2 in F minor", "Op. 70 No. 3 in D♭"]],
+  [6, "Chopin", "Preludes, Op. 28", ["No. 1 in C", "No. 2 in A minor", "No. 3 in G", "No. 5 in D", "No. 8 in F♯ minor", "No. 9 in E", "No. 10 in C♯ minor", "No. 11 in B", "No. 12 in G♯ minor", "No. 13 in F♯", "No. 14 in E♭ minor", "No. 15 in D♭ ('Raindrop')", "No. 16 in B♭ minor", "No. 17 in A♭", "No. 18 in F minor", "No. 19 in E♭", "No. 21 in B♭", "No. 22 in G minor", "No. 23 in F", "No. 24 in D minor"]],
+  [6, "Chopin", "Mazurkas", ["Op. 7 No. 1 in B♭", "Op. 17 No. 4 in A minor", "Op. 24 No. 1 in G minor", "Op. 33 No. 3 in C", "Op. 67 No. 2 in G minor", "Op. 67 No. 4 in A minor", "Op. 68 No. 2 in A minor", "Op. 68 No. 3 in F"]],
+  [8, "Chopin", "Polonaises", ["Op. 40 No. 1 in A ('Military')", "Op. 53 in A♭ ('Heroic')", "Op. 26 No. 1 in C♯ minor", "Polonaise in G minor, B. 1"]],
+  [8, "Chopin", "Impromptus, Ballades & Scherzos", ["Impromptu No. 1 in A♭, Op. 29", "Impromptu No. 2 in F♯, Op. 36", "Impromptu No. 3 in G♭, Op. 51", "Ballade No. 2 in F, Op. 38", "Ballade No. 3 in A♭, Op. 47", "Ballade No. 4 in F minor, Op. 52", "Scherzo No. 1 in B minor, Op. 20", "Scherzo No. 2 in B♭ minor, Op. 31", "Scherzo No. 3 in C♯ minor, Op. 39", "Scherzo No. 4 in E, Op. 54", "Berceuse, Op. 57", "Barcarolle, Op. 60"]],
+  [8, "Beethoven", "The 32 Piano Sonatas", ["No. 1 in F minor, Op. 2 No. 1", "No. 2 in A, Op. 2 No. 2", "No. 3 in C, Op. 2 No. 3", "No. 4 in E♭, Op. 7", "No. 5 in C minor, Op. 10 No. 1", "No. 6 in F, Op. 10 No. 2", "No. 7 in D, Op. 10 No. 3", "No. 8 in C minor, Op. 13 ('Pathétique')", "No. 9 in E, Op. 14 No. 1", "No. 10 in G, Op. 14 No. 2", "No. 11 in B♭, Op. 22", "No. 12 in A♭, Op. 26", "No. 13 in E♭, Op. 27 No. 1", "No. 14 in C♯ minor, Op. 27 No. 2 ('Moonlight')", "No. 15 in D, Op. 28 ('Pastoral')", "No. 16 in G, Op. 31 No. 1", "No. 17 in D minor, Op. 31 No. 2 ('Tempest')", "No. 18 in E♭, Op. 31 No. 3", "No. 19 in G minor, Op. 49 No. 1", "No. 20 in G, Op. 49 No. 2", "No. 21 in C, Op. 53 ('Waldstein')", "No. 22 in F, Op. 54", "No. 23 in F minor, Op. 57 ('Appassionata')", "No. 24 in F♯, Op. 78", "No. 25 in G, Op. 79", "No. 26 in E♭, Op. 81a ('Les Adieux')", "No. 27 in E minor, Op. 90", "No. 28 in A, Op. 101", "No. 29 in B♭, Op. 106 ('Hammerklavier')", "No. 30 in E, Op. 109", "No. 31 in A♭, Op. 110", "No. 32 in C minor, Op. 111"]],
+  [5, "Beethoven", "Bagatelles", ["Op. 33 No. 1", "Op. 33 No. 2", "Op. 33 No. 3", "Op. 33 No. 4", "Op. 33 No. 5", "Op. 33 No. 6", "Op. 33 No. 7", "Op. 119 No. 3", "Op. 119 No. 4", "Op. 119 No. 5", "Op. 119 No. 6", "Op. 119 No. 7", "Op. 119 No. 8", "Op. 119 No. 9", "Op. 119 No. 10", "Op. 119 No. 11", "Op. 126 No. 1", "Op. 126 No. 2", "Op. 126 No. 3", "Op. 126 No. 4", "Op. 126 No. 5", "Op. 126 No. 6"]],
+  [6, "Beethoven", "Variations & other pieces", ["6 Écossaises, WoO 83", "Rondo a capriccio, Op. 129 ('Rage over a Lost Penny')", "32 Variations in C minor, WoO 80", "Rondo in G, Op. 51 No. 2"]],
+  [6, "Debussy", "Suite bergamasque", ["Prélude", "Menuet", "Clair de lune", "Passepied"]],
+  [8, "Debussy", "Préludes, Book 1", ["Danseuses de Delphes", "Voiles", "Le vent dans la plaine", "Les sons et les parfums tournent dans l'air du soir", "Les collines d'Anacapri", "Des pas sur la neige", "Ce qu'a vu le vent d'ouest", "La sérénade interrompue", "La cathédrale engloutie", "La danse de Puck", "Minstrels"]],
+  [8, "Debussy", "Préludes, Book 2", ["Brouillards", "Feuilles mortes", "La puerta del Vino", "Les fées sont d'exquises danseuses", "Bruyères", "General Lavine – eccentric", "La terrasse des audiences du clair de lune", "Ondine", "Hommage à S. Pickwick Esq. P.P.M.P.C.", "Canope", "Les tierces alternées", "Feux d'artifice"]],
+  [8, "Debussy", "Other pieces", ["Pour le piano: Sarabande", "Pour le piano: Toccata", "Estampes: Pagodes", "Estampes: La soirée dans Grenade", "Estampes: Jardins sous la pluie", "Images I: Reflets dans l'eau", "La plus que lente", "Valse romantique"]],
+  [7, "Liszt", "Consolations, S. 172", ["No. 1 in E", "No. 2 in E", "No. 3 in D♭", "No. 4 in D♭", "No. 5 in E", "No. 6 in E"]],
+  [8, "Liszt", "Liebesträume, S. 541", ["No. 1 in A♭", "No. 2 in E", "No. 3 in A♭"]],
+  [8, "Liszt", "Concert pieces", ["Un sospiro (Concert Étude No. 3)", "La campanella (Paganini Étude No. 3)", "Hungarian Rhapsody No. 2", "Hungarian Rhapsody No. 6", "Transcendental Étude No. 1 'Preludio'", "Transcendental Étude No. 3 'Paysage'", "Transcendental Étude No. 5 'Feux follets'", "Transcendental Étude No. 11 'Harmonies du soir'", "Transcendental Étude No. 12 'Chasse-neige'"]],
+  [6, "Brahms", "16 Waltzes, Op. 39", ["#1-16"]],
+  [8, "Brahms", "Piano pieces", ["Intermezzo in E♭, Op. 117 No. 1", "Intermezzo in B♭ minor, Op. 117 No. 2", "Intermezzo in C♯ minor, Op. 117 No. 3", "Intermezzo in A minor, Op. 118 No. 1", "Intermezzo in A, Op. 118 No. 2", "Ballade in G minor, Op. 118 No. 3", "Intermezzo in F minor, Op. 118 No. 4", "Romanze in F, Op. 118 No. 5", "Intermezzo in E♭ minor, Op. 118 No. 6", "Intermezzo in B minor, Op. 119 No. 1", "Intermezzo in E minor, Op. 119 No. 2", "Intermezzo in C, Op. 119 No. 3", "Rhapsody in E♭, Op. 119 No. 4", "Rhapsody in B minor, Op. 79 No. 1", "Rhapsody in G minor, Op. 79 No. 2"]],
+  [7, "Schubert", "Impromptus & Moments musicaux", ["Impromptu in C minor, D. 899 No. 1", "Impromptu in E♭, D. 899 No. 2", "Impromptu in G♭, D. 899 No. 3", "Impromptu in A♭, D. 899 No. 4", "Impromptu in F minor, D. 935 No. 1", "Impromptu in A♭, D. 935 No. 2", "Impromptu in B♭, D. 935 No. 3", "Impromptu in F minor, D. 935 No. 4", "Moment musical No. 1 in C", "Moment musical No. 2 in A♭", "Moment musical No. 3 in F minor", "Moment musical No. 4 in C♯ minor", "Moment musical No. 5 in F minor", "Moment musical No. 6 in A♭"]],
+  [8, "Schubert", "Piano Sonatas", ["Sonata in A, D. 664", "Sonata in A minor, D. 784", "Sonata in A minor, D. 845", "Sonata in A, D. 959", "Sonata in B♭, D. 960"]],
+  [4, "Schubert", "Dances", ["Écossaises, D. 529", "Waltzes, D. 145", "Ländler, D. 366", "Scherzo in B♭, D. 593 No. 1"]],
+  [7, "Schumann", "Waldszenen, Op. 82", ["Eintritt", "Jäger auf der Lauer", "Einsame Blumen", "Verrufene Stelle", "Freundliche Landschaft", "Herberge", "Vogel als Prophet", "Jagdlied", "Abschied"]],
+  [8, "Schumann", "Fantasiestücke, Op. 12", ["Des Abends", "Aufschwung", "Warum?", "Grillen", "In der Nacht", "Fabel", "Traumes Wirren", "Ende vom Lied"]],
+  [8, "Schumann", "Other pieces", ["Arabeske, Op. 18", "Papillons, Op. 2", "Romanze in F♯, Op. 28 No. 2"]],
+  [6, "Mendelssohn", "Songs without Words (all books)", ["Op. 19 No. 2", "Op. 19 No. 3", "Op. 19 No. 4", "Op. 19 No. 5", "Op. 30 No. 1", "Op. 30 No. 2", "Op. 30 No. 4", "Op. 30 No. 5", "Op. 38 No. 1", "Op. 38 No. 2", "Op. 38 No. 3", "Op. 38 No. 4", "Op. 38 No. 5", "Op. 38 No. 6", "Op. 53 No. 1", "Op. 53 No. 2", "Op. 53 No. 3", "Op. 53 No. 4", "Op. 53 No. 5", "Op. 53 No. 6", "Op. 62 No. 1", "Op. 62 No. 2", "Op. 62 No. 3", "Op. 62 No. 4", "Op. 62 No. 5", "Op. 67 No. 1", "Op. 67 No. 2", "Op. 67 No. 3", "Op. 67 No. 4 ('Spinning Song')", "Op. 67 No. 5", "Op. 67 No. 6", "Op. 85 No. 1", "Op. 102 No. 1"]],
+  [7, "Mendelssohn", "Other pieces", ["Rondo capriccioso, Op. 14", "Kinderstücke, Op. 72 (6 pieces)"]],
+  [5, "Grieg", "Lyric Pieces, Op. 38", ["Berceuse", "Folk Song", "Melody", "Halling", "Springdance", "Elegy", "Waltz", "Canon"]],
+  [5, "Grieg", "Lyric Pieces, Op. 43", ["Butterfly", "Solitary Traveller", "In My Native Country", "Little Bird", "Erotik", "To the Spring"]],
+  [6, "Grieg", "Lyric Pieces, Op. 54", ["Shepherd's Boy", "Norwegian March", "March of the Trolls", "Notturno", "Scherzo", "Bell Ringing"]],
+  [6, "Grieg", "Lyric Pieces, Op. 71", ["Once Upon a Time", "Summer's Eve", "Puck", "Peace of the Woods", "Halling", "Gone", "Remembrances"]],
+  [6, "Mozart", "More Piano Sonatas", ["Sonata in C, K. 279", "Sonata in E♭, K. 282", "Sonata in D, K. 284", "Sonata in C, K. 309", "Sonata in B♭, K. 570", "Sonata in D, K. 576"]],
+  [6, "Mozart", "Variations, Rondos & Fantasias", ["12 Variations on 'Ah vous dirai-je, Maman', K. 265", "Rondo in A minor, K. 511", "Fantasia in C minor, K. 475", "Fantasia in C, K. 394"]],
+  [5, "Haydn", "Piano Sonatas", ["Sonata in C, Hob. XVI:35", "Sonata in D, Hob. XVI:37", "Sonata in E minor, Hob. XVI:34", "Sonata in G, Hob. XVI:27", "Sonata in F, Hob. XVI:23", "Sonata in E♭, Hob. XVI:52", "Sonata in C, Hob. XVI:50", "Sonata in E♭, Hob. XVI:49"]],
+  [7, "J. S. Bach", "French Suites", ["French Suite No. 1 in D minor, BWV 812", "French Suite No. 2 in C minor, BWV 813", "French Suite No. 3 in B minor, BWV 814", "French Suite No. 4 in E♭, BWV 815", "French Suite No. 5 in G, BWV 816", "French Suite No. 6 in E, BWV 817"]],
+  [8, "J. S. Bach", "Partitas, Italian Concerto & WTC 2", ["Partita No. 1 in B♭, BWV 825", "Partita No. 2 in C minor, BWV 826", "Italian Concerto, BWV 971"]],
+  [8, "J. S. Bach", "The Well-Tempered Clavier, Book 2", ["#1-24"]],
+  [3, "Kuhlau", "Sonatinas, Op. 20", ["Sonatina No. 1 in C", "Sonatina No. 2 in G", "Sonatina No. 3 in F"]],
+  [3, "Lemoine", "50 Études enfantines, Op. 37", ["#1-50"]],
+  [3, "Duvernoy", "25 Études, Op. 176", ["#1-25"]],
+  [5, "Czerny", "24 Études for the Left Hand, Op. 718", ["#1-24"]],
+  [7, "Rachmaninoff", "Preludes & pieces", ["Prelude in C♯ minor, Op. 3 No. 2", "Elégie, Op. 3 No. 1", "Prelude in G minor, Op. 23 No. 5", "Prelude in D, Op. 23 No. 4", "Prelude in G, Op. 32 No. 5", "Prelude in B minor, Op. 32 No. 10", "Moment musical in E minor, Op. 16 No. 4"]],
+  [7, "Ravel", "Piano pieces", ["Pavane pour une infante défunte", "Menuet sur le nom d'Haydn", "Sonatine", "Jeux d'eau"]],
+  [5, "Satie", "More pieces", ["Gnossienne No. 2", "Gnossienne No. 3", "Gnossienne No. 4", "Je te veux"]],
+  [7, "Albéniz & Granados", "Spanish pieces", ["Albéniz: Tango (España, Op. 165)", "Albéniz: Asturias (Leyenda)", "Granados: Spanish Dance No. 5 'Andaluza'"]],
+  [4, "Popular & film", "Piano favourites", ["Nuvole bianche (Einaudi)", "Una mattina (Einaudi)", "I giorni (Einaudi)", "Le onde (Einaudi)", "River Flows in You (Yiruma)", "Kiss the Rain (Yiruma)", "Summer (Joe Hisaishi)", "One Summer's Day (Joe Hisaishi)", "Merry-Go-Round of Life (Joe Hisaishi)", "Comptine d'un autre été (Yann Tiersen)"]],
 ];
 const PLIB_LEVELS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 /* every library piece, flattened: { id, title (shown in the plan), composer, lv, coll, name } */
@@ -150,16 +198,17 @@ function pkHTML(W) {
      <div class="muted small">${t("pk_hint")}</div>`;
   }
   if (P.mode === "lib") {
-    const L = plibFlat(); P.lv ??= Math.max(0, Math.min(8, +(PROF?.grade ?? 1)));
-    const inLv = L.filter(p => p.lv === +P.lv), comps = [...new Set(inLv.map(p => p.composer))];
-    if (P.comp && !comps.includes(P.comp)) P.comp = null;
-    const colls = P.comp ? [...new Set(inLv.filter(p => p.composer === P.comp).map(p => p.coll))] : [];
+    /* composer → book → piece (no grade lists); the level is only a small hint on each piece */
+    const L = plibFlat(), STUD = ["Beyer", "Czerny", "Hanon", "Burgmüller", "S. Heller", "Duvernoy", "Lemoine"];
+    const all = [...new Set(L.map(p => p.composer))], studies = STUD.filter(c => all.includes(c)), comps = all.filter(c => !STUD.includes(c)).sort((a, b) => a.replace(/^[A-Z]\. ?/, "").localeCompare(b.replace(/^[A-Z]\. ?/, "")));
+    const colls = P.comp ? [...new Set(L.filter(p => p.composer === P.comp).map(p => p.coll))] : [];
     if (P.coll && !colls.includes(P.coll)) P.coll = null; if (!P.coll && colls.length === 1) P.coll = colls[0];
-    const rows = P.coll ? inLv.filter(p => p.composer === P.comp && p.coll === P.coll) : [];
-    return `${back}<div class="label">① ${t("pk_level")}</div>${pkChips("lv", PLIB_LEVELS, P.lv, v => gradeName(v))}
-     <div class="label">② ${t("pk_comp")}</div>${pkChips("comp", comps, P.comp)}
-     ${P.comp ? `<div class="label">③ ${t("pk_coll")}</div>${pkChips("coll", colls, P.coll)}` : ""}
-     ${rows.length ? `<div class="label">④ ${t("pk_piece")}</div><div class="list lib-pick">${rows.map(p => pkRow(p, on(p))).join("")}</div>` : ""}`;
+    const rows = P.coll ? L.filter(p => p.composer === P.comp && p.coll === P.coll) : [];
+    return `${back}<div class="label">① ${t("pk_comp")}</div>
+     <div class="small muted">${t("pk_studies")}</div>${pkChips("comp", studies, P.comp)}
+     <div class="small muted">${t("pk_composers")}</div>${pkChips("comp", comps, P.comp)}
+     ${P.comp ? `<div class="label">② ${t("pk_coll")}</div>${pkChips("coll", colls, P.coll)}` : ""}
+     ${rows.length ? `<div class="label">③ ${t("pk_piece")}</div><div class="list lib-pick">${rows.map(p => pkRow({ ...p, coll: "≈ " + gradeName(p.lv) }, on(p))).join("")}</div>` : ""}`;
   }
   if (P.mode === "abrsm") {
     const C = CATALOGS; P.cy ||= C[0].id; const c = C.find(x => x.id === P.cy) || C[0]; P.g ??= Math.max(0, Math.min(8, +(PROF?.grade ?? 1))); P.li ||= "A";

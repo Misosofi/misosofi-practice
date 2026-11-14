@@ -251,7 +251,7 @@ function thiefScene(kind) {
   <img class="th-pic th-run" src="${ART}thief.webp" alt="">
   <div class="th-list">${news.map(x => `<div>${x.k === "item" ? `${itemImg(x.id)} ${t("th_took", { what: esc(itemOf(x.id)?.n || "") })}` : t("th_n_" + x.k)}</div>`).join("")}</div>
   <div class="muted">${t("th_how")}</div>
-  <button class="btn" data-pp="edit">✏️ ${t("pp_make")}</button></div>`);
+  <button class="btn" data-pp="help">📝 ${t("pp_makePlan")}</button></div>`);
 }
 function thiefNews() { if (S.thief?.news?.length && document.getElementById("sheet").hidden) thiefScene("news"); }
 
