@@ -106,17 +106,53 @@ function TqrSheet(name, sid, code) {
    <button class="btn soft block" data-act="tCopyLogin" data-c="${code}">${I.link} ${t("t_qrCopy")}</button>
    <button class="btn ghost block" data-act="tNewCode" data-id="${sid}">🔄 ${t("t_qrNew")}</button></div>`);
 }
-/* ready-made exam lists: add one grade at a time to the library (pieces already there are skipped) */
-function TcatalogCard() {
-  if (typeof CATALOGS === "undefined") return "";
-  return CATALOGS.map(c => { const grades = [...new Set(c.rows.map(r => r[0]))];
-    const has = g => c.rows.filter(r => r[0] === g).every(r => TS.library.some(l => l.title === r[3] && +l.grade === g));
-    return `<div class="card stack" style="background:var(--soft,#F6F4FF)"><b>📚 ${esc(c.name)}</b><div class="muted small">${t("cat_d")}</div>
-     <div class="chips">${grades.map(g => `<button class="chip ${has(g) ? "on" : ""}" data-act="tCatAdd" data-c="${c.id}" data-g="${g}" ${has(g) ? "disabled" : ""}>${has(g) ? "✓ " : "＋ "}${gradeName(g)}</button>`).join("")}</div></div>`; }).join("");
+/* ---------- books: the teacher brings in any list of pieces (an exam syllabus, a method book's contents…) ----------
+   Paste the list (or open a .txt/.csv file). One piece per line. Understood:
+     Grade 3 | A | Composer | Title  (| 📘)      — pipes, tabs or semicolons
+     Composer – Title     or just a title
+     a line "Grade 2" / "Initial" / "List B" sets the grade / list for the lines below it.
+   Tip on iPhone: photograph the contents page → in Photos, press and hold the text → Select All → Copy → paste here. */
+const bookOf = l => (l.label || "").split(" · ")[0].replace(/ 📘$/, "");
+function TbookParse(txt, g0) {
+  const out = []; let g = g0, li = "";
+  const gOf = x => { const m = /^(initial|prep|0)$/i.test(x.trim()) ? 0 : (/(?:grade|level|g)\s*(\d)/i.exec(x) || /^(\d)$/.exec(x.trim()) || [])[1]; return m === 0 ? 0 : m != null ? +m : null; };
+  String(txt || "").split(/\r?\n/).forEach(raw => {
+    const ln = raw.trim(); if (!ln || ln.startsWith("#")) return;
+    if (/^(initial( grade)?|(grade|level)\s*\d)$/i.test(ln)) { g = gOf(ln) ?? g; return; }
+    const lm = /^list\s*([A-Z])$/i.exec(ln); if (lm) { li = lm[1].toUpperCase(); return; }
+    let f = ln.split(/\s*[|\t;]\s*/).filter(x => x !== ""), book = false;
+    if (f.length > 1 && /^(📘|yes|y|book)$/i.test(f[f.length - 1])) { book = true; f.pop(); }
+    let gg = g, l2 = li, comp = "", title = "";
+    if (f.length >= 4) { gg = gOf(f[0]) ?? g; l2 = f[1].replace(/^list\s*/i, "").toUpperCase().slice(0, 2); comp = f[2]; title = f.slice(3).join(" – "); }
+    else if (f.length === 3) { if (gOf(f[0]) != null) { gg = gOf(f[0]); comp = f[1]; title = f[2]; } else { comp = f[0]; title = f[1]; gg = gOf(f[2]) ?? g; } }
+    else if (f.length === 2) { comp = f[0]; title = f[1]; }
+    else { const m = /^(.{2,40}?)\s+[–—-]\s+(.+)$/.exec(ln); if (m) { comp = m[1]; title = m[2]; } else title = ln; }
+    title = title.replace(/^\d{1,3}[.)]\s+/, "").trim(); if (!title) return;
+    out.push({ g: Math.max(0, Math.min(8, gg ?? 0)), li: l2, comp: comp.trim(), title, book });
+  });
+  return out;
 }
+function TbooksCard() {
+  const books = {}; TS.library.forEach(l => { const b = bookOf(l); if (b) books[b] = (books[b] || 0) + 1; });
+  const P = TS.bookPrev;
+  return `<div class="card teacher stack tp-new"><div class="section-head"><h2>📥 ${t("bk_h")}</h2></div><div class="muted small">${t("bk_how")}</div>
+   ${Object.keys(books).length ? `<div class="list">${Object.entries(books).map(([b, n]) => `<div class="row"><div class="grow"><b>📘 ${esc(b)}</b><div class="muted small">${t("bk_n", { n })}</div></div><button class="btn sm ghost" data-act="tBookDel" data-b="${esc(b)}">🗑</button></div>`).join("")}</div>` : ""}
+   <input id="bkName" maxlength="40" placeholder="${t("bk_name")}" value="${esc(TS.bookName || "")}">
+   <select id="bkG">${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(g => `<option value="${g}" ${g === (TS.bookG ?? 1) ? "selected" : ""}>${t("bk_defG")}: ${gradeName(g)}</option>`).join("")}</select>
+   <textarea id="bkTxt" rows="6" placeholder="${t("bk_ph")}">${esc(TS.bookTxt || "")}</textarea>
+   <label class="btn soft block">📄 ${t("bk_file")}<input type="file" id="bkFile" accept=".txt,.csv,text/plain,text/csv" hidden></label>
+   <button class="btn block soft" data-act="tBookRead">👀 ${t("bk_read")}</button>
+   ${P ? `<div class="small"><b>${t("bk_found", { n: P.length })}</b></div><div class="list small bk-prev">${P.slice(0, 8).map(r => `<div class="row"><div class="grow">${esc(r.title)} <span class="muted">· ${esc(r.comp || "—")} · ${gradeName(r.g)}${r.li ? " · List " + esc(r.li) : ""}${r.book ? " 📘" : ""}</span></div></div>`).join("")}${P.length > 8 ? `<div class="muted">… +${P.length - 8}</div>` : ""}</div>
+     <button class="btn block" data-act="tBookAdd" ${P.length ? "" : "disabled"}>📥 ${t("bk_add", { n: P.length })}</button>` : ""}</div>`;
+}
+document.addEventListener("change", async e => {
+  if (e.target.id !== "bkFile") return; const f = e.target.files?.[0]; if (!f) return;
+  const txt = await f.text(); TS.bookTxt = txt; TS.bookName ||= f.name.replace(/\.[a-z]+$/i, "").replace(/[-_]+/g, " ");
+  TS.bookPrev = TbookParse(txt, TS.bookG ?? 1); Trefresh();
+});
 function TvLibrary() {
   const L = TS.library.filter(l => (TS.libG === "all" || String(l.grade) === String(TS.libG)));
-  return `<div class="section">${TcatalogCard()}</div><div class="section"><div class="card teacher stack"><div class="section-head"><h2>${t("libH")}</h2><span class="muted small">${t("t_libCount", { n: TS.library.length })}</span></div><div class="muted small">${t("libSub")} ${t("scoreOnly")}</div>
+  return `<div class="section">${TbooksCard()}</div><div class="section"><div class="card teacher stack"><div class="section-head"><h2>${t("libH")}</h2><span class="muted small">${t("t_libCount", { n: TS.library.length })}</span></div><div class="muted small">${t("libSub")} ${t("scoreOnly")}</div>
  <input id="tLibQ" placeholder="${t("libSearch")}" value="${esc(TS.libQ)}" style="flex:none">
  <div class="chips">${["all", 0, 1, 2, 3, 4, 5, 6, 7, 8].map(g => `<button class="chip ${String(TS.libG) === String(g) ? "on" : ""}" data-act="tLibG" data-g="${g}">${g === "all" ? t("allGrades") : gradeName(g)}</button>`).join("")}</div>
  <div class="list">${L.length ? L.map(l => `<div class="row lib-row" data-q="${esc((l.title + " " + l.composer).toLowerCase())}" ${TS.libQ && !(l.title + " " + l.composer).toLowerCase().includes(TS.libQ) ? "hidden" : ""} style="align-items:flex-start"><div class="grow"><div class="title">${esc(l.title)}</div><div class="muted small">${esc(l.composer || "—")} · ${gradeName(+l.grade || 0)}${l.label ? " · " + esc(l.label) : ""}</div>
@@ -370,10 +406,17 @@ function teacherClick(b) {
     case "tScore": TshowScore(id); return;
     case "tRewardDel": Tdo(async () => { await DB.del("rewards", { eq: { id } }); TS.rewards = TS.rewards.filter(x => x.id !== id); }, t("deleted")).then(Trefresh); return;
     case "tGiven": Tdo(async () => { await DB.upd("redemptions", { id }, { given: true }); TS.reds = TS.reds.filter(x => x.id !== id); }, t("saved")).then(Trefresh); return;
-    case "tCatAdd": { const c = CATALOGS.find(x => x.id === b.dataset.c), g = +b.dataset.g; if (!c) return;
-      const rows = c.rows.filter(r => r[0] === g && !TS.library.some(l => l.title === r[3] && +l.grade === g)).map(r => ({ id: uid(), teacher_id: TS.me.id, title: r[3].slice(0, 140), composer: r[2].slice(0, 80), grade: g, label: `${c.short} · List ${r[1]}${r[4] ? " 📘" : ""}`.slice(0, 60) }));
-      if (!rows.length) return; b.disabled = true;
-      Tdo(() => DB.ins("library", rows), t("libAdded", { n: rows.length })).then(ok => { if (ok) { TS.library.push(...rows.map(r => ({ ...r, score_path: null, yt_url: "" }))); TS.library.sort((a, b) => a.title.localeCompare(b.title)); } Trefresh(); }); return; }
+    case "tBookRead": { const keep = () => { TS.bookName = document.getElementById("bkName")?.value.trim() || ""; TS.bookG = +document.getElementById("bkG")?.value || 0; TS.bookTxt = document.getElementById("bkTxt")?.value || ""; };
+      keep(); TS.bookPrev = TbookParse(TS.bookTxt, TS.bookG); Trefresh(); return; }
+    case "tBookAdd": { const name = (document.getElementById("bkName")?.value || "").trim().slice(0, 40); if (!name) { toast(t("bk_needName")); document.getElementById("bkName")?.focus(); return; }
+      const P = TS.bookPrev || [], have = new Set(TS.library.map(l => (l.title + "|" + l.grade + "|" + bookOf(l)).toLowerCase()));
+      const rows = P.filter(r => !have.has((r.title + "|" + r.g + "|" + name).toLowerCase())).map(r => ({ id: uid(), teacher_id: TS.me.id, title: r.title.slice(0, 140), composer: r.comp.slice(0, 80), grade: r.g, label: `${name}${r.li ? " · List " + r.li : ""}${r.book ? " 📘" : ""}`.slice(0, 60) }));
+      if (!rows.length) { toast(t("bk_none")); return; } b.disabled = true;
+      Tdo(async () => { for (let i = 0; i < rows.length; i += 200) await DB.ins("library", rows.slice(i, i + 200)); }, t("libAdded", { n: rows.length })).then(ok => {
+        if (ok) { TS.library.push(...rows.map(r => ({ ...r, score_path: null, yt_url: "" }))); TS.library.sort((a, b) => a.title.localeCompare(b.title)); TS.bookPrev = null; TS.bookTxt = ""; TS.bookName = ""; }
+        Trefresh(); }); return; }
+    case "tBookDel": { const bk = b.dataset.b, ids = TS.library.filter(l => bookOf(l) === bk && !l.score_path).map(l => l.id); if (!ids.length || !confirm(t("bk_delAsk", { b: bk, n: ids.length }))) return;
+      Tdo(async () => { for (let i = 0; i < ids.length; i += 100) await DB.del("library", { in: { id: ids.slice(i, i + 100) } }); TS.library = TS.library.filter(l => !ids.includes(l.id)); }, t("deleted")).then(Trefresh); return; }
     case "tRules": { const c = document.getElementById("tCatsOn").checked, txt = document.getElementById("tTerms").value.slice(0, 2000);
       Tdo(async () => { await DB.ups("teacher_settings", [{ teacher_id: TS.me.id, keep_recordings_days: TS.keep, cats_from_students: c, visit_terms: txt }], "teacher_id"); TS.tset = { ...TS.tset, cats_from_students: c, visit_terms: txt }; }, t("saved")); return; }
     case "tKeep": { const n = +b.dataset.n; Tdo(async () => { await DB.ups("teacher_settings", [{ teacher_id: TS.me.id, keep_recordings_days: n, cats_from_students: !!TS.tset?.cats_from_students, visit_terms: TS.tset?.visit_terms || "" }], "teacher_id"); TS.keep = n; }, t("saved")).then(() => { Trefresh(); Tcleanup().catch(() => { }); }); return; }
