@@ -191,7 +191,10 @@ function TrenderDetail() {
    <input id="taT" placeholder="${t("t_taskPh")}" required maxlength="140" style="flex-basis:100%"><button class="btn sm" type="submit">${t("t_addTask")}</button></form></div>
 
  <div class="section" style="margin-block:4px"><h2>${t("t_piecesH")}</h2><div class="list">${D.pieces.length ? D.pieces.map(p => `<div class="row"><div class="grow"><div class="title">${esc(p.title)}</div><div class="muted small">${t("st_" + p.status)} · ${fmtDur(+p.seconds || 0)} ${t("totalTime")}</div></div><button class="x" data-act="tPieceDel" data-id="${p.id}" aria-label="Delete">×</button></div>`).join("") : `<div class="empty">—</div>`}</div>
-  <form class="add" data-form="tPieceNew"><input id="tpT" placeholder="${t("piecePh")}" required maxlength="120"><button class="btn sm" type="submit">${t("add")}</button></form>
+  <form class="stack tp-new card" data-form="tPieceNew"><b>➕ ${t("t_pnH")}</b><div class="muted small">${t("t_pnHow")}</div>
+   <input id="tpT" placeholder="${t("t_pnTitle")}" maxlength="120"><input id="tpC" placeholder="${t("t_pnComp")}" maxlength="80">
+   <label class="btn soft block">📷 ${t("t_pnPhoto")}<input type="file" id="tpF" accept="image/*,application/pdf" hidden onchange="document.getElementById('tpFn').textContent=this.files[0]?'✓ '+this.files[0].name:''"></label><span class="small muted" id="tpFn"></span>
+   <button class="btn block" type="submit">${t("t_pnAdd")}</button></form>
   ${TS.library.length ? `<form class="add" data-form="tGive"><select id="tgL" aria-label="${t("t_giveLib")}">${TS.library.map(l => `<option value="${l.id}" ${D.pieces.some(p => p.library_id === l.id) ? "disabled" : ""}>${esc(l.title)}</option>`).join("")}</select><button class="btn sm" type="submit">${t("libGive")}</button></form>` : ""}</div>
 
  <div class="section" style="margin-block:4px"><h2>${t("techH")}</h2><div class="list">${drills.length ? drills.map(d => `<div class="row"><div class="grow"><div class="title">${esc(d.name)}</div><div class="muted small">${t("targetBpm")} ♩=${+d.target || "—"} · ${t("bestBpm")} ♩=${+d.best || "—"}</div></div><button class="x" data-act="tDrillDel" data-id="${esc(d.id)}" aria-label="Delete">×</button></div>`).join("") : `<div class="empty">—</div>`}</div>
@@ -384,7 +387,18 @@ async function teacherSubmit(e) {
   if (f === "tReward") { const title = v("rT"); if (!title) return; const row = { id: uid(), teacher_id: me, title, price: Math.max(1, Math.round(+v("rP") || 100)) }; if (await Tdo(() => DB.ins("rewards", [row]), t("saved"))) { TS.rewards.push(row); TS.rewards.sort((a, b) => a.price - b.price); Trefresh(); } return; }
   if (f === "tName") { const n = v("tNm"); if (!n) return; if (await Tdo(() => DB.upd("profiles", { id: me }, { display_name: n }), t("saved"))) { TS.prof.display_name = n; Trefresh(); } return; }
   const sid = TS.cur; if (!sid) return;
-  if (f === "tPieceNew") { const title = v("tpT"); if (!title) return; await Tdo(() => DB.ins("pieces", [{ id: uid(), student_id: sid, title, composer: "" }]), t("saved")); return TreloadDetail(); }
+  /* a piece for THIS student: it goes into the teacher's list too (with the photo of the score), and is given to the student */
+  if (f === "tPieceNew") { const file = document.getElementById("tpF")?.files?.[0]; let title = v("tpT"); if (!title && !file) return;
+    title ||= "📷 " + new Date().toLocaleDateString(undefined, { day: "numeric", month: "short" });
+    const lib = { id: uid(), teacher_id: me, title: title.slice(0, 140), composer: v("tpC").slice(0, 80), grade: +(tStu(sid)?.grade || 0), label: "" };
+    const ok = await Tdo(async () => {
+      await DB.ins("library", [lib]);
+      if (file) { if (file.size > 50e6) throw new Error("too big"); const safe = (file.name || "score.jpg").normalize("NFKD").replace(/[^\w.\-]+/g, "_").slice(-80) || "score.jpg", path = `${me}/${lib.id}/${Date.now()}-${safe}`;
+        await DB.upload("scores", path, file, file.type || "image/jpeg"); await DB.upd("library", { id: lib.id }, { score_path: path }); lib.score_path = path; }
+      await DB.ins("pieces", [{ id: uid(), student_id: sid, library_id: lib.id, title: lib.title, composer: lib.composer }]);
+    }, t("saved"));
+    if (ok) { TS.library.push({ score_path: null, yt_url: "", ...lib }); TS.library.sort((a, b) => a.title.localeCompare(b.title)); }
+    return TreloadDetail(); }
   if (f === "tTaskAdd") { const title = v("taT"); if (!title) return; const row = { id: uid(), student_id: sid, week: weekKey(TS.week), area: v("taA") || "other", title, piece_id: v("taP") || null, source: "teacher" }; await Tdo(() => DB.ins("tasks", [row]), t("saved")); return TreloadDetail(); }
   if (f === "tTaskEdit") { const id = e.target.dataset.id, title = v("te-" + id); if (!title) return; TS.editTask = null; await Tdo(() => DB.upd("tasks", { id }, { title }), t("saved")); return TreloadDetail(); }
   if (f === "tGive") { const libId = v("tgL"); if (!libId) return; await Tdo(async () => { if (await TgiveLib(sid, libId)) toast(t("libGiven")); }); return TreloadDetail(); }

@@ -39,6 +39,7 @@ const isDirty = () => !!lsGet(LSK("dirty"));
 /* rows as they should be in the database, keyed by id */
 function computeRows() {
   const pieces = {}, days = {}, tasks = {}, reds = {};
+  S.pieces = S.pieces.filter(p => p.status !== "done");   /* old "removed" marks from v1.42 */
   S.pieces.forEach(p => pieces[p.id] = { id: p.id, student_id: ME, library_id: p.libId || null, title: p.title, composer: p.composer || "", status: p.status, seconds: sec1(p.sec), sections: p.sections || [] });
   S.log.forEach(l => {
     const ps = {}; S.pieces.forEach(p => { if (p.days?.[l.date]) ps[p.id] = sec1(p.days[l.date]); });

@@ -429,7 +429,7 @@ document.addEventListener("click", e => {
   else if (a === "wWhole") { wzRead(); const bb = W.bars[b.dataset.v] ||= {}; bb.whole = !bb.whole; if (bb.whole) bb.from = bb.to = ""; ppWizard(); }
   else if (a === "wAddPiece") { const i = document.getElementById("wzNewPiece"), v = (i?.value || "").trim().slice(0, 60); if (v && !W.pieces.includes(v)) W.pieces.push(v); wzRead(); ppWizard(); }
   else if (a === "wDelPiece") { wzRead(); const n = b.dataset.v; if (!confirm(t("wz_delAsk", { p: n }))) return;
-    S.pieces.forEach(p => { if (p.title === n) p.status = "done"; }); W.pieces = W.pieces.filter(x => x !== n); if (W.hw?.pieces) W.hw.pieces = W.hw.pieces.filter(p => p.title !== n); save(); toast(t("wz_deleted")); ppWizard(); }
+    const gone = S.pieces.filter(p => p.title === n).map(p => p.id); S.pieces = S.pieces.filter(p => p.title !== n); S.items.forEach(i => { if (gone.includes(i.pieceId)) i.pieceId = null; }); W.pieces = W.pieces.filter(x => x !== n); if (W.hw?.pieces) W.hw.pieces = W.hw.pieces.filter(p => p.title !== n); save(); toast(t("wz_deleted")); ppWizard(); }
   else if (a === "wLib") { wzRead(); W.lib = { mode: "home", q: "" }; ppWizard(); }
   else if (a === "wpkHome") { W.lib = { mode: "home", q: "" }; ppWizard(); }
   else if (a === "wpkMode") { W.lib = { mode: b.dataset.v, q: "" }; ppWizard(); }

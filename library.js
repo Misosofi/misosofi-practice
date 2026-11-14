@@ -144,9 +144,9 @@ function pkHTML(W) {
      <input id="wzLibQ" style="flex:none;min-height:0;height:46px" placeholder="🔍 ${t("libSearch")}" value="${esc(P.q)}" oninput="pkSearch(this.value)">
      <div id="pkFound" class="list lib-pick">${P.q ? pkFoundHTML(W, P.q) : ""}</div>
      ${R.length ? `<div class="card stack"><b>🕘 ${t("pk_recent")}</b><div class="list">${R.map((r, i) => pkRow({ id: "rc:" + i, ...r }, on(r))).join("")}</div></div>` : ""}
+     ${pkTeacher().length ? `<button class="card pk-cat pk-teacher" data-pp="wpkMode" data-v="teacher"><span class="pk-ic">👩‍🏫</span><span class="grow"><b>${t("pk_teacher")}</b><span class="small muted">${t("pk_teacherSub")}</span></span><span>→</span></button>` : ""}
      <button class="card pk-cat" data-pp="wpkMode" data-v="lib"><span class="pk-ic">🎹</span><span class="grow"><b>${t("pk_lib")}</b><span class="small muted">${t("pk_libSub")}</span></span><span>→</span></button>
      <button class="card pk-cat" data-pp="wpkMode" data-v="abrsm"><span class="pk-ic">📘</span><span class="grow"><b>ABRSM</b><span class="small muted">${t("pk_abrsmSub")}</span></span><span>→</span></button>
-     ${(S.library || []).length ? `<button class="card pk-cat" data-pp="wpkMode" data-v="teacher"><span class="pk-ic">👩‍🏫</span><span class="grow"><b>${t("pk_teacher")}</b><span class="small muted">${t("pk_teacherSub")}</span></span><span>→</span></button>` : ""}
      <div class="muted small">${t("pk_hint")}</div>`;
   }
   if (P.mode === "lib") {
@@ -167,12 +167,12 @@ function pkHTML(W) {
     return `${back}${pkChips("cy", C.map(x => x.id), P.cy, v => esc(C.find(x => x.id === v).short))}${pkChips("g", PLIB_LEVELS, P.g, v => gradeName(v))}${pkChips("li", ["A", "B", "C"], P.li, v => "List " + v)}
      <div class="list lib-pick">${rows.map(p => pkRow(p, on(p), `<a class="btn sm soft" href="${esc(listenUrl(p))}" target="_blank" rel="noopener">▶</a>`)).join("") || `<div class="empty">${t("lb_none")}</div>`}</div>`;
   }
-  /* the teacher's own list */
-  const L = S.library || [], grades = [...new Set(L.map(l => +l.grade || 0))].sort((a, b) => a - b); P.tg ??= "all";
-  const rows = L.filter(l => P.tg === "all" || String(+l.grade || 0) === String(P.tg));
-  return `${back}${pkChips("tg", ["all"].concat(grades), P.tg, v => v === "all" ? t("allGrades") : gradeName(+v))}
-   <div class="list lib-pick">${rows.map(l => pkRow(l, on(l), `<a class="btn sm soft" href="${esc(listenUrl(l))}" target="_blank" rel="noopener">▶</a>`)).join("") || `<div class="empty">${t("lb_none")}</div>`}</div>`;
+  /* only the pieces the teacher set for this student (no grade lists) */
+  const rows = pkTeacher();
+  return `${back}<div class="list lib-pick">${rows.map(l => pkRow(l, on(l), `${l.score_path ? `<button class="btn sm soft" data-act="score" data-id="${l.id}">📄</button>` : ""}<a class="btn sm soft" href="${esc(listenUrl(l))}" target="_blank" rel="noopener">▶</a>`)).join("") || `<div class="empty">${t("pk_teacherNone")}</div>`}</div>`;
 }
+/* the teacher's pieces for me: library items the teacher gave to this student */
+function pkTeacher() { const ids = new Set(S.pieces.map(p => p.libId).filter(Boolean)); return (S.library || []).filter(l => ids.has(l.id)); }
 function pkFoundHTML(W, q) {
   const s = q.toLowerCase().trim(); if (s.length < 2) return "";
   const seen = new Set(), hits = pkAll().filter(p => { const k = p.title + "|" + p.composer; if (seen.has(k)) return false; seen.add(k); return (p.title + " " + (p.composer || "") + " " + (p.coll || "")).toLowerCase().includes(s); }).slice(0, 30);
