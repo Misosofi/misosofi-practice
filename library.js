@@ -140,6 +140,11 @@ const PLIB = [
   [5, "Satie", "More pieces", ["Gnossienne No. 2", "Gnossienne No. 3", "Gnossienne No. 4", "Je te veux"]],
   [7, "Albéniz & Granados", "Spanish pieces", ["Albéniz: Tango (España, Op. 165)", "Albéniz: Asturias (Leyenda)", "Granados: Spanish Dance No. 5 'Andaluza'"]],
   [4, "Popular & film", "Piano favourites", ["Nuvole bianche (Einaudi)", "Una mattina (Einaudi)", "I giorni (Einaudi)", "Le onde (Einaudi)", "River Flows in You (Yiruma)", "Kiss the Rain (Yiruma)", "Summer (Joe Hisaishi)", "One Summer's Day (Joe Hisaishi)", "Merry-Go-Round of Life (Joe Hisaishi)", "Comptine d'un autre été (Yann Tiersen)"]],
+  /* Yamaha Primary 1–4, the older English edition (titles from the studio's own books and CDs) */
+  [0, "Yamaha", "Primary 1", ["Shining Star", "Happy Day", "Tug of War", "Fly, Far Away!", "Frog Song", "I'm a King!", "Yawning Kitten", "Roller Coaster", "Pineapple Dance"]],
+  [0, "Yamaha", "Primary 2", ["A Little Dance", "Who's Crying?", "Song for Bandit", "A Bedtime Story", "Cock-a-Doodle-Doo", "Naughty Little Bird and Sleepy Bear", "Cuckoo", "Merry Dance", "Mole's Cleaning", "A Relaxed Elephant", "Marching Bees", "African Dance"]],
+  [0, "Yamaha", "Primary 3", ["London Bridge", "Music Box", "Bask in the Sun", "Good Morning!", "Marching Bear", "A Blue Bird", "Hens", "A Bouquet", "Magician's Spell", "Magician's March", "Pig's Gavotte", "Dancing in the Field", "Go Go! Train"]],
+  [1, "Yamaha", "Primary 4", ["Red Shoes", "Fallen Leaves", "A Pigeon", "Marionette's Dance", "Lavender's Blue", "The Woodpecker is a Carpenter", "I'm a Teapot", "Gipsy's Dance", "Rabbit's Hide and Seek", "The Magic Flute", "Royal March of the Lion", "Party at Midnight", "First Loss"]],
 ];
 const PLIB_LEVELS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 /* every library piece, flattened: { id, title (shown in the plan), composer, lv, coll, name } */
@@ -200,13 +205,14 @@ function pkHTML(W) {
   }
   if (P.mode === "lib") {
     /* composer → book → piece (no grade lists); the level is only a small hint on each piece */
-    const L = plibFlat(), STUD = ["Beyer", "Czerny", "Hanon", "Burgmüller", "S. Heller", "Duvernoy", "Lemoine"];
-    const all = [...new Set(L.map(p => p.composer))], studies = STUD.filter(c => all.includes(c)), comps = all.filter(c => !STUD.includes(c)).sort((a, b) => a.replace(/^[A-Z]\. ?/, "").localeCompare(b.replace(/^[A-Z]\. ?/, "")));
+    const L = plibFlat(), STUD = ["Beyer", "Czerny", "Hanon", "Burgmüller", "S. Heller", "Duvernoy", "Lemoine"], METH = ["Yamaha"];
+    const all = [...new Set(L.map(p => p.composer))], studies = STUD.filter(c => all.includes(c)), meths = METH.filter(c => all.includes(c)), comps = all.filter(c => !STUD.includes(c) && !METH.includes(c)).sort((a, b) => a.replace(/^[A-Z]\. ?/, "").localeCompare(b.replace(/^[A-Z]\. ?/, "")));
     const colls = P.comp ? [...new Set(L.filter(p => p.composer === P.comp).map(p => p.coll))] : [];
     if (P.coll && !colls.includes(P.coll)) P.coll = null; if (!P.coll && colls.length === 1) P.coll = colls[0];
     const rows = P.coll ? L.filter(p => p.composer === P.comp && p.coll === P.coll) : [];
     return `${back}<div class="label">① ${t("pk_comp")}</div>
      <div class="small muted">${t("pk_studies")}</div>${pkChips("comp", studies, P.comp)}
+     ${meths.length ? `<div class="small muted">${t("pk_methods")}</div>${pkChips("comp", meths, P.comp)}` : ""}
      <div class="small muted">${t("pk_composers")}</div>${pkChips("comp", comps, P.comp)}
      ${P.comp ? `<div class="label">② ${t("pk_coll")}</div>${pkChips("coll", colls, P.coll)}` : ""}
      ${rows.length ? `<div class="label">③ ${t("pk_piece")}</div><div class="list lib-pick">${rows.map(p => pkRow({ ...p, coll: "≈ " + gradeName(p.lv) }, on(p))).join("")}</div>` : ""}`;
