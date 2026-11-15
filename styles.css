@@ -942,3 +942,9 @@ input,select,textarea{font-size:16px} /* no zoom on iOS focus */
 .cp-where{text-align:center;font-weight:800;font-size:1.15rem}.cp-slot{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;background:#f1eefb;color:#b5abd8;font-weight:900}.cp-slot.ok{background:#e1f6d8}.cp-slot.bad{background:#fde3e3}
 .cp-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.cp-ans{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 4px;border-radius:18px;border:2px solid #e5e2f0;background:#fff;font:inherit;font-weight:800;cursor:pointer}.cp-ans b{font-size:38px}.cp-ans small{color:#888}.cp-ans:disabled{opacity:.5}
 .cp-ans.nope{animation:cpNo .45s}.cp-ans.hit{border-color:#3bb36b;background:#eafbe3}@keyframes cpNo{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.cp-pic{padding:0;min-height:0;aspect-ratio:3/2;background:#222}.cp-pic img{width:100%;height:100%;object-fit:cover;display:block;animation:cpKen 9s ease-in-out infinite alternate}
+@keyframes cpKen{from{transform:scale(1)}to{transform:scale(1.08) translate(-1.5%,-1%)}}
+.cp-pic .cp-notes{color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.4)}.cp-say{align-self:center}
+.fl-mark{font-size:110px;font-weight:900;line-height:1;animation:flPop .35s ease-out}.fl-mark.ok{color:#2fae4e}.fl-mark.no{color:#e0566b}
+@keyframes flPop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}

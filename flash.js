@@ -83,8 +83,8 @@ function flRender() {
   const names = SOL.map((n, i) => ({ n: (S.abc ? LET[i] + " / " : "") + n, i }));
   openSheet(`<div class="stack fl">${head}
     <div class="fl-top"><span>${F.i + 1} / ${FL_N}</span><span>✓ ${F.ok}</span></div>
-    <div class="fl-card ${F.phase}">${F.phase === "count" ? `<div class="fl-count" id="flCount">${F.cnt}</div>` : flSVG(c, hidden)}</div>
-    <div class="fl-msg" id="flMsg">${reveal ? (F.lastOk ? "✅ " : "❌ ") + c.ds.map(flName).join(" – ") : hidden ? (F.ans === "piano" ? "🎹 " + t("fl_playIt") : F.ans === "tap" ? "👆 " + t("fl_tapIt") : "🗣 " + t("fl_sayIt")) : ""}</div>
+    <div class="fl-card ${F.phase}">${F.phase === "count" ? `<div class="fl-count" id="flCount">${F.cnt}</div>` : reveal ? `<div class="fl-mark ${F.lastOk ? "ok" : "no"}">${F.lastOk ? "✓" : "✗"}</div>` : flSVG(c, hidden)}</div>
+    <div class="fl-msg" id="flMsg">${reveal ? "" : hidden ? (F.ans === "piano" ? "🎹 " + t("fl_playIt") : F.ans === "tap" ? "👆 " + t("fl_tapIt") : "🗣 " + t("fl_sayIt")) : ""}</div>
     ${c && c.ds.length > 1 && hidden ? `<div class="fl-prog">${got || "&nbsp;"}</div>` : ""}
     ${hidden && F.ans === "tap" ? `<div class="fl-names">${names.map(x => `<button class="btn soft" data-fl="tap" data-i="${x.i}">${x.n}</button>`).join("")}</div>` : ""}
     ${hidden && F.ans === "say" ? `<button class="btn block" data-fl="show">👀 ${t("fl_check")}</button>` : ""}
@@ -110,9 +110,9 @@ function flNext() {
 }
 function flJudge(ok) {
   const F = FL; F.lastOk = ok; if (ok) F.ok++; else F.miss.push(F.card);
-  try { ding(ok); } catch (e) { }
-  if (ok) { F.i++; F.phase = "reveal"; flRender(); clearTimeout(F.tm); F.tm = setTimeout(flNext, 350); }       /* right → the next card flashes straight away */
-  else { F.phase = "reveal"; flRender(); F.i++; clearTimeout(F.tm); F.tm = setTimeout(flNext, 1400); }
+  try { if (ok && typeof pinpon === "function") pinpon(); else ding(ok); } catch (e) { }
+  if (ok) { F.i++; F.phase = "reveal"; flRender(); clearTimeout(F.tm); F.tm = setTimeout(flNext, 650); }       /* right → the next card flashes straight away */
+  else { F.phase = "reveal"; flRender(); F.i++; clearTimeout(F.tm); F.tm = setTimeout(flNext, 900); }
 }
 /* piano: each heard note must be the next note of the card, in the exact octave (the right key) */
 function flHeard(midi) {
