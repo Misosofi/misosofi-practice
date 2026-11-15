@@ -32,6 +32,7 @@ self.addEventListener("fetch", e => {
   const fonts = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
   if (!sameOrigin && !fonts && req.url !== CDN) return;
   if (sameOrigin && url.searchParams.has("join")) return;           /* invite links: always fresh */
+  if (sameOrigin && /\/(piano|parts)\//.test(url.pathname)) return; /* ピアノ導入アプリ（piano/）と共通部品（parts/）は別アプリ：さわらない */
   if (sameOrigin && /\.(mp4|mov|webm|m4a|mp3)$/i.test(url.pathname)) return;   /* videos: Safari needs real range requests */
   if (sameOrigin && url.pathname.includes("/assets/")) {
     e.respondWith((async () => { const c = await caches.open(ASSETS), hit = await c.match(req); if (hit) return hit; const r = await fetch(req); if (r.ok) c.put(req, r.clone()); return r; })());

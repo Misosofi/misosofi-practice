@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ピアノのえほん — みそそっフィ</title>
+<meta name="theme-color" content="#FBF3E4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="paper" aria-hidden="true"></div>
+<header class="top">
+  <button class="parent-btn" id="parentBtn" type="button" aria-label="保護者の方へ">保護者の方へ</button>
+  <div class="coins" id="coins" aria-label="コイン"><span class="coin" aria-hidden="true"></span><b id="coinN">0</b></div>
+</header>
+<main id="view"></main>
+<div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheetIn" role="dialog" aria-modal="true"></div></div>
+<div class="burst" id="burst" aria-hidden="true"></div>
+<script src="../parts/piano.js"></script>
+<script src="../parts/listen.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
