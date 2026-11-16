@@ -5,7 +5,8 @@
   --r:22px;
   --font:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif;
 }
-*{box-sizing:border-box;touch-action:manipulation}
+*{box-sizing:border-box;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea{-webkit-user-select:text;user-select:text}
 /* 2回すばやく たたいても 画面が ズームしないように（iPhone/iPad） */
 html,body{-webkit-text-size-adjust:100%}
 [hidden]{display:none!important}
@@ -182,3 +183,9 @@ input.name{font:inherit;font-size:24px;font-weight:700;border:2.5px dashed #D9C3
 .rchips .rc{min-width:58px;padding:10px 8px;border-radius:14px;background:#fff;border:3px solid #E5D9C3;font-weight:800;font-size:24px;text-align:center;transition:transform .1s}
 .rchips .rc.half{min-width:40px;font-size:20px}
 .rchips .rc.on{background:#F7C948;border-color:#E0A82E;transform:scale(1.12)}
+/* はい くろ／はい しろ の 合図 */
+.songname{text-align:center;font-size:14px;color:#8a7a62;margin:2px 0}
+.cue{align-self:center;width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:4px solid #E5D9C3;background:#fff;font-weight:800;font-size:22px;margin:4px 0;transition:background .1s}
+.cue.go{animation:cuego .45s ease-out}
+.cue.hit{background:#F7C948;border-color:#E0A82E}
+@keyframes cuego{0%{transform:scale(1.35);background:#BFE0F7;border-color:#4F8DBA}100%{transform:scale(1)}}
