@@ -34,7 +34,7 @@ const KURI = ["kuriito_dance.webp", "kuriito_dance_flip.webp", "kuriito_sit.webp
 const kuriPick = () => { let h = 0; for (const c of S.scene || "") h = (h * 31 + c.charCodeAt(0)) >>> 0; return KURI[h % KURI.length]; };
 const kuri = (cls = "") => `<img class="kuri ${cls}" src="${ART}${kuriPick()}" alt="くろねこのくりーと">`;
 const bubble = (html, who = "くりーと") => `<div class="bubble"><span class="who">${who}</span>${html}</div>`;
-const hero = (html, cls) => `<div class="hero">${kuri(cls)}${bubble(html)}</div>`;
+const hero = (html, cls) => { if (html) setTimeout(() => voice(html), 350); return `<div class="hero">${kuri(cls)}${bubble(html)}</div>`; };
 
 /* ---------- piano keyboard ---------- */
 const BLACK_PC = { 1: 0, 3: 1, 6: 3, 8: 4, 10: 5 };        // black key → white index it sits after
@@ -105,7 +105,7 @@ SCENES.intro1 = sc => {
 };
 
 SCENES.intro2 = sc => {
-  sc.innerHTML = hero(`${esc(S.name)}、よろしくね！<br>ぼくは、6さい。<br>みんなは なんさいかな？`) + `<div class="ages"></div><div class="grow"></div>`;
+  setTimeout(() => playVoice("A2"), 350); sc.innerHTML = hero(`${esc(S.name)}、よろしくね！<br>ぼくは、6さい。<br>みんなは なんさいかな？`) + `<div class="ages"></div><div class="grow"></div>`;
   const box = sc.querySelector(".ages"); let b;
   [2, 3, 4, 5, 6, 7, 8, 9].forEach(a => { const x = document.createElement("button"); x.className = "btn light" + (S.age === a ? " on" : ""); x.textContent = a;
     x.onclick = () => { S.age = a; save(); box.querySelectorAll(".btn").forEach(y => y.classList.toggle("on", y === x)); b.disabled = false; }; box.appendChild(x); });
@@ -122,13 +122,13 @@ SCENES.intro3 = sc => {
 SCENES.intro4 = sc => {
   sc.innerHTML = hero("さっそく みんなといっしょに、したの がっきを ひくよ。<br>ねえみんな、この がっき、なにか わかる？");
   const kb = keyboard(60, 2); sc.appendChild(kb);
-  const say = document.createElement("div"); say.className = "say"; say.textContent = "さわってみてね"; sc.appendChild(say);
+  const say = document.createElement("div"); say.className = "say"; (say.textContent = "さわってみてね", voice("さわってみてね")); sc.appendChild(say);
   let n = 0; const grow = document.createElement("div"); grow.className = "grow"; sc.appendChild(grow);
   let b = null;
   kb.keys.addEventListener("pointerdown", () => {
     if (++n === 3) {
-      sc.querySelector(".bubble").innerHTML = `<span class="who">くりーと</span>そう、ピアノだよ！<br>ピアノには「くろい けんばん」と「しろい けんばん」が あるよ。`;
-      say.textContent = ""; b = next(sc, "つぎへ", "intro5");
+      sc.querySelector(".bubble").innerHTML = `<span class="who">くりーと</span>そう、ピアノだよ！<br>ピアノには「くろい けんばん」と「しろい けんばん」が あるよ。`; playVoice("A5");
+      (say.textContent = "", voice("")); b = next(sc, "つぎへ", "intro5");
     }
   });
 };
@@ -145,7 +145,26 @@ SCENES.intro5 = sc => {
    → ④ けんばん「くろい けんばんは どっち？」 → ⑤ くろい けんばんだけ ノック ノック
    小さい子なので、まちがえても ブーは鳴らさない（やさしい音で、正しい方が光る）。 */
 const softNo = () => P.play(55, 0, 0.5, 0.12);
-const speak = t => { try { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t.replace(/<[^>]+>/g, "")); u.lang = "ja-JP"; u.rate = 0.9; u.pitch = 1.3; speechSynthesis.speak(u); } catch (e) { } };
+const VOICE_TEXT = {"A1": "こんにちは！ぼくの なまえは、くりーと。くろねこの くりーと だよ。みんなの なまえは、なにかな？", "A2": "よろしくね！ぼくは、6さい。みんなは なんさいかな？", "A3": "ぼくは、おんがくが だいすき！うたったり、ピアノを ひいたりするんだ。みんなも おんがくは すきかな？", "A4": "さっそく みんなと いっしょに、したの がっきを ひくよ。ねえ みんな、この がっき、なにか わかる？", "A5": "そう、ピアノだよ！ピアノには「くろい けんばん」と「しろい けんばん」が あるよ。", "A6": "じゃあ これから、たくさん たのしく ぼくと おんがくで あそぼう！ぼくと まいにち、いっしょに あそんでほしいんだ！あそんでくれる？", "B1": "まっしろ！これは しろ だよ。", "B2": "まっくろ！これは くろ だよ。", "B3": "しろは どっち？", "B4": "くろは どっち？", "B5": "しろい ねこさんは どっち？", "B6": "くろい ねこさんは どっち？", "B7": "しろい けんばんは どっち？", "B8": "くろい けんばんは どっち？", "B9": "こっちかな？", "B10": "こんどは くろい けんばん だけ、ノック ノック してみよう！コン コン！", "B11": "それは しろ だよ。くろい けんばんは どこかな？", "B12": "じょうず！くろい けんばん だけ ノック できたね！", "B13": "しろ と くろ、わかったね！よく がんばりました！また あした、あおうね！", "C1": "よーく みてみると、くろい けんばんは「ふたつの グループ」と「みっつの グループ」が あるよ。", "C2": "ひくい ところから たかい ところへ、「ふたつ、みっつ」と かぞえてみよう！", "C3": "ふたつ", "C4": "みっつ", "C5": "ふたつの くろい けんばんの グループを ぜんぶ タップしてみよう。まちがわないように よーく みてね。みっつじゃないからね。ふたつだよ！", "C6": "いいね！ふたつだね！", "C7": "ダメダメ〜、それは みっつ だよ。", "C8": "じゃあ、クイズだよ！ひかった くろい けんばんは ふたつ？それとも みっつ？", "C9": "みんなの ピアノで、ふたつの くろい けんばんの グループを みつけてみよう。みつけたら、グーを つくって「たんたん」って かるく ひいてみよう。", "C10": "たん！もういっかい！", "C11": "じょうずに ひけたかな？よく がんばりました！きょうの おんがくの あそびは これで おしまい！また あした、あおうね！", "D1": "こんにちは！くりーと だよ！きょうも いっしょに あそぼう！ふたつの くろい けんばんの グループ、おぼえてるかな？ひとつ タップしてみて！", "D2": "おぼえてたね！", "D3": "ピアノの みぎの はしっこは たかい おと、ひだりの はしっこは ひくい おと だよ。ひかった ふたつの グループは たかい？ひくい？", "D4": "こんどは みないで、みみで きいてね。ぞうさん？ことりさん？", "D5": "せいかい！ぞうさんの ひくい おと！", "D6": "せいかい！ことりさんの たかい おと！", "D7": "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎてで グーを つくって「たんたん！」", "D8": "たかい おとは、ことりさんの ように かわいい おと だったかな？", "D9": "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりてで グーを つくって「たんたん！」", "D10": "ひくい おとは、ぞうさんの ように、おおきな ふとい おと だったかな？", "D11": "あれ？だいずの おへやから、おかしな おとが きこえるよ…。ちょっと のぞきみに いってみない？", "D12": "まんなかの ふたつの くろい けんばんで、「タ タ タン！」って ノック してね。くりーとの まねっこ だよ。", "D13": "さん、はい！", "D14": "コンコン… あれ？へんじが ないね。もういちど！", "D15": "ドアが すこし あいたよ！もういっかい！", "D16": "だいず、なに してるの？", "D17": "いまは だめ〜！", "D18": "あーっ！だいず、ぬすみぐい してたー！", "D19": "もう、だいずったら！みんな、ノック じょうず だったよ！", "D20": "きょうは、たかい おと と ひくい おと が わかったね！よく がんばりました！また あした、あおうね！", "E1": "おんがくに あわせて、くろい けんばんで グーを つくって「たんたん」しよう！ひかった グループを ひいてね。", "E2": "いち、に、さん、はい！", "E3": "ふたつ！", "E4": "みっつ！", "E5": "みぎて", "E6": "ひだりて", "E7": "りょうて", "E8": "せいかい！", "E9": "いいね！", "E10": "じょうず！", "E11": "ざんねん、もういちど よーく みてね。", "E12": "もういちど よーく きいてね。", "E13": "それは しろい けんばん だよ。", "E14": "それは みっつの グループ だよ。"};
+const VOICE_HAVE = new Set(["A1", "A2", "A3", "A4", "A5", "A6", "B1", "B10", "B11", "B12", "B13", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "C1", "C10", "C11", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"]);
+/* アツコさんの声：文が台本と同じなら録音を流す。録音がない文は、speak は機械の声、voice は何も言わない。
+   声を流している間は、マイクが声を拾わないように止める。 */
+const vnorm = t => String(t).replace(/<[^>]+>/g, "").replace(/[\s、。！？!?「」『』（）()…・〜~ー,.]/g, "");
+const VOICE_BY_TEXT = {}; for (const id in VOICE_TEXT) VOICE_BY_TEXT[vnorm(VOICE_TEXT[id])] = id;
+let vAudio = null, vLast = "", vLastAt = 0;
+function playVoice(id) {
+  if (!VOICE_HAVE.has(id)) return false;
+  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { }
+  if (vAudio) { vAudio.pause(); vAudio = null; }
+  vLast = vnorm(VOICE_TEXT[id] || ""); vLastAt = Date.now();
+  const a = new Audio("voice/" + id + ".mp3"); vAudio = a;
+  a.addEventListener("loadedmetadata", () => { if (window.MisoListen) MisoListen.mute((a.duration || 3) * 1000 + 300); });
+  if (window.MisoListen) MisoListen.mute(4000);
+  a.play().catch(() => { }); return true;
+}
+const playVoiceThen = (id, maxMs = 7000) => new Promise(ok => { if (!playVoice(id)) return ok(false); const a = vAudio, t = setTimeout(() => ok(true), maxMs); a.addEventListener("ended", () => { clearTimeout(t); ok(true); }, { once: true }); a.addEventListener("error", () => { clearTimeout(t); ok(false); }, { once: true }); });
+const voice = (t, force) => { if (!force && window.MisoListen && MisoListen.running) return false; const n = vnorm(t), id = VOICE_BY_TEXT[n]; if (!id) return false; const now = Date.now(); if (n === vLast && now - vLastAt < 1500) return true; vLast = n; vLastAt = now; return playVoice(id); };
+const speak = t => { if (voice(t, true)) return; try { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t.replace(/<[^>]+>/g, "")); u.lang = "ja-JP"; u.rate = 0.9; u.pitch = 1.3; speechSynthesis.speak(u); } catch (e) { } };
 const SK_TAG = `<span class="lesson-tag">レッスン0 ・ しろ と くろ</span>`;
 function dotsEl(n) { const d = document.createElement("div"); d.className = "dots"; d.innerHTML = "<i></i>".repeat(n); return d; }
 
@@ -178,9 +197,9 @@ function pickScene(sc, opt) {
       el.onclick = () => {
         if (lock) return;
         if (c === want) {
-          lock = true; el.classList.add("yes"); say.className = "say ok"; say.textContent = "せいかい！"; P.pinpon(); earn(1, el); dots.children[q].classList.add("on");
+          lock = true; el.classList.add("yes"); say.className = "say ok"; (say.textContent = "せいかい！", voice("せいかい！")); P.pinpon(); earn(1, el); dots.children[q].classList.add("on");
           if (++q >= opt.n) setTimeout(() => go(opt.next), 1300); else setTimeout(ask, 1300);
-        } else { softNo(); say.className = "say"; say.textContent = "こっちかな？"; const r = stage.querySelector(`[data-c="${want}"]`); r.classList.remove("hint"); void r.offsetWidth; r.classList.add("hint"); }
+        } else { softNo(); say.className = "say"; (say.textContent = "こっちかな？", voice("こっちかな？")); const r = stage.querySelector(`[data-c="${want}"]`); r.classList.remove("hint"); void r.offsetWidth; r.classList.add("hint"); }
       }; });
     const t = (want === "w" ? opt.askW : opt.askK); sc.querySelector(".bubble").innerHTML = `<span class="who">くりーと</span>${t}`; say.innerHTML = "&nbsp;"; speak(t);
   };
@@ -220,7 +239,7 @@ function realKeysSwitch(sc, kb, onKey, label = "キーボード・ピアノで �
 SCENES.sk5 = sc => {
   const NEED = 8; let n = 0, done = false;
   sc.innerHTML = SK_TAG + hero("こんどは くろい けんばん だけ<br>ノック ノック してみよう！<br>コン コン！");
-  speak("こんどは、くろい けんばん だけ、ノック ノック、してみよう！");
+  
   const say = document.createElement("div"); say.className = "say";
   const knocks = document.createElement("div"); knocks.className = "knocks"; knocks.innerHTML = "<i></i>".repeat(NEED);
   const kb = keyboard(60, 1, (m, el, real) => {
@@ -228,8 +247,8 @@ SCENES.sk5 = sc => {
     if (isBlack(m)) {
       if (!real) { P.play(m, 0, 0.6, 0.28); knock(); } el.classList.remove("found"); void el.offsetWidth; el.classList.add("found"); setTimeout(() => el.classList.remove("found"), 300);
       knocks.children[n].classList.add("on"); n++; say.className = "say ok"; say.textContent = n % 2 ? "コン！" : "コン コン！";
-      if (n >= NEED) { done = true; say.textContent = "じょうず！くろい けんばん だけ ノック できたね！"; P.pinpon(); earn(2, kb); setTimeout(() => go("skend"), 1700); }
-    } else { if (!real) P.play(m, 0, 0.5, 0.15); say.className = "say"; say.textContent = "それは しろ だよ。くろい けんばん は どこかな？"; }
+      if (n >= NEED) { done = true; (say.textContent = "じょうず！くろい けんばん だけ ノック できたね！", voice("じょうず！くろい けんばん だけ ノック できたね！")); P.pinpon(); earn(2, kb); setTimeout(() => go("skend"), 1700); }
+    } else { if (!real) P.play(m, 0, 0.5, 0.15); say.className = "say"; (say.textContent = "それは しろ だよ。くろい けんばん は どこかな？", voice("それは しろ だよ。くろい けんばん は どこかな？")); }
   });
   kb.classList.add("tall"); sc.appendChild(realKeysSwitch(sc, kb, kb.onKey)); sc.appendChild(kb); sc.appendChild(say); sc.appendChild(knocks);
 };
@@ -239,7 +258,7 @@ SCENES.skend = sc => {
   sc.innerHTML = SK_TAG + hero("しろ と くろ、わかったね！<br>よく がんばりました！<br>また あした、あおうね！", "dance") +
     `<div class="endpic"><img src="${ART}cat_black.webp" alt="" style="max-height:120px"><img src="${ART}cat_white.webp" alt="" style="max-height:120px"></div>
      <div class="stars">★</div><p class="small">コイン ${S.coins}こ</p><div class="grow"></div>`;
-  speak("しろ と くろ、わかったね！ よく がんばりました！"); P.chord([60, 64, 67, 72], 0, 1.6, 0.22);
+  P.chord([60, 64, 67, 72], 0, 1.6, 0.22);
   const r = document.createElement("button"); r.className = "btn light"; r.textContent = "もういちど あそぶ"; r.onclick = () => go("sk1"); sc.appendChild(r);
   next(sc, "おうちに もどる", "home");
 };
@@ -259,11 +278,12 @@ SCENES.lesson1 = sc => {
     for (const g of groupsIn(48, 2)) {
       if (stop) return; g.keys.forEach(m => kb.els[m].classList.add(g.n === 2 ? "glow2" : "glow3"));
       kb.tag(g.keys, g.n === 2 ? "ふたつ" : "みっつ", "t" + g.n);
-      P.chord(g.keys, 0, 0.8, 0.22); await wait(1100);
+      playVoice(g.n === 2 ? "C3" : "C4"); P.chord(g.keys, 0.35, 0.8, 0.2); await wait(1300);
     }
     again.disabled = false;
   }
-  again.onclick = show; setTimeout(show, 600);
+  again.onclick = show;
+  (async () => { await wait(250); if (await playVoiceThen("C1")) { if (stop) return; await playVoiceThen("C2"); } if (!stop) show(); })();
   next(sc, "わかった！", "lesson1find");
 };
 
@@ -276,17 +296,17 @@ SCENES.lesson1find = sc => {
   const dots = document.createElement("div"); dots.className = "dots"; dots.innerHTML = all.map(() => "<i></i>").join("");
   const kb = keyboard(low, oct, (m, el) => {
     P.play(m, 0, 0.7, 0.25);
-    if (!isBlack(m)) { say.className = "say"; say.textContent = "くろい けんばんを さがしてね"; return; }
+    if (!isBlack(m)) { say.className = "say"; (say.textContent = "くろい けんばんを さがしてね", voice("くろい けんばんを さがしてね")); return; }
     const g = groupOf(m);
     if (g.n === 2) {
       if (found.has(g.id)) return;
       found.add(g.id); g.keys.forEach(k => kb.els[k].classList.add("found"));
-      say.className = "say ok"; say.textContent = "いいね！ふたつだね！"; setTimeout(() => P.pinpon(), 200); earn(1, el);
+      say.className = "say ok"; (say.textContent = "いいね！ふたつだね！", voice("いいね！ふたつだね！")); setTimeout(() => P.pinpon(), 200); earn(1, el);
       dots.querySelectorAll("i").forEach((d, i) => d.classList.toggle("on", i < found.size));
       if (found.size === all.length) setTimeout(() => go("lesson1quiz"), 1300);
     } else {
       g.keys.forEach(k => { const e = kb.els[k]; e.classList.remove("wrong"); void e.offsetWidth; e.classList.add("wrong"); });
-      say.className = "say ng"; say.textContent = "ダメダメ〜、それは みっつ だよ"; setTimeout(() => P.buzz(), 150);
+      say.className = "say ng"; (say.textContent = "ダメダメ〜、それは みっつ だよ", voice("ダメダメ〜、それは みっつ だよ")); setTimeout(() => P.buzz(), 150);
     }
   });
   sc.appendChild(kb); sc.appendChild(say); sc.appendChild(dots);
@@ -310,9 +330,9 @@ SCENES.lesson1quiz = sc => {
       if (lock) return; lock = true; const g = order[q];
       if (g.n === n) {
         g.keys.forEach(k => { kb.els[k].classList.remove("ask"); kb.els[k].classList.add(n === 2 ? "found" : "glow3"); });
-        say.className = "say ok"; say.textContent = "せいかい！"; P.pinpon(); earn(1, b); dots.children[q].classList.add("on");
+        say.className = "say ok"; (say.textContent = "せいかい！", voice("せいかい！")); P.pinpon(); earn(1, b); dots.children[q].classList.add("on");
         q++; setTimeout(() => q >= N ? go("lesson1piano") : ask(), 1200);
-      } else { say.className = "say ng"; say.textContent = "ざんねん、もういちど よーくみてね"; P.buzz(); setTimeout(() => { lock = false; }, 600); }
+      } else { say.className = "say ng"; (say.textContent = "ざんねん、もういちど よーくみてね", voice("ざんねん、もういちど よーくみてね")); P.buzz(); setTimeout(() => { lock = false; }, 600); }
     };
   });
   setTimeout(ask, 500);
@@ -329,9 +349,9 @@ SCENES.lesson1piano = sc => {
   const start = document.createElement("button"); start.className = "btn big sky"; start.textContent = "ピアノで きかせてね"; sc.appendChild(start);
   const skip = document.createElement("button"); skip.className = "btn light"; skip.textContent = "ピアノが ないときは こちら"; sc.appendChild(skip);
   let hits = 0, lastAt = 0, done = false;
-  const finish = () => { done = true; MisoListen.stop(); mic.classList.remove("on"); say.className = "say ok"; say.textContent = "じょうず！ふたつの グループだね！"; P.pinpon(); earn(3, mic); setTimeout(() => go("lesson1end"), 1600); };
+  const finish = () => { done = true; MisoListen.stop(); mic.classList.remove("on"); say.className = "say ok"; (say.textContent = "じょうず！ふたつの グループだね！", voice("じょうず！ふたつの グループだね！")); P.pinpon(); earn(3, mic); setTimeout(() => go("lesson1end"), 1600); };
   start.onclick = async () => {
-    start.disabled = true; say.className = "say"; say.textContent = "きいているよ…";
+    start.disabled = true; say.className = "say"; (say.textContent = "きいているよ…", voice("きいているよ…"));
     try {
       await MisoListen.start({
         onLevel: db => mic.style.setProperty("--lv", Math.max(.8, Math.min(1.25, .8 + (db + 60) / 80))),
@@ -339,13 +359,13 @@ SCENES.lesson1piano = sc => {
           if (done) return; const pc = m % 12, now = performance.now();
           if (pc === 1 || pc === 3) {
             if (now - lastAt < 150) return; lastAt = now; taps[Math.min(hits, 1)].classList.add("on"); hits++;
-            if (hits >= 2) finish(); else { say.className = "say ok"; say.textContent = "たん！もういっかい！"; }
-          } else if (pc === 6 || pc === 8 || pc === 10) { say.className = "say ng"; say.textContent = "それは みっつの グループだよ"; }
-          else { say.className = "say ng"; say.textContent = "それは しろい けんばんだよ"; }
+            if (hits >= 2) finish(); else { say.className = "say ok"; (say.textContent = "たん！もういっかい！", voice("たん！もういっかい！")); }
+          } else if (pc === 6 || pc === 8 || pc === 10) { say.className = "say ng"; (say.textContent = "それは みっつの グループだよ", voice("それは みっつの グループだよ")); }
+          else { say.className = "say ng"; (say.textContent = "それは しろい けんばんだよ", voice("それは しろい けんばんだよ")); }
         }
       });
       mic.classList.add("on"); start.hidden = true;
-    } catch (e) { start.disabled = false; say.className = "say ng"; say.textContent = "マイクが つかえなかったよ"; }
+    } catch (e) { start.disabled = false; say.className = "say ng"; (say.textContent = "マイクが つかえなかったよ", voice("マイクが つかえなかったよ")); }
   };
   /* ピアノがない日：画面のけんばんで。コインはなし（本物のピアノで ひけたときだけ） */
   skip.onclick = () => { MisoListen.stop(); go("lesson1end"); };
@@ -371,15 +391,15 @@ const imgPick = (src, alt) => `<img src="${ART}${src}" alt="${alt}">`;
 
 SCENES.l2a = sc => {
   sc.innerHTML = L2_TAG + hero("こんにちは！くりーと だよ！<br>きょうも いっしょに あそぼう！<br>ふたつの くろい けんばんの グループ、おぼえてるかな？<br>ひとつ タップしてみて！");
-  speak("こんにちは！くりーと だよ！ ふたつの くろい けんばんの グループ、おぼえてるかな？");
+  
   const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
   let ok = false;
   const kb = keyboard(48, 2, (m, el) => {
     P.play(m, 0, 0.7, 0.25); if (ok) return;
-    if (!isBlack(m)) { say.className = "say"; say.textContent = "くろい けんばんだよ"; return; }
+    if (!isBlack(m)) { say.className = "say"; (say.textContent = "くろい けんばんだよ", voice("くろい けんばんだよ")); return; }
     const g = groupOf(m);
-    if (g.n === 2) { ok = true; g.keys.forEach(k => kb.els[k].classList.add("found")); say.className = "say ok"; say.textContent = "おぼえてたね！"; P.pinpon(); earn(1, el); setTimeout(() => go("l2b"), 1300); }
-    else { g.keys.forEach(k => { const e = kb.els[k]; e.classList.remove("wrong"); void e.offsetWidth; e.classList.add("wrong"); }); say.className = "say ng"; say.textContent = "それは みっつ だよ"; softNo(); }
+    if (g.n === 2) { ok = true; g.keys.forEach(k => kb.els[k].classList.add("found")); say.className = "say ok"; (say.textContent = "おぼえてたね！", voice("おぼえてたね！")); P.pinpon(); earn(1, el); setTimeout(() => go("l2b"), 1300); }
+    else { g.keys.forEach(k => { const e = kb.els[k]; e.classList.remove("wrong"); void e.offsetWidth; e.classList.add("wrong"); }); say.className = "say ng"; (say.textContent = "それは みっつ だよ", voice("それは みっつ だよ")); softNo(); }
   });
   sc.appendChild(kb); sc.appendChild(say);
 };
@@ -403,7 +423,7 @@ function hiLoQuiz(sc, opt) {
         lock = true; b.classList.add("yes"); say.className = "say ok"; say.textContent = k === "hi" ? "せいかい！ことりさんの たかい おと！" : "せいかい！ぞうさんの ひくい おと！";
         P.pinpon(); earn(1, b); dots.children[q].classList.add("on");
         setTimeout(() => { b.classList.remove("yes"); if (++q >= opt.n) go(opt.next); else ask(); }, 1400);
-      } else { softNo(); say.className = "say"; say.textContent = "もういちど よーく " + (opt.ear ? "きいてね" : "みてね"); const r = buttons[want]; r.classList.remove("hint"); void r.offsetWidth; r.classList.add("hint"); setTimeout(() => opt.play && opt.play(want), 500); }
+      } else { softNo(); say.className = "say"; (say.textContent = "もういちど よーく ", voice("もういちど よーく ")) + (opt.ear ? "きいてね" : "みてね"); const r = buttons[want]; r.classList.remove("hint"); void r.offsetWidth; r.classList.add("hint"); setTimeout(() => opt.play && opt.play(want), 500); }
     };
   });
   const ask = () => { lock = false; say.innerHTML = "&nbsp;"; opt.show(stage, qs[q]); };
@@ -417,10 +437,10 @@ function playHiLo(c) {
 
 SCENES.l2b = sc => hiLoQuiz(sc, { n: 4, next: "l2c",
   intro: "ピアノの みぎの はしっこは たかい おと、ひだりの はしっこは ひくい おと だよ。<br>ひかった ふたつの グループは たかい？ ひくい？",
-  show: (stage, c) => { stage.innerHTML = ""; const kb = fullKeyboard(); stage.appendChild(kb); const keys = c === "hi" ? [97, 99] : [25, 27]; keys.forEach(k => kb.els[k].classList.add("ask")); speak("ひかった ふたつの グループは、たかい？ ひくい？"); } });
+  show: (stage, c) => { stage.innerHTML = ""; const kb = fullKeyboard(); stage.appendChild(kb); const keys = c === "hi" ? [97, 99] : [25, 27]; keys.forEach(k => kb.els[k].classList.add("ask")); } });
 
 SCENES.l2c = sc => hiLoQuiz(sc, { n: 4, next: "l2d", ear: true, play: playHiLo,
-  intro: "こんどは みないで、みみで きいてね。<br>ぞうさん（ひくい おと）？<br>ことりさん（たかい おと）？",
+  intro: "こんどは みないで、みみで きいてね。<br>ぞうさん？ ことりさん？",
   show: (stage, c) => { stage.innerHTML = `<button class="btn sky big listen-again" type="button">もういちど きく</button>`; stage.querySelector("button").onclick = () => playHiLo(c); setTimeout(() => playHiLo(c), 300); } });
 
 /* ④ 本物のピアノ：いちばん たかい グループを みぎてで、いちばん ひくい グループを ひだりてで「たんたん」 */
@@ -437,12 +457,12 @@ SCENES.l2d = sc => {
   const skip = document.createElement("button"); skip.className = "btn light"; skip.textContent = "ピアノが ないときは こちら"; sc.appendChild(skip);
   const show = () => { const s = steps[i]; sc.querySelector("#l2dB").innerHTML = `<span class="who">くりーと</span>${s.text}`; sc.querySelector("#l2dImg").src = ART + s.img; taps.forEach(t => t.classList.remove("on")); hits = 0; speak(s.text); };
   const stepDone = () => {
-    const s = steps[i]; say.className = "say ok"; say.textContent = "じょうず！"; P.pinpon(); earn(2, mic); sc.querySelector("#l2dB").innerHTML = `<span class="who">くりーと</span>${s.after}`; speak(s.after);
+    const s = steps[i]; say.className = "say ok"; (say.textContent = "じょうず！", voice("じょうず！")); P.pinpon(); earn(2, mic); sc.querySelector("#l2dB").innerHTML = `<span class="who">くりーと</span>${s.after}`; speak(s.after);
     if (++i >= steps.length) { done = true; MisoListen.stop(); mic.classList.remove("on"); setTimeout(() => go("l2e"), 2600); }
     else setTimeout(() => { say.innerHTML = "&nbsp;"; show(); }, 2600);
   };
   start.onclick = async () => {
-    start.disabled = true; say.className = "say"; say.textContent = "きいているよ…";
+    start.disabled = true; say.className = "say"; (say.textContent = "きいているよ…", voice("きいているよ…"));
     MisoListen.opt.low = 28; MisoListen.opt.maxHz = 4200;
     try {
       await MisoListen.start({
@@ -452,11 +472,11 @@ SCENES.l2d = sc => {
           if (pc !== 1 && pc !== 3) { say.className = "say ng"; say.textContent = isBlack(m) ? "それは みっつの グループだよ" : "それは しろい けんばんだよ"; return; }
           if (!s.ok(m)) { say.className = "say ng"; say.textContent = s.k === "hi" ? "もっと みぎの、たかい ところだよ" : "もっと ひだりの、ひくい ところだよ"; return; }
           if (now - lastAt < 150) return; lastAt = now; taps[Math.min(hits, 1)].classList.add("on"); hits++;
-          if (hits >= 2) stepDone(); else { say.className = "say ok"; say.textContent = "たん！もういっかい！"; }
+          if (hits >= 2) stepDone(); else { say.className = "say ok"; (say.textContent = "たん！もういっかい！", voice("たん！もういっかい！")); }
         }
       });
       mic.classList.add("on"); start.hidden = true;
-    } catch (e) { start.disabled = false; say.className = "say ng"; say.textContent = "マイクが つかえなかったよ"; }
+    } catch (e) { start.disabled = false; say.className = "say ng"; (say.textContent = "マイクが つかえなかったよ", voice("マイクが つかえなかったよ")); }
   };
   skip.onclick = () => { MisoListen.stop(); go("l2e"); };
   cleanup = () => { MisoListen.stop(); MisoListen.opt.low = 45; MisoListen.opt.maxHz = 2200; };
@@ -466,7 +486,7 @@ SCENES.l2d = sc => {
 /* ⑤ だいずの おへや：まんなかの ふたつの くろい けんばんで「タタタン」と ノック（3かい）→ ドアが あく */
 SCENES.l2e = sc => {
   sc.innerHTML = L2_TAG + hero("あれ？ だいずの おへやから、おかしな おとが きこえるよ…<br>ちょっと のぞきみに いってみない？") + `<div class="choices"></div><div class="grow"></div>`;
-  speak("あれ？ だいずの おへやから、おかしな おとが きこえるよ。ちょっと のぞきみに いってみない？");
+  
   P.play(79, 0.2, 0.2, 0.12); P.play(76, 0.45, 0.2, 0.12);
   const box = sc.querySelector(".choices");
   ["いく", "ちょっとだけ いく"].forEach((t, i) => { const x = document.createElement("button"); x.className = "btn big " + (i ? "light" : ""); x.textContent = t; x.onclick = () => go("l2f"); box.appendChild(x); });
@@ -480,7 +500,7 @@ SCENES.l2f = sc => {
   const say = document.createElement("div"); say.className = "say"; say.id = "say"; say.innerHTML = "&nbsp;"; const door = sc.querySelector("#door");
   const dots = dotsEl(ROUNDS); const kb = keyboard(60, 1, (m, el, real) => {
     if (phase !== "you") { if (!real) P.play(m, 0, .4, .15); return; }
-    if (!(m === 61 || m === 63)) { if (!real) P.play(m, 0, .4, .15); say.className = "say"; say.textContent = "まんなかの ふたつの くろい けんばん だよ"; return; }
+    if (!(m === 61 || m === 63)) { if (!real) P.play(m, 0, .4, .15); say.className = "say"; (say.textContent = "まんなかの ふたつの くろい けんばん だよ", voice("まんなかの ふたつの くろい けんばん だよ")); return; }
     if (!real) { P.chord([61, 63], 0, .35, .22); knock(); } el.classList.add("found"); setTimeout(() => el.classList.remove("found"), 200);
     taps.push(performance.now()); clearTimeout(tmr); tmr = setTimeout(check, 900);
   });
@@ -490,11 +510,11 @@ SCENES.l2f = sc => {
   /* お手本：さん、はい！ → タ タ タン（♪♪♩ テンポ ♩=90） */
   const beat = 60 / 90;
   async function demo() {
-    phase = "demo"; taps = []; say.className = "say"; say.textContent = "きいてね… タ タ タン！";
+    phase = "demo"; taps = []; say.className = "say"; (say.textContent = "きいてね… タ タ タン！", voice("きいてね… タ タ タン！"));
     MisoListen.mute(beat * 2000 + 900); await wait(500); [0, beat / 2, beat].forEach(t => { setTimeout(() => { knock(); P.chord([61, 63], 0, t === beat ? .5 : .2, .2); }, t * 1000); });
     await wait(beat * 2000 + 300);
-    say.textContent = "さん、はい！"; speak("さん、はい"); await wait(900);
-    phase = "you"; say.textContent = "どうぞ！ タ タ タン！";
+    (say.textContent = "さん、はい！", voice("さん、はい！")); speak("さん、はい"); await wait(900);
+    phase = "you"; (say.textContent = "どうぞ！ タ タ タン！", voice("どうぞ！ タ タ タン！"));
   }
   function check() {
     phase = "check"; const t = taps; taps = [];
@@ -502,7 +522,7 @@ SCENES.l2f = sc => {
     if (ok) {
       dots.children[round].classList.add("on"); round++; earn(1, door); P.pinpon();
       door.style.setProperty("--open", round / ROUNDS);
-      if (round >= ROUNDS) { phase = "end"; say.className = "say ok"; say.textContent = "ガチャ！"; setTimeout(() => go("l2g"), 1200); }
+      if (round >= ROUNDS) { phase = "end"; say.className = "say ok"; (say.textContent = "ガチャ！", voice("ガチャ！")); setTimeout(() => go("l2g"), 1200); }
       else { say.className = "say ok"; say.textContent = ["コンコン… あれ？ へんじが ないね。もういちど！", "ドアが すこし あいたよ！もういっかい！"][round - 1]; setTimeout(demo, 1700); }
     } else { softNo(); say.className = "say"; say.textContent = t.length < 3 ? "タ タ タン、みっつ ノック だよ。もういちど！" : "タ タ タン、もういちど きいてね"; setTimeout(demo, 1500); }
   }
@@ -527,7 +547,7 @@ SCENES.l2end = sc => {
   sc.innerHTML = L2_TAG + hero("きょうは、たかい おと と ひくい おと が わかったね！<br>よく がんばりました！<br>また あした、あおうね！", "dance") +
     `<div class="endpic"><img src="${ART}elephant.webp" alt="" style="max-height:130px"><img src="${ART}bird.webp" alt="" style="max-height:110px"></div>
      <div class="stars">★</div><p class="small">レッスン2 おしまい ・ コイン ${S.coins}こ</p><div class="grow"></div>`;
-  speak("きょうは、たかい おと と ひくい おと が わかったね！ よく がんばりました！"); P.chord([60, 64, 67, 72], 0, 1.6, 0.22);
+  P.chord([60, 64, 67, 72], 0, 1.6, 0.22);
   const r = document.createElement("button"); r.className = "btn light"; r.textContent = "もういちど あそぶ"; r.onclick = () => go("l2a"); sc.appendChild(r);
   next(sc, "おうちに もどる", "home");
 };
@@ -554,7 +574,7 @@ SCENES.l3 = sc => {
     if (!real) P.play(m, 0, .4, .2);
     if (!playing || !active || !isBlack(m)) return;
     const g = groupOf(m); if (g.n !== active.n || active.done) return;
-    active.done = true; hits++; g.keys.forEach(k => kb.els[k] && kb.els[k].classList.add("found")); say.className = "say ok"; say.textContent = "いいね！";
+    active.done = true; hits++; g.keys.forEach(k => kb.els[k] && kb.els[k].classList.add("found")); say.className = "say ok"; (say.textContent = "いいね！", voice("いいね！"));
   });
   hand.className = "say"; sc.appendChild(realKeysSwitch(sc, kb, kb.onKey)); sc.appendChild(kb); sc.appendChild(hand); sc.appendChild(say);
   const startBtn = document.createElement("button"); startBtn.className = "btn big"; startBtn.textContent = "はじめる"; sc.appendChild(startBtn);
