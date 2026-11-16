@@ -34,7 +34,7 @@ const KURI = ["kuriito_dance.webp", "kuriito_dance_flip.webp", "kuriito_sit.webp
 const kuriPick = () => { let h = 0; for (const c of S.scene || "") h = (h * 31 + c.charCodeAt(0)) >>> 0; return KURI[h % KURI.length]; };
 const kuri = (cls = "") => `<img class="kuri ${cls}" src="${ART}${kuriPick()}" alt="くろねこのくりーと">`;
 const bubble = (html, who = "くりーと") => `<div class="bubble"><span class="who">${who}</span>${html}</div>`;
-const hero = (html, cls) => { if (html) setTimeout(() => voice(html), 350); return `<div class="hero">${kuri(cls)}${bubble(html)}</div>`; };
+const hero = (html, cls) => { if (html) setTimeout(() => { if (!(window.MisoListen && MisoListen.running)) speak(html); }, 350); return `<div class="hero">${kuri(cls)}${bubble(html)}</div>`; };
 /* なまえを よんでから 話す くりーと（レッスンの はじめ と おわり） */
 const heroN = (html, cls) => { if (S.name) setTimeout(() => { playName(); }, 200); return hero(S.name ? `${esc(nm())}${html.startsWith("こんにちは") ? "、" : "！<br>"}${html}` : html, cls); };
 
@@ -214,7 +214,9 @@ const VOICE_HAVE = new Set(["A1", "A2", "A3", "A4", "A5", "A6", "B1", "B10", "B1
    声を流している間は、マイクが声を拾わないように止める。 */
 const vnorm = t => String(t).split(nm() || "\u0000").join("").split(S.name || "\u0000").join("").replace(/<[^>]+>/g, "").replace(/[\s、。！？!?「」『』（）()…・〜~ー,.]/g, "");
 const VOICE_BY_TEXT = {}; for (const id in VOICE_TEXT) VOICE_BY_TEXT[vnorm(VOICE_TEXT[id])] = id;
-let vAudio = null, vLast = "", vLastAt = 0;
+let vAudio = null, vLast = "", vLastAt = 0, pendingSound = null;
+/* リンクから ひらいた ときなど、まだ 画面に さわっていないと iPhone は 音を 止める → さいしょに さわった ときに 流す */
+document.addEventListener("pointerdown", () => { if (pendingSound) { const f = pendingSound; pendingSound = null; f(); } }, true);
 function playVoice(id) {
   if (!VOICE_HAVE.has(id)) return false;
   if (nameBusy) { vLast = vnorm(VOICE_TEXT[id] || ""); vLastAt = Date.now(); nameBusy.then(() => playVoice(id)); return true; }
@@ -224,11 +226,11 @@ function playVoice(id) {
   const a = new Audio("voice/" + id + ".mp3"); vAudio = a;
   a.addEventListener("loadedmetadata", () => { if (window.MisoListen) MisoListen.mute((a.duration || 3) * 1000 + 300); });
   if (window.MisoListen) MisoListen.mute(4000);
-  a.play().catch(() => { }); return true;
+  a.play().catch(() => { pendingSound = () => a.play().catch(() => { }); }); return true;
 }
 const playVoiceThen = async (id, maxMs = 7000) => { if (nameBusy) await nameBusy; return await new Promise(ok => { if (!playVoice(id)) return ok(false); const a = vAudio, t = setTimeout(() => ok(true), maxMs); a.addEventListener("ended", () => { clearTimeout(t); ok(true); }, { once: true }); a.addEventListener("error", () => { clearTimeout(t); ok(false); }, { once: true }); }); };
 const voice = (t, force) => { if (!force && window.MisoListen && MisoListen.running) return false; const n = vnorm(t), id = VOICE_BY_TEXT[n]; if (!id) return false; const now = Date.now(); if (n === vLast && now - vLastAt < 1500) return true; vLast = n; vLastAt = now; return playVoice(id); };
-const speak = t => { if (voice(t, true)) return; try { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t.replace(/<[^>]+>/g, "")); u.lang = "ja-JP"; u.rate = 0.9; u.pitch = 1.3; speechSynthesis.speak(u); } catch (e) { } };
+const speak = t => { if (voice(t, true)) return; try { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t.replace(/<[^>]+>/g, "")); u.lang = "ja-JP"; u.rate = 0.9; u.pitch = 1.3; speechSynthesis.speak(u); if (!navigator.userActivation || !navigator.userActivation.hasBeenActive) pendingSound = () => { speechSynthesis.cancel(); speechSynthesis.speak(u); }; } catch (e) { } };
 const SK_TAG = `<span class="lesson-tag">レッスン0 ・ しろ と くろ</span>`;
 function dotsEl(n) { const d = document.createElement("div"); d.className = "dots"; d.innerHTML = "<i></i>".repeat(n); return d; }
 
