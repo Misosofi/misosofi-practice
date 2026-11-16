@@ -153,3 +153,10 @@ input.name{font:inherit;font-size:24px;font-weight:700;border:2.5px dashed #D9C3
 .mic-switch{display:flex;flex-direction:column;align-items:center;gap:4px}
 .mic-switch .btn{width:100%;font-size:18px;min-height:52px}
 .mic-switch.on .btn{background:var(--leaf);box-shadow:0 5px 0 #6E9E5C}
+.sfx{display:flex;gap:8px;align-items:center}
+.sfx .small{flex:none}
+.sfx .btn{flex:1;min-height:48px;font-size:18px;padding:4px}
+.sfx .btn.on{background:var(--sky);color:#fff;box-shadow:0 5px 0 var(--sky2)}
+.namerec .row{margin-top:8px}
+.namerec .btn{font-size:17px;min-height:52px}
+.namerec .btn.on{background:var(--rose)}
