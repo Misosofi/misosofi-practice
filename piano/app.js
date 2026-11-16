@@ -29,7 +29,10 @@ function burst(el) {
     $("burst").appendChild(d); setTimeout(() => d.remove(), 950);
   }
 }
-const kuri = (cls = "") => `<img class="kuri ${cls}" src="${ART}kuriito_dance.webp" alt="くろねこのくりーと">`;
+/* くりーとの 絵は 場面ごとに かえる（同じ絵ばかりに ならないように） */
+const KURI = ["kuriito_dance.webp", "kuriito_dance_flip.webp", "kuriito_sit.webp"];
+const kuriPick = () => { let h = 0; for (const c of S.scene || "") h = (h * 31 + c.charCodeAt(0)) >>> 0; return KURI[h % KURI.length]; };
+const kuri = (cls = "") => `<img class="kuri ${cls}" src="${ART}${kuriPick()}" alt="くろねこのくりーと">`;
 const bubble = (html, who = "くりーと") => `<div class="bubble"><span class="who">${who}</span>${html}</div>`;
 const hero = (html, cls) => `<div class="hero">${kuri(cls)}${bubble(html)}</div>`;
 
@@ -318,9 +321,9 @@ SCENES.lesson1quiz = sc => {
 /* レッスン1-4：ほんものの ピアノで グー「タンタン」（マイクで聞く） */
 SCENES.lesson1piano = sc => {
   sc.innerHTML = `<span class="lesson-tag">チャプター1 ・ レッスン1</span>` +
-    hero("みんなの ピアノで、ふたつの くろいけんばんの グループを みつけてみよう。<br>みつけたら、おててで グーをつくって、「タンタン」って かるく ひいてみよう。") +
+    hero("みんなの ピアノで、ふたつの くろいけんばんの グループを みつけてみよう。<br>みつけたら、グーを つくって「たんたん」って かるく ひいてみよう。") +
     `<div class="mic" id="mic"><div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="#4F8DBA" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
-      <div class="taps"><span>タン</span><span>タン</span></div></div>
+      <div class="taps"><span>たん</span><span>たん</span></div></div>
     <div class="say" id="say">&nbsp;</div><div class="grow"></div>`;
   const say = sc.querySelector("#say"), mic = sc.querySelector("#mic"), taps = sc.querySelectorAll(".taps span");
   const start = document.createElement("button"); start.className = "btn big sky"; start.textContent = "ピアノで きかせてね"; sc.appendChild(start);
@@ -336,7 +339,7 @@ SCENES.lesson1piano = sc => {
           if (done) return; const pc = m % 12, now = performance.now();
           if (pc === 1 || pc === 3) {
             if (now - lastAt < 150) return; lastAt = now; taps[Math.min(hits, 1)].classList.add("on"); hits++;
-            if (hits >= 2) finish(); else { say.className = "say ok"; say.textContent = "タン！もういっかい！"; }
+            if (hits >= 2) finish(); else { say.className = "say ok"; say.textContent = "たん！もういっかい！"; }
           } else if (pc === 6 || pc === 8 || pc === 10) { say.className = "say ng"; say.textContent = "それは みっつの グループだよ"; }
           else { say.className = "say ng"; say.textContent = "それは しろい けんばんだよ"; }
         }
@@ -392,7 +395,7 @@ function hiLoQuiz(sc, opt) {
   const qs = []; for (let k = 0; k < opt.n; k++) qs.push(k % 2 ? "lo" : "hi"); qs.sort(() => Math.random() - .5);
   let q = 0, lock = false;
   const buttons = {};
-  [["hi", "bird.webp", "たかい（ことりさん）"], ["lo", "elephant.webp", "ひくい（ぞうさん）"]].forEach(([k, img, t]) => {
+  [["lo", "elephant.webp", "ひくい（ぞうさん）"], ["hi", "bird.webp", "たかい（ことりさん）"]].forEach(([k, img, t]) => {
     const b = document.createElement("button"); b.className = "pick hl"; b.dataset.c = k; b.innerHTML = imgPick(img, t) + `<span>${t.split("（")[0]}</span>`; ch.appendChild(b); buttons[k] = b;
     b.onclick = () => {
       if (lock) return; const want = qs[q];
@@ -417,14 +420,14 @@ SCENES.l2b = sc => hiLoQuiz(sc, { n: 4, next: "l2c",
   show: (stage, c) => { stage.innerHTML = ""; const kb = fullKeyboard(); stage.appendChild(kb); const keys = c === "hi" ? [97, 99] : [25, 27]; keys.forEach(k => kb.els[k].classList.add("ask")); speak("ひかった ふたつの グループは、たかい？ ひくい？"); } });
 
 SCENES.l2c = sc => hiLoQuiz(sc, { n: 4, next: "l2d", ear: true, play: playHiLo,
-  intro: "こんどは みないで、みみで きいてね。<br>ことりさん（たかい おと）？<br>ぞうさん（ひくい おと）？",
+  intro: "こんどは みないで、みみで きいてね。<br>ぞうさん（ひくい おと）？<br>ことりさん（たかい おと）？",
   show: (stage, c) => { stage.innerHTML = `<button class="btn sky big listen-again" type="button">もういちど きく</button>`; stage.querySelector("button").onclick = () => playHiLo(c); setTimeout(() => playHiLo(c), 300); } });
 
 /* ④ 本物のピアノ：いちばん たかい グループを みぎてで、いちばん ひくい グループを ひだりてで「たんたん」 */
 SCENES.l2d = sc => {
   const steps = [
-    { k: "hi", text: "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎての グーで「たんたん！」", ok: m => m >= 73, img: "bird.webp", after: "たかい おとは ことりさんの ように かわいい おと だったかな？" },
-    { k: "lo", text: "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりての グーで「たんたん！」", ok: m => m <= 51, img: "elephant.webp", after: "ひくい おとは ぞうさんの ように、おおきな ふとい おと だったかな？" }];
+    { k: "hi", text: "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎてで グーを つくって「たんたん！」", ok: m => m >= 73, img: "bird.webp", after: "たかい おとは ことりさんの ように かわいい おと だったかな？" },
+    { k: "lo", text: "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりてで グーを つくって「たんたん！」", ok: m => m <= 51, img: "elephant.webp", after: "ひくい おとは ぞうさんの ように、おおきな ふとい おと だったかな？" }];
   let i = 0, hits = 0, lastAt = 0, done = false;
   sc.innerHTML = L2_TAG + `<div class="hero"><img class="kuri" id="l2dImg" src="${ART}bird.webp" alt=""><div class="bubble" id="l2dB"></div></div>
     <div class="mic" id="mic"><div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="#4F8DBA" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
@@ -522,7 +525,7 @@ SCENES.l2g = sc => {
 
 SCENES.l2end = sc => {
   sc.innerHTML = L2_TAG + hero("きょうは、たかい おと と ひくい おと が わかったね！<br>よく がんばりました！<br>また あした、あおうね！", "dance") +
-    `<div class="endpic"><img src="${ART}bird.webp" alt="" style="max-height:110px"><img src="${ART}elephant.webp" alt="" style="max-height:130px"></div>
+    `<div class="endpic"><img src="${ART}elephant.webp" alt="" style="max-height:130px"><img src="${ART}bird.webp" alt="" style="max-height:110px"></div>
      <div class="stars">★</div><p class="small">レッスン2 おしまい ・ コイン ${S.coins}こ</p><div class="grow"></div>`;
   speak("きょうは、たかい おと と ひくい おと が わかったね！ よく がんばりました！"); P.chord([60, 64, 67, 72], 0, 1.6, 0.22);
   const r = document.createElement("button"); r.className = "btn light"; r.textContent = "もういちど あそぶ"; r.onclick = () => go("l2a"); sc.appendChild(r);
@@ -541,7 +544,7 @@ const L3_SONGS = [
 ];
 const L3_TAG = `<span class="lesson-tag">チャプター1 ・ レッスン3</span>`;
 SCENES.l3 = sc => {
-  sc.innerHTML = L3_TAG + hero("おんがくに あわせて、くろい けんばんで「タンタン」しよう！<br>ひかった グループを ひいてね。") +
+  sc.innerHTML = L3_TAG + hero("おんがくに あわせて、くろい けんばんで グーを つくって「たんたん」しよう！<br>ひかった グループを ひいてね。") +
     `<div class="card small" style="text-align:left">保護者の方へ：このレッスンの曲（音源）は準備中です。今は仮の曲で、しくみだけ試せます。年齢や理解度によっては、このレッスンを飛ばしてチャプター2へ進んでも大丈夫です。</div>`;
   const song = L3_SONGS[0], beat = 60 / song.bpm;
   const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
@@ -569,7 +572,7 @@ SCENES.l3 = sc => {
       timers.push(setTimeout(() => {
         clear(); const g = groupsIn(48, 2).filter(x => x.n === n); const pick = h === "L" ? g[0] : h === "R" ? g[g.length - 1] : null;
         (pick ? [pick] : g).forEach(x => x.keys.forEach(k => kb.els[k].classList.add(n === 2 ? "glow2" : "glow3")));
-        active = { n, done: false }; say.className = "say"; say.textContent = n === 2 ? "ふたつ！ タンタン" : "みっつ！ タンタン";
+        active = { n, done: false }; say.className = "say"; say.textContent = n === 2 ? "ふたつ！ たんたん" : "みっつ！ たんたん";
         hand.textContent = h === "R" ? "みぎて" : h === "L" ? "ひだりて" : "りょうて";
       }, at));
     });
