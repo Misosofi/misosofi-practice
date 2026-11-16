@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ピアノのえほん 声の録音</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root{--paper:#FBF3E4;--ink:#3B2F27;--ink2:#7A6656;--sun:#F2B544;--sun2:#E0962B;--sky:#7FB2D6;--sky2:#4F8DBA;--rose:#E98C7E;--leaf:#8DBF7A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;
+  padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 120px max(12px,env(safe-area-inset-left))}
+.wrap{max-width:620px;margin:0 auto}
+h1{font-size:22px;margin:6px 0 2px}
+.lead{font-size:14px;color:var(--ink2);margin:0 0 10px;line-height:1.6}
+.prog{position:sticky;top:0;z-index:5;background:var(--paper);padding:8px 0;display:flex;align-items:center;gap:10px;font-weight:900}
+.bar{flex:1;height:12px;background:#E6D6BC;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--leaf);width:0;transition:width .3s}
+h2{font-size:17px;margin:18px 0 6px;color:var(--sky2)}
+.line{background:#fff;border-radius:18px;padding:12px;margin:8px 0;box-shadow:0 3px 0 #E6D6BC}
+.line.done{box-shadow:0 0 0 2px var(--leaf),0 3px 0 #E6D6BC}
+.line.rec{box-shadow:0 0 0 3px var(--rose)}
+.id{font-size:12px;font-weight:900;color:var(--ink2)}
+.txt{font-size:19px;font-weight:700;line-height:1.6;margin:2px 0 10px}
+.note{font-size:13px;color:var(--rose);font-weight:700}
+.btns{display:flex;gap:8px}
+button{font:inherit;font-weight:900;border:0;border-radius:14px;min-height:48px;padding:6px 12px;cursor:pointer}
+.r{flex:2;background:var(--rose);color:#fff;font-size:18px}
+.line.rec .r{background:#C0392B;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.75}}
+.p{flex:1;background:var(--sky);color:#fff}
+.p[disabled]{opacity:.35}
+.ok{font-size:22px;color:var(--leaf);align-self:center;width:28px;text-align:center}
+.foot{position:fixed;left:0;right:0;bottom:0;background:rgba(251,243,228,.97);padding:10px max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-bottom));box-shadow:0 -2px 0 #E6D6BC;z-index:6}
+.foot .in{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.send{background:var(--sun);box-shadow:0 4px 0 var(--sun2);font-size:19px;width:100%}
+.msg{font-size:13px;color:var(--ink2);text-align:center;min-height:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎙 ピアノのえほん 声の録音</h1>
+  <p class="lead">「● 録音」を押して読み、もう一度押すと止まります。「▶ 聞く」で確認して、やり直したいときはもう一度「● 録音」。<br>途中でやめても、録った声はこのスマホに残ります。全部終わったら、いちばん下の「まとめて送る」を押してください。</p>
+  <div class="prog"><span id="cnt">0 / 0</span><div class="bar"><i id="bar"></i></div></div>
+  <div id="list"></div>
+</div>
+<div class="foot"><div class="in"><button class="send" id="send">まとめて送る（1つのファイルにする）</button><div class="msg" id="msg"></div></div></div>
+<script>
+"use strict";
+const SCRIPT = [
+ ["A","はじめ（くりーとの 自己紹介）",[
+  "こんにちは！ぼくの なまえは、くりーと。くろねこの くりーと だよ。みんなの なまえは、なにかな？",
+  "よろしくね！ぼくは、6さい。みんなは なんさいかな？",
+  "ぼくは、おんがくが だいすき！うたったり、ピアノを ひいたりするんだ。みんなも おんがくは すきかな？",
+  "さっそく みんなと いっしょに、したの がっきを ひくよ。ねえ みんな、この がっき、なにか わかる？",
+  "そう、ピアノだよ！ピアノには「くろい けんばん」と「しろい けんばん」が あるよ。",
+  "じゃあ これから、たくさん たのしく ぼくと おんがくで あそぼう！ぼくと まいにち、いっしょに あそんでほしいんだ！あそんでくれる？"]],
+ ["B","レッスン0 しろ と くろ",[
+  "まっしろ！これは しろ だよ。","まっくろ！これは くろ だよ。","しろは どっち？","くろは どっち？",
+  "しろい ねこさんは どっち？","くろい ねこさんは どっち？","しろい けんばんは どっち？","くろい けんばんは どっち？","こっちかな？",
+  "こんどは くろい けんばん だけ、ノック ノック してみよう！コン コン！","それは しろ だよ。くろい けんばんは どこかな？",
+  "じょうず！くろい けんばん だけ ノック できたね！","しろ と くろ、わかったね！よく がんばりました！また あした、あおうね！"]],
+ ["C","レッスン1 ふたつ と みっつ",[
+  "よーく みてみると、くろい けんばんは「ふたつの グループ」と「みっつの グループ」が あるよ。",
+  "ひくい ところから たかい ところへ、「ふたつ、みっつ」と かぞえてみよう！","ふたつ","みっつ",
+  "ふたつの くろい けんばんの グループを ぜんぶ タップしてみよう。まちがわないように よーく みてね。みっつじゃないからね。ふたつだよ！",
+  "いいね！ふたつだね！","ダメダメ〜、それは みっつ だよ。","じゃあ、クイズだよ！ひかった くろい けんばんは ふたつ？それとも みっつ？",
+  "みんなの ピアノで、ふたつの くろい けんばんの グループを みつけてみよう。みつけたら、グーを つくって「たんたん」って かるく ひいてみよう。",
+  "たん！もういっかい！","じょうずに ひけたかな？よく がんばりました！きょうの おんがくの あそびは これで おしまい！また あした、あおうね！"]],
+ ["D","レッスン2 たかい おと・ひくい おと／だいずの おへや",[
+  "こんにちは！くりーと だよ！きょうも いっしょに あそぼう！ふたつの くろい けんばんの グループ、おぼえてるかな？ひとつ タップしてみて！",
+  "おぼえてたね！","ピアノの みぎの はしっこは たかい おと、ひだりの はしっこは ひくい おと だよ。ひかった ふたつの グループは たかい？ひくい？",
+  "こんどは みないで、みみで きいてね。ぞうさん？ことりさん？","せいかい！ぞうさんの ひくい おと！","せいかい！ことりさんの たかい おと！",
+  "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎてで グーを つくって「たんたん！」",
+  "たかい おとは、ことりさんの ように かわいい おと だったかな？",
+  "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりてで グーを つくって「たんたん！」",
+  "ひくい おとは、ぞうさんの ように、おおきな ふとい おと だったかな？",
+  "あれ？だいずの おへやから、おかしな おとが きこえるよ…。ちょっと のぞきみに いってみない？",
+  "まんなかの ふたつの くろい けんばんで、「タ タ タン！」って ノック してね。くりーとの まねっこ だよ。",
+  "さん、はい！","コンコン… あれ？へんじが ないね。もういちど！","ドアが すこし あいたよ！もういっかい！","だいず、なに してるの？",
+  "いまは だめ〜！|だいずの 声で","あーっ！だいず、ぬすみぐい してたー！","もう、だいずったら！みんな、ノック じょうず だったよ！",
+  "きょうは、たかい おと と ひくい おと が わかったね！よく がんばりました！また あした、あおうね！"]],
+ ["E","レッスン3 と、よく使う ことば",[
+  "おんがくに あわせて、くろい けんばんで グーを つくって「たんたん」しよう！ひかった グループを ひいてね。",
+  "いち、に、さん、はい！","ふたつ！","みっつ！","みぎて","ひだりて","りょうて","せいかい！","いいね！","じょうず！",
+  "ざんねん、もういちど よーく みてね。","もういちど よーく きいてね。","それは しろい けんばん だよ。","それは みっつの グループ だよ。"]]
+];
+
+/* ---- このスマホの中に保存（IndexedDB） ---- */
+let db = null;
+const openDB = () => new Promise(ok => { try { const r = indexedDB.open("miso-voice", 1); r.onupgradeneeded = () => r.result.createObjectStore("clips"); r.onsuccess = () => ok(db = r.result); r.onerror = () => ok(null); } catch (e) { ok(null); } });
+const dbPut = (k, v) => new Promise(ok => { if (!db) return ok(); const t = db.transaction("clips", "readwrite"); t.objectStore("clips").put(v, k); t.oncomplete = ok; t.onerror = ok; });
+const dbAll = () => new Promise(ok => { if (!db) return ok({}); const out = {}, t = db.transaction("clips"), s = t.objectStore("clips"); const c = s.openCursor(); c.onsuccess = () => { const r = c.result; if (r) { out[r.key] = r.value; r.continue(); } else ok(out); }; c.onerror = () => ok(out); });
+const clips = {};   // id → Blob
+
+const list = document.getElementById("list"); const rows = {}; let total = 0;
+SCRIPT.forEach(([g, title, lines]) => {
+  const h = document.createElement("h2"); h.textContent = `録音${g}：${title}`; list.appendChild(h);
+  lines.forEach((raw, i) => {
+    const [text, note] = raw.split("|"), id = g + (i + 1); total++;
+    const d = document.createElement("div"); d.className = "line"; d.id = "L" + id;
+    d.innerHTML = `<div class="id">${id}</div><div class="txt"></div>${note ? `<div class="note">（${note}）</div>` : ""}
+      <div class="btns"><button class="r" type="button">● 録音</button><button class="p" type="button" disabled>▶ 聞く</button><span class="ok"></span></div>`;
+    d.querySelector(".txt").textContent = text; list.appendChild(d);
+    rows[id] = d; d.querySelector(".r").onclick = () => toggleRec(id); d.querySelector(".p").onclick = () => play(id);
+  });
+});
+function refresh() {
+  let n = 0; for (const id in rows) { const has = !!clips[id]; rows[id].classList.toggle("done", has); rows[id].querySelector(".p").disabled = !has; rows[id].querySelector(".ok").textContent = has ? "✓" : ""; if (has) n++; }
+  document.getElementById("cnt").textContent = `${n} / ${total}`; document.getElementById("bar").style.width = (n / total * 100) + "%";
+}
+
+/* ---- 録音 ---- */
+let stream = null, rec = null, recId = null, chunks = [], player = null;
+const mime = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
+async function toggleRec(id) {
+  if (player) { player.pause(); player = null; }
+  if (rec && rec.state === "recording") { const was = recId; rec.stop(); if (was === id) return; await new Promise(r => setTimeout(r, 300)); }
+  try { if (!stream) stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+  catch (e) { msg("マイクが使えませんでした。設定でマイクを許可してください。"); return; }
+  chunks = []; recId = id; rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = async () => {
+    const b = new Blob(chunks, { type: rec.mimeType || mime || "audio/mp4" }); rows[id].classList.remove("rec"); rows[id].querySelector(".r").textContent = "● 録音";
+    if (b.size > 800) { clips[id] = b; await dbPut(id, b); msg(`${id} を保存しました`); } refresh();
+  };
+  rec.start(); rows[id].classList.add("rec"); rows[id].querySelector(".r").textContent = "■ 止める"; msg(`${id} 録音中…`);
+}
+function play(id) { if (!clips[id]) return; if (player) player.pause(); player = new Audio(URL.createObjectURL(clips[id])); player.play().catch(() => { }); }
+const msg = t => { document.getElementById("msg").textContent = t; };
+
+/* ---- まとめて1つのファイル（zip）にする ---- */
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = u => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+async function makeZip(files) {
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  for (const [name, blob] of files) {
+    const data = new Uint8Array(await blob.arrayBuffer()), nm = enc.encode(name), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, nm.length, true);
+    parts.push(h.buffer, nm, data);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    central.push(c.buffer, nm); off += 30 + nm.length + data.length;
+  }
+  const csize = central.reduce((a, b) => a + b.byteLength, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...central, e.buffer], { type: "application/zip" });
+}
+document.getElementById("send").onclick = async () => {
+  if (rec && rec.state === "recording") rec.stop();
+  const ids = Object.keys(clips); if (!ids.length) { msg("まだ録音がありません"); return; }
+  const ext = t => /mp4|m4a|aac/.test(t) ? "m4a" : /ogg/.test(t) ? "ogg" : "webm";
+  const order = Object.keys(rows).filter(id => clips[id]);
+  const zip = await makeZip(order.map(id => [`${id}.${ext(clips[id].type)}`, clips[id]]));
+  const d = new Date(), stamp = `${d.getMonth() + 1}${String(d.getDate()).padStart(2, "0")}-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
+  const file = new File([zip], `piano-voice-${stamp}.zip`, { type: "application/zip" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: "ピアノのえほん 声" }); msg(`${order.length}個の声を まとめました`); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+  msg(`${order.length}個の声を「${file.name}」にしました`);
+};
+
+openDB().then(dbAll).then(all => { Object.assign(clips, all); refresh(); });
+refresh();
+</script>
+</body>
+</html>
