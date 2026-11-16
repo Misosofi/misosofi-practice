@@ -177,3 +177,8 @@ input.name{font:inherit;font-size:24px;font-weight:700;border:2.5px dashed #D9C3
 .kbd-wrap.only-k .w{background:#f1f1f1}
 .kbd .w.found{background:#FFE9A8}
 .kbd .w.wrong{animation:shake .35s}
+/* リズムの まねっこ：タ・タ・タン の カード */
+.rchips{display:flex;justify-content:center;gap:8px;margin:6px 0;flex-wrap:wrap}
+.rchips .rc{min-width:58px;padding:10px 8px;border-radius:14px;background:#fff;border:3px solid #E5D9C3;font-weight:800;font-size:24px;text-align:center;transition:transform .1s}
+.rchips .rc.half{min-width:40px;font-size:20px}
+.rchips .rc.on{background:#F7C948;border-color:#E0A82E;transform:scale(1.12)}

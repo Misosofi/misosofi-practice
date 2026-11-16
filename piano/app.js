@@ -1,4 +1,4 @@
-const APPV = "20261116d";
+const APPV = "20261116e";
 // 古い版が残っていたら最新に入れかえる
 (function(){try{fetch("index.html?t="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(h=>{const m=h.match(/app\.js\?v=(\w+)/);if(m&&m[1]!==APPV&&sessionStorage.getItem("miso-rl")!==m[1]){sessionStorage.setItem("miso-rl",m[1]);location.reload();}}).catch(()=>{});}catch(e){}})();
 /* ===== ピアノのえほん（みそそっフィ ピアノ導入コース）試作 =====
@@ -119,7 +119,7 @@ SCENES.home = sc => {
     <div class="endpic">${kuri("dance")}</div>
     <p class="small">ピアノといっしょに あそぼう！</p><div class="grow"></div>`;
   if (!S.name) { const b = next(sc, "はじめる", "intro1"); b.addEventListener("click", () => P.load()); return; }
-  [["sk1", "しろ と くろ", "", "チャプター1 レッスン1"], ["w2a", "くろ・しろで えんそう", "light", "チャプター1 レッスン2"], ["lesson1", "ふたつ と みっつ", "light", "チャプター2 レッスン1"], ["l2a", "たかい おと・ひくい おと", "light", "チャプター2 レッスン2"], ["g3", "ふたつ・みっつの きょく", "light", "チャプター2 レッスン3"], ["l3", "みぎて・ひだりての きょく", "light", "チャプター2 レッスン4（じゅんびちゅう）"]].forEach(([to, t, c, sub]) => {
+  [["sk1", "しろ と くろ", "", "チャプター1 レッスン1"], ["w2a", "くろ・しろで えんそう", "light", "チャプター1 レッスン2"], ["lesson1", "ふたつ と みっつ", "light", "チャプター2 レッスン1"], ["l2a", "たかい おと・ひくい おと", "light", "チャプター2 レッスン2"], ["g3", "ふたつ・みっつの きょく", "light", "チャプター2 レッスン3"], ["r4a", "ふたつは いい・みっつは ダメ", "light", "チャプター2 レッスン4（リズムの まねっこ）"]].forEach(([to, t, c, sub]) => {
     const b = next(sc, "", to, c); b.innerHTML = `<small style="display:block;font-size:13px">${sub}</small>${t}`; b.addEventListener("click", () => P.load()); });
   const r = document.createElement("button"); r.className = "btn light"; r.style.fontSize = "15px"; r.style.minHeight = "44px"; r.textContent = "はじめから（なまえ・とし）"; r.onclick = () => go("intro1"); sc.appendChild(r);
 };
@@ -190,8 +190,8 @@ SCENES.intro5 = sc => {
    → ④ けんばん「くろい けんばんは どっち？」 → ⑤ くろい けんばんだけ ノック ノック
    小さい子なので、まちがえても ブーは鳴らさない（やさしい音で、正しい方が光る）。 */
 /* ---------- まちがいの かず（レッスンごと）→ おわりに「もういちど」を すすめる ---------- */
-const LESSON_OF = sc => /^sk/.test(sc) ? "sk" : /^lesson1/.test(sc) ? "l1" : /^l2/.test(sc) ? "l2" : /^l3/.test(sc) ? "l3" : /^w2/.test(sc) ? "w2" : /^g3/.test(sc) ? "g3" : null;
-const LESSON_NAME = { sk: "1-1 しろ と くろ", w2: "1-2 くろ・しろで えんそう", l1: "2-1 ふたつ と みっつ", l2: "2-2 たかい おと・ひくい おと", g3: "2-3 ふたつ・みっつの きょく", l3: "2-4 みぎて・ひだりての きょく" };
+const LESSON_OF = sc => /^sk/.test(sc) ? "sk" : /^lesson1/.test(sc) ? "l1" : /^l2/.test(sc) ? "l2" : /^l3/.test(sc) ? "l3" : /^w2/.test(sc) ? "w2" : /^g3/.test(sc) ? "g3" : /^r4/.test(sc) ? "r4" : null;
+const LESSON_NAME = { sk: "1-1 しろ と くろ", w2: "1-2 くろ・しろで えんそう", l1: "2-1 ふたつ と みっつ", l2: "2-2 たかい おと・ひくい おと", g3: "2-3 ふたつ・みっつの きょく", r4: "2-4 ふたつは いい・リズムの まねっこ" };
 function missOne() { const k = LESSON_OF(S.scene); if (!k) return; S.miss = S.miss || {}; S.miss[k] = (S.miss[k] || 0) + 1; save(); }
 function missReset(k) { S.miss = S.miss || {}; S.miss[k] = 0; save(); }
 /* めやす（仮）：0〜2こ＝つぎへ、3〜5こ＝もういちど が おすすめ、6こ いじょう＝もういちど やろう */
@@ -211,7 +211,7 @@ function lessonResult(sc, k, again, nextSc, nextLabel) {
   const h = document.createElement("button"); h.className = "btn light"; h.style.fontSize = "16px"; h.style.minHeight = "48px"; h.textContent = "おうちに もどる"; h.onclick = () => go("home"); sc.appendChild(h);
 }
 const softNo = () => { missOne(); P.play(55, 0, 0.5, 0.12); };
-const VOICE_TEXT = {"A1": "こんにちは！ぼくの なまえは、くりーと。くろねこの くりーと だよ。みんなの なまえは、なにかな？", "A2": "よろしくね！ぼくは、6さい。みんなは なんさいかな？", "A3": "ぼくは、おんがくが だいすき！うたったり、ピアノを ひいたりするんだ。みんなも おんがくは すきかな？", "A4": "さっそく みんなと いっしょに、したの がっきを ひくよ。ねえ みんな、この がっき、なにか わかる？", "A5": "そう、ピアノだよ！ピアノには「くろい けんばん」と「しろい けんばん」が あるよ。", "A6": "じゃあ これから、たくさん たのしく ぼくと おんがくで あそぼう！ぼくと まいにち、いっしょに あそんでほしいんだ！あそんでくれる？", "B1": "まっしろ！これは しろ だよ。", "B2": "まっくろ！これは くろ だよ。", "B3": "しろは どっち？", "B4": "くろは どっち？", "B5": "しろい ねこさんは どっち？", "B6": "くろい ねこさんは どっち？", "B7": "しろい けんばんは どっち？", "B8": "くろい けんばんは どっち？", "B9": "こっちかな？", "B10": "こんどは くろい けんばん だけ、ノック ノック してみよう！コン コン！", "B11": "それは しろ だよ。くろい けんばんは どこかな？", "B12": "じょうず！くろい けんばん だけ ノック できたね！", "B13": "しろ と くろ、わかったね！よく がんばりました！また あした、あおうね！", "C1": "よーく みてみると、くろい けんばんは「ふたつの グループ」と「みっつの グループ」が あるよ。", "C2": "ひくい ところから たかい ところへ、「ふたつ、みっつ」と かぞえてみよう！", "C3": "ふたつ", "C4": "みっつ", "C5": "ふたつの くろい けんばんの グループを ぜんぶ タップしてみよう。まちがわないように よーく みてね。みっつじゃないからね。ふたつだよ！", "C6": "いいね！ふたつだね！", "C7": "ダメダメ〜、それは みっつ だよ。", "C8": "じゃあ、クイズだよ！ひかった くろい けんばんは ふたつ？それとも みっつ？", "C9": "みんなの ピアノで、ふたつの くろい けんばんの グループを みつけてみよう。みつけたら、グーを つくって「たんたん」って かるく ひいてみよう。", "C10": "たん！もういっかい！", "C11": "じょうずに ひけたかな？よく がんばりました！きょうの おんがくの あそびは これで おしまい！また あした、あおうね！", "D1": "こんにちは！くりーと だよ！きょうも いっしょに あそぼう！ふたつの くろい けんばんの グループ、おぼえてるかな？ひとつ タップしてみて！", "D2": "おぼえてたね！", "D3": "ピアノの みぎの はしっこは たかい おと、ひだりの はしっこは ひくい おと だよ。ひかった ふたつの グループは たかい？ひくい？", "D4": "こんどは みないで、みみで きいてね。ぞうさん？ことりさん？", "D5": "せいかい！ぞうさんの ひくい おと！", "D6": "せいかい！ことりさんの たかい おと！", "D7": "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎてで グーを つくって「たんたん！」", "D8": "たかい おとは、ことりさんの ように かわいい おと だったかな？", "D9": "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりてで グーを つくって「たんたん！」", "D10": "ひくい おとは、ぞうさんの ように、おおきな ふとい おと だったかな？", "D11": "あれ？だいずの おへやから、おかしな おとが きこえるよ…。ちょっと のぞきみに いってみない？", "D12": "まんなかの ふたつの くろい けんばんで、「タ タ タン！」って ノック してね。くりーとの まねっこ だよ。", "D13": "さん、はい！", "D14": "コンコン… あれ？へんじが ないね。もういちど！", "D15": "ドアが すこし あいたよ！もういっかい！", "D16": "だいず、なに してるの？", "D17": "いまは だめ〜！", "D18": "あーっ！だいず、ぬすみぐい してたー！", "D19": "もう、だいずったら！みんな、ノック じょうず だったよ！", "D20": "きょうは、たかい おと と ひくい おと が わかったね！よく がんばりました！また あした、あおうね！", "E1": "おんがくに あわせて、くろい けんばんで グーを つくって「たんたん」しよう！ひかった グループを ひいてね。", "E2": "いち、に、さん、はい！", "E3": "ふたつ！", "E4": "みっつ！", "E5": "みぎて", "E6": "ひだりて", "E7": "りょうて", "E8": "せいかい！", "E9": "いいね！", "E10": "じょうず！", "E11": "ざんねん、もういちど よーく みてね。", "E12": "もういちど よーく きいてね。", "E13": "それは しろい けんばん だよ。", "E14": "それは みっつの グループ だよ。", "F1": "きょうは、くろい けんばん と しろい けんばんで えんそう しよう！さいしょに、しろ と くろ の おさらい だよ。", "F2": "しろい けんばんを タップしてね", "F3": "くろい けんばんを タップしてね", "F4": "それは しろ だよ", "F5": "それは くろ だよ", "F6": "きょうは くろで えんそう しよう！おんがくに あわせて、くろい けんばんを すきなように ひいてね。", "F7": "それは しろ だよ。きょうは くろ！", "F8": "くろで じょうずに えんそう できたね！", "F9": "こんどは しろで えんそう しよう！しろい けんばんを すきなように ひいてね。", "F10": "それは くろ だよ。きょうは しろ！", "F11": "しろで じょうずに えんそう できたね！", "F12": "もっと たくさん ひいてみよう！", "F13": "くろ と しろで、じょうずに えんそう できたね！よく がんばりました！また あした、あおうね！", "F14": "くろい けんばんの きょく だよ。「ふたつ」って いったら ふたつの グループ、「みっつ」って いったら みっつの グループを ひいてね。", "F15": "それは ふたつ だよ", "F16": "ふたつ と みっつ、ばっちり だね！よく がんばりました！また あした、あおうね！"};
+const VOICE_TEXT = {"A1": "こんにちは！ぼくの なまえは、くりーと。くろねこの くりーと だよ。みんなの なまえは、なにかな？", "A2": "よろしくね！ぼくは、6さい。みんなは なんさいかな？", "A3": "ぼくは、おんがくが だいすき！うたったり、ピアノを ひいたりするんだ。みんなも おんがくは すきかな？", "A4": "さっそく みんなと いっしょに、したの がっきを ひくよ。ねえ みんな、この がっき、なにか わかる？", "A5": "そう、ピアノだよ！ピアノには「くろい けんばん」と「しろい けんばん」が あるよ。", "A6": "じゃあ これから、たくさん たのしく ぼくと おんがくで あそぼう！ぼくと まいにち、いっしょに あそんでほしいんだ！あそんでくれる？", "B1": "まっしろ！これは しろ だよ。", "B2": "まっくろ！これは くろ だよ。", "B3": "しろは どっち？", "B4": "くろは どっち？", "B5": "しろい ねこさんは どっち？", "B6": "くろい ねこさんは どっち？", "B7": "しろい けんばんは どっち？", "B8": "くろい けんばんは どっち？", "B9": "こっちかな？", "B10": "こんどは くろい けんばん だけ、ノック ノック してみよう！コン コン！", "B11": "それは しろ だよ。くろい けんばんは どこかな？", "B12": "じょうず！くろい けんばん だけ ノック できたね！", "B13": "しろ と くろ、わかったね！よく がんばりました！また あした、あおうね！", "C1": "よーく みてみると、くろい けんばんは「ふたつの グループ」と「みっつの グループ」が あるよ。", "C2": "ひくい ところから たかい ところへ、「ふたつ、みっつ」と かぞえてみよう！", "C3": "ふたつ", "C4": "みっつ", "C5": "ふたつの くろい けんばんの グループを ぜんぶ タップしてみよう。まちがわないように よーく みてね。みっつじゃないからね。ふたつだよ！", "C6": "いいね！ふたつだね！", "C7": "ダメダメ〜、それは みっつ だよ。", "C8": "じゃあ、クイズだよ！ひかった くろい けんばんは ふたつ？それとも みっつ？", "C9": "みんなの ピアノで、ふたつの くろい けんばんの グループを みつけてみよう。みつけたら、グーを つくって「たんたん」って かるく ひいてみよう。", "C10": "たん！もういっかい！", "C11": "じょうずに ひけたかな？よく がんばりました！きょうの おんがくの あそびは これで おしまい！また あした、あおうね！", "D1": "こんにちは！くりーと だよ！きょうも いっしょに あそぼう！ふたつの くろい けんばんの グループ、おぼえてるかな？ひとつ タップしてみて！", "D2": "おぼえてたね！", "D3": "ピアノの みぎの はしっこは たかい おと、ひだりの はしっこは ひくい おと だよ。ひかった ふたつの グループは たかい？ひくい？", "D4": "こんどは みないで、みみで きいてね。ぞうさん？ことりさん？", "D5": "せいかい！ぞうさんの ひくい おと！", "D6": "せいかい！ことりさんの たかい おと！", "D7": "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎてで グーを つくって「たんたん！」", "D8": "たかい おとは、ことりさんの ように かわいい おと だったかな？", "D9": "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりてで グーを つくって「たんたん！」", "D10": "ひくい おとは、ぞうさんの ように、おおきな ふとい おと だったかな？", "D11": "あれ？だいずの おへやから、おかしな おとが きこえるよ…。ちょっと のぞきみに いってみない？", "D12": "まんなかの ふたつの くろい けんばんで、「タ タ タン！」って ノック してね。くりーとの まねっこ だよ。", "D13": "さん、はい！", "D14": "コンコン… あれ？へんじが ないね。もういちど！", "D15": "ドアが すこし あいたよ！もういっかい！", "D16": "だいず、なに してるの？", "D17": "いまは だめ〜！", "D18": "あーっ！だいず、ぬすみぐい してたー！", "D19": "もう、だいずったら！みんな、ノック じょうず だったよ！", "D20": "きょうは、たかい おと と ひくい おと が わかったね！よく がんばりました！また あした、あおうね！", "E1": "おんがくに あわせて、くろい けんばんで グーを つくって「たんたん」しよう！ひかった グループを ひいてね。", "E2": "いち、に、さん、はい！", "E3": "ふたつ！", "E4": "みっつ！", "E5": "みぎて", "E6": "ひだりて", "E7": "りょうて", "E8": "せいかい！", "E9": "いいね！", "E10": "じょうず！", "E11": "ざんねん、もういちど よーく みてね。", "E12": "もういちど よーく きいてね。", "E13": "それは しろい けんばん だよ。", "E14": "それは みっつの グループ だよ。", "F1": "きょうは、くろい けんばん と しろい けんばんで えんそう しよう！さいしょに、しろ と くろ の おさらい だよ。", "F2": "しろい けんばんを タップしてね", "F3": "くろい けんばんを タップしてね", "F4": "それは しろ だよ", "F5": "それは くろ だよ", "F6": "きょうは くろで えんそう しよう！おんがくに あわせて、くろい けんばんを すきなように ひいてね。", "F7": "それは しろ だよ。きょうは くろ！", "F8": "くろで じょうずに えんそう できたね！", "F9": "こんどは しろで えんそう しよう！しろい けんばんを すきなように ひいてね。", "F10": "それは くろ だよ。きょうは しろ！", "F11": "しろで じょうずに えんそう できたね！", "F12": "もっと たくさん ひいてみよう！", "F13": "くろ と しろで、じょうずに えんそう できたね！よく がんばりました！また あした、あおうね！", "F14": "くろい けんばんの きょく だよ。「ふたつ」って いったら ふたつの グループ、「みっつ」って いったら みっつの グループを ひいてね。", "F15": "それは ふたつ だよ", "F16": "ふたつ と みっつ、ばっちり だね！よく がんばりました！また あした、あおうね！", "G1": "きょうから、くろい けんばんは、ふたつは いい！みっつは ダメ！ふたつが ひかったら タップ！みっつは タップしちゃ ダメだよ。", "G2": "ふたつは いいね！", "G3": "みっつは ダメ！", "G4": "みっつは ダメ、がまん できたね！", "G5": "ふたつは いいよ！", "G6": "くりーとの まねっこ だよ。みぎてで、ふたつの くろい けんばんを ひいてね。ワルツに のって、タタ タン タン！", "G7": "こんどは ひだりて だよ。ひだりてで、ふたつの くろい けんばんを ひいてね。", "G8": "きいてね。", "G9": "どうぞ！", "G10": "ぴったり！", "G11": "もういちど きいてね。", "G12": "ちょっと おおかったね。もういちど きいてね。", "G13": "だいじょうぶ、つぎ いこう！", "G14": "ふたつは いい、みっつは ダメ、ばっちり だね！リズムも じょうず！よく がんばりました！また あした、あおうね！"};
 const VOICE_HAVE = new Set(["A1", "A2", "A3", "A4", "A5", "A6", "B1", "B10", "B11", "B12", "B13", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "C1", "C10", "C11", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "D1", "D10", "D11", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D2", "D20", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "E1", "E10", "E11", "E12", "E13", "E14", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9"]);
 /* アツコさんの声：文が台本と同じなら録音を流す。録音がない文は、speak は機械の声、voice は何も言わない。
    声を流している間は、マイクが声を拾わないように止める。 */
@@ -831,7 +831,131 @@ SCENES.w2end = sc => {
 SCENES.g3end = sc => {
   sc.innerHTML = G3_TAG + heroN("ふたつ と みっつ、ばっちり だね！<br>よく がんばりました！<br>また あした、あおうね！", "dance");
   P.chord([54, 58, 61, 66], 0, 1.6, 0.2);
-  lessonResult(sc, "g3", "g3", null, "");
+  lessonResult(sc, "g3", "g3", "r4a", "つぎの レッスンへ（ふたつは いい・みっつは ダメ）");
+};
+
+/* ===== チャプター2 レッスン4：ふたつは いい、みっつは ダメ ＋ リズムの まねっこ（みぎて → ひだりて） =====
+   ① ひかった グループが ふたつなら タップ、みっつなら タップしない（ふたつは いい、みっつは ダメ）
+   ② ワルツ（3びょうし）に のって、くりーとの リズムを まねする：みぎてで
+   ③ おなじ ことを ひだりてで
+   リズムは「よむ」のでは なく「きいて まねする」。よむのは チャプター3 から。 */
+const R4_TAG = `<span class="lesson-tag">チャプター2 ・ レッスン4</span>`;
+const R4_BEAT = 60 / 88;
+/* リズム：1小節（3拍）の なかの 音の ながさ（拍）。ことばは こどもが くちで いう ことば */
+const R4_RHY = [
+  { d: [1, 1, 1], w: ["タン", "タン", "タン"] },
+  { d: [.5, .5, 1, 1], w: ["タ", "タ", "タン", "タン"] },
+  { d: [1, .5, .5, 1], w: ["タン", "タ", "タ", "タン"] },
+  { d: [.5, .5, .5, .5, 1], w: ["タ", "タ", "タ", "タ", "タン"] }
+];
+/* ワルツの 伴奏 1小節：ブン・チャッ・チャッ */
+function waltzBar(at, bass, ch) { P.play(bass, at, R4_BEAT * 1.2, .2); P.chord(ch, at + R4_BEAT, R4_BEAT * .6, .07); P.chord(ch, at + R4_BEAT * 2, R4_BEAT * .6, .07); }
+const R4_PROG = [[42, [58, 61, 66]], [37, [56, 61, 65]]];
+
+SCENES.r4a = sc => {
+  missReset("r4");
+  sc.innerHTML = R4_TAG + heroN("きょうから、くろい けんばんは、<br>ふたつは いい！ みっつは ダメ！<br>ふたつが ひかったら タップ！ みっつは タップしちゃ ダメだよ。");
+  const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
+  const N = 10, seq = [2, 3, 2, 2, 3, 2, 3, 3, 2, 2].sort(() => Math.random() - .5), dots = dotsEl(N);
+  let q = -1, cur = null, timers = [], score = 0;
+  const groups = groupsIn(48, 2);
+  const clear = () => Object.values(kb.els).forEach(e => e.classList.remove("ask", "found", "glow3", "wrong"));
+  const kb = keyboard(48, 2, (m, el) => {
+    P.play(m, 0, .5, .22); if (!cur || cur.done || !isBlack(m)) return;
+    const g = groupOf(m);
+    if (cur.n === 3 || g.n === 3) {
+      cur.done = true; missOne(); (g.n === 3 ? g : cur.g).keys.forEach(k => { const e = kb.els[k]; e.classList.remove("wrong"); void e.offsetWidth; e.classList.add("wrong"); });
+      say.className = "say ng"; say.textContent = "みっつは ダメ！"; sv("みっつは ダメ！"); P.buzz();
+    } else if (g.n === 2) {
+      cur.done = true; score++; dots.children[q].classList.add("on"); g.keys.forEach(k => kb.els[k].classList.add("found"));
+      say.className = "say ok"; say.textContent = "ふたつは いいね！"; sv("ふたつは いいね！"); P.pinpon();
+    }
+  });
+  kb.classList.add("tall"); sc.appendChild(kb); sc.appendChild(say); sc.appendChild(dots);
+  const startBtn = document.createElement("button"); startBtn.className = "btn big"; startBtn.textContent = "はじめる"; sc.appendChild(startBtn);
+  const step = () => {
+    clear(); if (cur && !cur.done && cur.n === 3) { dots.children[q].classList.add("on"); score++; say.className = "say ok"; say.textContent = "みっつは ダメ、がまん できたね！"; }
+    if (cur && !cur.done && cur.n === 2) { say.className = "say"; say.textContent = "ふたつは いいよ！"; }
+    if (++q >= N) { cur = null; timers.push(setTimeout(() => { if (score >= 7) earn(2, dots); go("r4b"); }, 1300)); return; }
+    const pool = groups.filter(g => g.n === seq[q]), g = pool[Math.floor(Math.random() * pool.length)];
+    cur = { n: g.n, g, done: false }; g.keys.forEach(k => kb.els[k].classList.add("ask"));
+    timers.push(setTimeout(step, 2200));
+  };
+  startBtn.onclick = () => { startBtn.hidden = true; P.ac(); say.innerHTML = "&nbsp;"; step(); };
+  const prev = cleanup; cleanup = () => { timers.forEach(clearTimeout); if (prev) prev(); };
+};
+
+/* リズムが あっているか：音の かず と、あいだの ながさの わりあい（小さい子 むけに あまめ） */
+function rhythmOk(t, d) {
+  if (t.length !== d.length) return false;
+  if (t.length < 2) return true;
+  const gaps = []; for (let i = 1; i < t.length; i++) gaps.push(t[i] - t[i - 1]);
+  const exp = d.slice(0, -1), se = exp.reduce((a, b) => a + b, 0), sg = gaps.reduce((a, b) => a + b, 0);
+  if (sg / 1000 < se * R4_BEAT * .5 || sg / 1000 > se * R4_BEAT * 1.8) return false;
+  return gaps.every((g, i) => Math.abs(g / sg - exp[i] / se) < .075);
+}
+
+function rhythmCopy(sc, o) {
+  sc.innerHTML = R4_TAG + hero(o.intro);
+  const chips = document.createElement("div"); chips.className = "rchips";
+  const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
+  const dots = dotsEl(R4_RHY.length);
+  let r = 0, taps = [], phase = "wait", timers = [], tries = 0;
+  const T = (f, ms) => timers.push(setTimeout(f, ms));
+  const drawChips = () => { const R = R4_RHY[r]; chips.innerHTML = R.w.map((w, i) => `<span class="rc${R.d[i] < 1 ? " half" : ""}">${w}</span>`).join(""); };
+  const lit = i => chips.querySelectorAll(".rc").forEach((c, k) => c.classList.toggle("on", k === i));
+  const kb = keyboard(o.low, 2, (m, el, real) => {
+    if (!real) P.play(m, 0, .45, .25);
+    if (phase !== "you" || !isBlack(m)) return;
+    const g = groupOf(m);
+    if (g.n === 3) { missOne(); say.className = "say ng"; say.textContent = "みっつは ダメ！"; return; }
+    if (el) { el.classList.remove("found"); void el.offsetWidth; el.classList.add("found"); setTimeout(() => el.classList.remove("found"), 220); }
+    taps.push(performance.now()); const n = taps.length - 1; if (n < R4_RHY[r].d.length) lit(n);
+  });
+  kb.classList.add("tall");
+  const cap = document.createElement("div"); cap.className = "small"; cap.style.textAlign = o.hand === "L" ? "left" : "right"; cap.textContent = o.hand === "L" ? "← ひだりての ほう（ひくい ところ）" : "みぎての ほう（たかい ところ）→";
+  kb.prepend(cap);
+  sc.appendChild(chips); sc.appendChild(realKeysSwitch(sc, kb, kb.onKey)); sc.appendChild(kb); sc.appendChild(say); sc.appendChild(dots);
+  const startBtn = document.createElement("button"); startBtn.className = "btn big"; startBtn.textContent = "はじめる"; sc.appendChild(startBtn);
+  const bar = R4_BEAT * 3;
+  function round() {
+    const R = R4_RHY[r], g = groupsIn(o.low, 2).filter(x => x.n === 2)[o.hand === "L" ? 0 : 1];
+    drawChips(); lit(-1); phase = "demo"; taps = []; say.className = "say"; say.textContent = "きいてね…"; sv("きいてね。");
+    P.ac(); const t0 = 0.9;
+    for (let b = 0; b < 4; b++) waltzBar(t0 + b * bar, ...R4_PROG[b % 2]);
+    /* 1小節め：ぜんそう、2小節め：くりーとの おてほん、3小節め：さん、はい、4小節め：こどもの ばん */
+    if (window.MisoListen) MisoListen.mute((t0 + bar * 2) * 1000 + 300);
+    let at = t0 + bar; R.d.forEach((d, i) => { P.chord(g.keys, at, Math.min(d, 1) * R4_BEAT * .9, .3); T(() => { lit(i); g.keys.forEach(k => { kb.els[k].classList.add("glow2"); setTimeout(() => kb.els[k].classList.remove("glow2"), 200); }); }, at * 1000); at += d * R4_BEAT; });
+    T(() => { lit(-1); say.textContent = "さん、はい！"; }, (t0 + bar * 2) * 1000);
+    [0, 1, 2].forEach(k => P.play(84, t0 + bar * 2 + k * R4_BEAT, .1, .08));
+    T(() => { phase = "you"; taps = []; say.className = "say"; say.textContent = "どうぞ！"; }, (t0 + bar * 3 - R4_BEAT * .4) * 1000);
+    T(check, (t0 + bar * 4 + R4_BEAT * .8) * 1000);
+  }
+  function check() {
+    phase = "check"; const R = R4_RHY[r];
+    if (rhythmOk(taps, R.d)) {
+      say.className = "say ok"; say.textContent = "ぴったり！"; sv("ぴったり！"); P.pinpon(); earn(1, chips); dots.children[r].classList.add("on"); tries = 0;
+      if (++r >= R4_RHY.length) { T(() => go(o.next), 1500); return; }
+      T(round, 1700);
+    } else {
+      missOne(); tries++; say.className = "say"; say.textContent = taps.length < R.d.length ? "もういちど きいてね。" : taps.length > R.d.length ? "ちょっと おおかったね。もういちど きいてね。" : "もういちど きいてね。"; sv(say.textContent);
+      if (tries >= 3) { tries = 0; dots.children[r].classList.add("on"); say.textContent = "だいじょうぶ、つぎ いこう！"; if (++r >= R4_RHY.length) { T(() => go(o.next), 1500); return; } }
+      T(round, 1900);
+    }
+  }
+  startBtn.onclick = () => { startBtn.hidden = true; round(); };
+  const prev = cleanup; cleanup = () => { phase = "end"; timers.forEach(clearTimeout); if (prev) prev(); };
+}
+
+SCENES.r4b = sc => rhythmCopy(sc, { hand: "R", low: 60, next: "r4c",
+  intro: "くりーとの まねっこ だよ。<br>みぎてで、ふたつの くろい けんばんを ひいてね。<br>ワルツに のって、タタ タン タン！" });
+SCENES.r4c = sc => rhythmCopy(sc, { hand: "L", low: 36, next: "r4end",
+  intro: "こんどは ひだりて だよ。<br>ひだりてで、ふたつの くろい けんばんを ひいてね。" });
+
+SCENES.r4end = sc => {
+  sc.innerHTML = R4_TAG + heroN("ふたつは いい、みっつは ダメ、ばっちり だね！<br>リズムも じょうず！<br>よく がんばりました！ また あした、あおうね！", "dance");
+  P.chord([42, 58, 61, 66], 0, 1.6, .2);
+  lessonResult(sc, "r4", "r4a", null, "");
 };
 
 /* ---------- 保護者の方へ ---------- */
@@ -842,12 +966,14 @@ const PARENT = {
     <div class="check"><b>保護者チェックシート</b><label><input type="checkbox" data-c="wk"> 「しろ」「くろ」と言われて指させる</label><label><input type="checkbox" data-c="kkey"> 黒い鍵盤だけを押せる</label></div>`,
   c2: `<h2>保護者の方へ（チャプター1 レッスン2／チャプター2 レッスン3）</h2><p><b>チャプター1 レッスン2</b>：「きょうは くろ」「きょうは しろ」の曲で、決められた色の鍵盤だけを使い、伴奏に合わせて好きなように弾きます。正しい音を探すのではなく、色を守って楽しく弾けたら合格です。ここではまだ、二つ・三つは気にしなくて大丈夫です。</p><p><b>チャプター2 レッスン3</b>：「ふたつ」「みっつ」と言われたグループを、音楽に合わせて弾きます。このあとのレッスンからは「二つはいい、三つはダメ」を徹底していきます。</p>
     <div class="check"><b>保護者チェックシート</b><label><input type="checkbox" data-c="c2k"> 黒い鍵盤だけで弾ける</label><label><input type="checkbox" data-c="c2w"> 白い鍵盤だけで弾ける</label><label><input type="checkbox" data-c="c223"> 「ふたつ」「みっつ」と言われて、そのグループを弾ける</label></div>`,
+  r4: `<h2>保護者の方へ（チャプター2 レッスン4）</h2><p>ここから「二つの黒い鍵盤はいい、三つはダメ」を徹底します。三つのグループを弾いていたら、必ず声をかけてあげてください。</p><p>リズムは、まだ楽譜を読みません。くりーとのお手本（ワルツ・3拍子）を聞いて、まねして弾きます。「タタ タン タン」と口で言いながら弾くと、リズムが体に入ります。右手ができたら左手でも同じことをします。</p><p>小さいお子さんは、このリズムのまねっこを何度もくり返してください。楽譜でリズムを読むのはチャプター3からです。</p>
+    <div class="check"><b>保護者チェックシート</b><label><input type="checkbox" data-c="r4no3"> 三つのグループを弾かない</label><label><input type="checkbox" data-c="r4R"> 右手でリズムのまねができる</label><label><input type="checkbox" data-c="r4L"> 左手でリズムのまねができる</label><label><input type="checkbox" data-c="r4say"> 「タタ タン タン」と口で言いながら弾ける</label></div>`,
   default: `<h2>保護者の方へ</h2><p>「ピアノのえほん」は、みそそっフィ絶対音感コースで養った音感を基盤にピアノを学んでいきます。ピアノが弾けない保護者の方でも心配はいりません。お子様と一緒に読み進めてください。</p><p>コインは、正解したときと、本物のピアノで弾けたときだけ増えます。</p>`,
   lesson: `<h2>保護者の方へ（レッスン1）</h2><p>ここでは、二つの黒鍵盤の認識をします。三つの鍵盤を選んでいたら、必ず指摘してあげてください。</p><p>レッスン1を何度か繰り返して練習してから、レッスン2へ進みましょう。</p>
     <div class="check"><b>保護者チェックシート</b><label><input type="checkbox" data-c="two"> 二つの黒鍵盤がわかる</label></div>`
 };
 $("parentBtn").onclick = () => {
-  const html = S.scene.startsWith("lesson1") ? PARENT.lesson : S.scene.startsWith("sk") ? PARENT.sk : S.scene.startsWith("l2") ? PARENT.l2 : /^(w2|g3)/.test(S.scene) ? PARENT.c2 : PARENT.default;
+  const html = S.scene.startsWith("lesson1") ? PARENT.lesson : S.scene.startsWith("sk") ? PARENT.sk : S.scene.startsWith("l2") ? PARENT.l2 : /^r4/.test(S.scene) ? PARENT.r4 : /^(w2|g3)/.test(S.scene) ? PARENT.c2 : PARENT.default;
   const hist = Object.keys(LESSON_NAME).filter(k => S.hist && S.hist[k] && S.hist[k].length).map(k => `<li>${LESSON_NAME[k]}：${S.hist[k].slice(-5).map(h => `${h.d.slice(5).replace("-", "/")} まちがい${h.miss}`).join("、")}</li>`).join("");
   $("sheetIn").innerHTML = html + (hist ? `<h2 style="margin-top:14px">これまでの きろく</h2><ul>${hist}</ul><p style="font-size:13px">まちがいが 0〜2こ：次へ進んでOK ／ 3〜5こ：もう一度がおすすめ ／ 6こ以上：もう一度やりましょう。お子様には数ではなく ★ で伝えています。</p>` : "") + `<button class="btn" style="width:100%;margin-top:12px" id="closeSheet">とじる</button>`;
   const ck = S.check || {}; $("sheetIn").querySelectorAll("[data-c]").forEach(c => { c.checked = !!ck[c.dataset.c]; c.onchange = () => { S.check = { ...(S.check || {}), [c.dataset.c]: c.checked }; save(); }; });
