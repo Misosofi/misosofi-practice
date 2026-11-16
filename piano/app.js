@@ -1,4 +1,4 @@
-const APPV = "20261116c";
+const APPV = "20261116d";
 // 古い版が残っていたら最新に入れかえる
 (function(){try{fetch("index.html?t="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(h=>{const m=h.match(/app\.js\?v=(\w+)/);if(m&&m[1]!==APPV&&sessionStorage.getItem("miso-rl")!==m[1]){sessionStorage.setItem("miso-rl",m[1]);location.reload();}}).catch(()=>{});}catch(e){}})();
 /* ===== ピアノのえほん（みそそっフィ ピアノ導入コース）試作 =====
@@ -60,7 +60,7 @@ function playName() {
 function cheer(el, text, cls = "say ok") {
   if (el) { el.className = cls; el.textContent = (S.name ? nm() + "、" : "") + text; }
   if (window.MisoListen && MisoListen.running) return;
-  playName().then(() => voice(text, true));
+  playName().then(() => speak(text));
 }
 nameLoad();
 
@@ -119,8 +119,8 @@ SCENES.home = sc => {
     <div class="endpic">${kuri("dance")}</div>
     <p class="small">ピアノといっしょに あそぼう！</p><div class="grow"></div>`;
   if (!S.name) { const b = next(sc, "はじめる", "intro1"); b.addEventListener("click", () => P.load()); return; }
-  [["sk1", "しろ と くろ", ""], ["lesson1", "ふたつ と みっつ", "light"], ["l2a", "たかい おと・ひくい おと", "light"], ["l3", "あそびの きょく", "light"]].forEach(([to, t, c], i) => {
-    const b = next(sc, "", to, c); b.innerHTML = `<small style="display:block;font-size:13px">レッスン${i}${to === "l3" ? "（きょく じゅんびちゅう）" : ""}</small>${t}`; b.addEventListener("click", () => P.load()); });
+  [["sk1", "しろ と くろ", "", "チャプター1 レッスン1"], ["w2a", "くろ・しろで えんそう", "light", "チャプター1 レッスン2"], ["lesson1", "ふたつ と みっつ", "light", "チャプター2 レッスン1"], ["l2a", "たかい おと・ひくい おと", "light", "チャプター2 レッスン2"], ["g3", "ふたつ・みっつの きょく", "light", "チャプター2 レッスン3"], ["l3", "みぎて・ひだりての きょく", "light", "チャプター2 レッスン4（じゅんびちゅう）"]].forEach(([to, t, c, sub]) => {
+    const b = next(sc, "", to, c); b.innerHTML = `<small style="display:block;font-size:13px">${sub}</small>${t}`; b.addEventListener("click", () => P.load()); });
   const r = document.createElement("button"); r.className = "btn light"; r.style.fontSize = "15px"; r.style.minHeight = "44px"; r.textContent = "はじめから（なまえ・とし）"; r.onclick = () => go("intro1"); sc.appendChild(r);
 };
 
@@ -190,8 +190,8 @@ SCENES.intro5 = sc => {
    → ④ けんばん「くろい けんばんは どっち？」 → ⑤ くろい けんばんだけ ノック ノック
    小さい子なので、まちがえても ブーは鳴らさない（やさしい音で、正しい方が光る）。 */
 /* ---------- まちがいの かず（レッスンごと）→ おわりに「もういちど」を すすめる ---------- */
-const LESSON_OF = sc => /^sk/.test(sc) ? "sk" : /^lesson1/.test(sc) ? "l1" : /^l2/.test(sc) ? "l2" : /^l3/.test(sc) ? "l3" : null;
-const LESSON_NAME = { sk: "レッスン0 しろ と くろ", l1: "レッスン1 ふたつ と みっつ", l2: "レッスン2 たかい おと・ひくい おと", l3: "レッスン3 あそびの きょく" };
+const LESSON_OF = sc => /^sk/.test(sc) ? "sk" : /^lesson1/.test(sc) ? "l1" : /^l2/.test(sc) ? "l2" : /^l3/.test(sc) ? "l3" : /^w2/.test(sc) ? "w2" : /^g3/.test(sc) ? "g3" : null;
+const LESSON_NAME = { sk: "1-1 しろ と くろ", w2: "1-2 くろ・しろで えんそう", l1: "2-1 ふたつ と みっつ", l2: "2-2 たかい おと・ひくい おと", g3: "2-3 ふたつ・みっつの きょく", l3: "2-4 みぎて・ひだりての きょく" };
 function missOne() { const k = LESSON_OF(S.scene); if (!k) return; S.miss = S.miss || {}; S.miss[k] = (S.miss[k] || 0) + 1; save(); }
 function missReset(k) { S.miss = S.miss || {}; S.miss[k] = 0; save(); }
 /* めやす（仮）：0〜2こ＝つぎへ、3〜5こ＝もういちど が おすすめ、6こ いじょう＝もういちど やろう */
@@ -211,7 +211,7 @@ function lessonResult(sc, k, again, nextSc, nextLabel) {
   const h = document.createElement("button"); h.className = "btn light"; h.style.fontSize = "16px"; h.style.minHeight = "48px"; h.textContent = "おうちに もどる"; h.onclick = () => go("home"); sc.appendChild(h);
 }
 const softNo = () => { missOne(); P.play(55, 0, 0.5, 0.12); };
-const VOICE_TEXT = {"A1": "こんにちは！ぼくの なまえは、くりーと。くろねこの くりーと だよ。みんなの なまえは、なにかな？", "A2": "よろしくね！ぼくは、6さい。みんなは なんさいかな？", "A3": "ぼくは、おんがくが だいすき！うたったり、ピアノを ひいたりするんだ。みんなも おんがくは すきかな？", "A4": "さっそく みんなと いっしょに、したの がっきを ひくよ。ねえ みんな、この がっき、なにか わかる？", "A5": "そう、ピアノだよ！ピアノには「くろい けんばん」と「しろい けんばん」が あるよ。", "A6": "じゃあ これから、たくさん たのしく ぼくと おんがくで あそぼう！ぼくと まいにち、いっしょに あそんでほしいんだ！あそんでくれる？", "B1": "まっしろ！これは しろ だよ。", "B2": "まっくろ！これは くろ だよ。", "B3": "しろは どっち？", "B4": "くろは どっち？", "B5": "しろい ねこさんは どっち？", "B6": "くろい ねこさんは どっち？", "B7": "しろい けんばんは どっち？", "B8": "くろい けんばんは どっち？", "B9": "こっちかな？", "B10": "こんどは くろい けんばん だけ、ノック ノック してみよう！コン コン！", "B11": "それは しろ だよ。くろい けんばんは どこかな？", "B12": "じょうず！くろい けんばん だけ ノック できたね！", "B13": "しろ と くろ、わかったね！よく がんばりました！また あした、あおうね！", "C1": "よーく みてみると、くろい けんばんは「ふたつの グループ」と「みっつの グループ」が あるよ。", "C2": "ひくい ところから たかい ところへ、「ふたつ、みっつ」と かぞえてみよう！", "C3": "ふたつ", "C4": "みっつ", "C5": "ふたつの くろい けんばんの グループを ぜんぶ タップしてみよう。まちがわないように よーく みてね。みっつじゃないからね。ふたつだよ！", "C6": "いいね！ふたつだね！", "C7": "ダメダメ〜、それは みっつ だよ。", "C8": "じゃあ、クイズだよ！ひかった くろい けんばんは ふたつ？それとも みっつ？", "C9": "みんなの ピアノで、ふたつの くろい けんばんの グループを みつけてみよう。みつけたら、グーを つくって「たんたん」って かるく ひいてみよう。", "C10": "たん！もういっかい！", "C11": "じょうずに ひけたかな？よく がんばりました！きょうの おんがくの あそびは これで おしまい！また あした、あおうね！", "D1": "こんにちは！くりーと だよ！きょうも いっしょに あそぼう！ふたつの くろい けんばんの グループ、おぼえてるかな？ひとつ タップしてみて！", "D2": "おぼえてたね！", "D3": "ピアノの みぎの はしっこは たかい おと、ひだりの はしっこは ひくい おと だよ。ひかった ふたつの グループは たかい？ひくい？", "D4": "こんどは みないで、みみで きいてね。ぞうさん？ことりさん？", "D5": "せいかい！ぞうさんの ひくい おと！", "D6": "せいかい！ことりさんの たかい おと！", "D7": "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎてで グーを つくって「たんたん！」", "D8": "たかい おとは、ことりさんの ように かわいい おと だったかな？", "D9": "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりてで グーを つくって「たんたん！」", "D10": "ひくい おとは、ぞうさんの ように、おおきな ふとい おと だったかな？", "D11": "あれ？だいずの おへやから、おかしな おとが きこえるよ…。ちょっと のぞきみに いってみない？", "D12": "まんなかの ふたつの くろい けんばんで、「タ タ タン！」って ノック してね。くりーとの まねっこ だよ。", "D13": "さん、はい！", "D14": "コンコン… あれ？へんじが ないね。もういちど！", "D15": "ドアが すこし あいたよ！もういっかい！", "D16": "だいず、なに してるの？", "D17": "いまは だめ〜！", "D18": "あーっ！だいず、ぬすみぐい してたー！", "D19": "もう、だいずったら！みんな、ノック じょうず だったよ！", "D20": "きょうは、たかい おと と ひくい おと が わかったね！よく がんばりました！また あした、あおうね！", "E1": "おんがくに あわせて、くろい けんばんで グーを つくって「たんたん」しよう！ひかった グループを ひいてね。", "E2": "いち、に、さん、はい！", "E3": "ふたつ！", "E4": "みっつ！", "E5": "みぎて", "E6": "ひだりて", "E7": "りょうて", "E8": "せいかい！", "E9": "いいね！", "E10": "じょうず！", "E11": "ざんねん、もういちど よーく みてね。", "E12": "もういちど よーく きいてね。", "E13": "それは しろい けんばん だよ。", "E14": "それは みっつの グループ だよ。"};
+const VOICE_TEXT = {"A1": "こんにちは！ぼくの なまえは、くりーと。くろねこの くりーと だよ。みんなの なまえは、なにかな？", "A2": "よろしくね！ぼくは、6さい。みんなは なんさいかな？", "A3": "ぼくは、おんがくが だいすき！うたったり、ピアノを ひいたりするんだ。みんなも おんがくは すきかな？", "A4": "さっそく みんなと いっしょに、したの がっきを ひくよ。ねえ みんな、この がっき、なにか わかる？", "A5": "そう、ピアノだよ！ピアノには「くろい けんばん」と「しろい けんばん」が あるよ。", "A6": "じゃあ これから、たくさん たのしく ぼくと おんがくで あそぼう！ぼくと まいにち、いっしょに あそんでほしいんだ！あそんでくれる？", "B1": "まっしろ！これは しろ だよ。", "B2": "まっくろ！これは くろ だよ。", "B3": "しろは どっち？", "B4": "くろは どっち？", "B5": "しろい ねこさんは どっち？", "B6": "くろい ねこさんは どっち？", "B7": "しろい けんばんは どっち？", "B8": "くろい けんばんは どっち？", "B9": "こっちかな？", "B10": "こんどは くろい けんばん だけ、ノック ノック してみよう！コン コン！", "B11": "それは しろ だよ。くろい けんばんは どこかな？", "B12": "じょうず！くろい けんばん だけ ノック できたね！", "B13": "しろ と くろ、わかったね！よく がんばりました！また あした、あおうね！", "C1": "よーく みてみると、くろい けんばんは「ふたつの グループ」と「みっつの グループ」が あるよ。", "C2": "ひくい ところから たかい ところへ、「ふたつ、みっつ」と かぞえてみよう！", "C3": "ふたつ", "C4": "みっつ", "C5": "ふたつの くろい けんばんの グループを ぜんぶ タップしてみよう。まちがわないように よーく みてね。みっつじゃないからね。ふたつだよ！", "C6": "いいね！ふたつだね！", "C7": "ダメダメ〜、それは みっつ だよ。", "C8": "じゃあ、クイズだよ！ひかった くろい けんばんは ふたつ？それとも みっつ？", "C9": "みんなの ピアノで、ふたつの くろい けんばんの グループを みつけてみよう。みつけたら、グーを つくって「たんたん」って かるく ひいてみよう。", "C10": "たん！もういっかい！", "C11": "じょうずに ひけたかな？よく がんばりました！きょうの おんがくの あそびは これで おしまい！また あした、あおうね！", "D1": "こんにちは！くりーと だよ！きょうも いっしょに あそぼう！ふたつの くろい けんばんの グループ、おぼえてるかな？ひとつ タップしてみて！", "D2": "おぼえてたね！", "D3": "ピアノの みぎの はしっこは たかい おと、ひだりの はしっこは ひくい おと だよ。ひかった ふたつの グループは たかい？ひくい？", "D4": "こんどは みないで、みみで きいてね。ぞうさん？ことりさん？", "D5": "せいかい！ぞうさんの ひくい おと！", "D6": "せいかい！ことりさんの たかい おと！", "D7": "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎてで グーを つくって「たんたん！」", "D8": "たかい おとは、ことりさんの ように かわいい おと だったかな？", "D9": "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりてで グーを つくって「たんたん！」", "D10": "ひくい おとは、ぞうさんの ように、おおきな ふとい おと だったかな？", "D11": "あれ？だいずの おへやから、おかしな おとが きこえるよ…。ちょっと のぞきみに いってみない？", "D12": "まんなかの ふたつの くろい けんばんで、「タ タ タン！」って ノック してね。くりーとの まねっこ だよ。", "D13": "さん、はい！", "D14": "コンコン… あれ？へんじが ないね。もういちど！", "D15": "ドアが すこし あいたよ！もういっかい！", "D16": "だいず、なに してるの？", "D17": "いまは だめ〜！", "D18": "あーっ！だいず、ぬすみぐい してたー！", "D19": "もう、だいずったら！みんな、ノック じょうず だったよ！", "D20": "きょうは、たかい おと と ひくい おと が わかったね！よく がんばりました！また あした、あおうね！", "E1": "おんがくに あわせて、くろい けんばんで グーを つくって「たんたん」しよう！ひかった グループを ひいてね。", "E2": "いち、に、さん、はい！", "E3": "ふたつ！", "E4": "みっつ！", "E5": "みぎて", "E6": "ひだりて", "E7": "りょうて", "E8": "せいかい！", "E9": "いいね！", "E10": "じょうず！", "E11": "ざんねん、もういちど よーく みてね。", "E12": "もういちど よーく きいてね。", "E13": "それは しろい けんばん だよ。", "E14": "それは みっつの グループ だよ。", "F1": "きょうは、くろい けんばん と しろい けんばんで えんそう しよう！さいしょに、しろ と くろ の おさらい だよ。", "F2": "しろい けんばんを タップしてね", "F3": "くろい けんばんを タップしてね", "F4": "それは しろ だよ", "F5": "それは くろ だよ", "F6": "きょうは くろで えんそう しよう！おんがくに あわせて、くろい けんばんを すきなように ひいてね。", "F7": "それは しろ だよ。きょうは くろ！", "F8": "くろで じょうずに えんそう できたね！", "F9": "こんどは しろで えんそう しよう！しろい けんばんを すきなように ひいてね。", "F10": "それは くろ だよ。きょうは しろ！", "F11": "しろで じょうずに えんそう できたね！", "F12": "もっと たくさん ひいてみよう！", "F13": "くろ と しろで、じょうずに えんそう できたね！よく がんばりました！また あした、あおうね！", "F14": "くろい けんばんの きょく だよ。「ふたつ」って いったら ふたつの グループ、「みっつ」って いったら みっつの グループを ひいてね。", "F15": "それは ふたつ だよ", "F16": "ふたつ と みっつ、ばっちり だね！よく がんばりました！また あした、あおうね！"};
 const VOICE_HAVE = new Set(["A1", "A2", "A3", "A4", "A5", "A6", "B1", "B10", "B11", "B12", "B13", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "C1", "C10", "C11", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "D1", "D10", "D11", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D2", "D20", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "E1", "E10", "E11", "E12", "E13", "E14", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9"]);
 /* アツコさんの声：文が台本と同じなら録音を流す。録音がない文は、speak は機械の声、voice は何も言わない。
    声を流している間は、マイクが声を拾わないように止める。 */
@@ -234,7 +234,7 @@ function playVoice(id) {
 const playVoiceThen = async (id, maxMs = 7000) => { if (nameBusy) await nameBusy; return await new Promise(ok => { if (!playVoice(id)) return ok(false); const a = vAudio, t = setTimeout(() => ok(true), maxMs); a.addEventListener("ended", () => { clearTimeout(t); ok(true); }, { once: true }); a.addEventListener("error", () => { clearTimeout(t); ok(false); }, { once: true }); }); };
 const voice = (t, force) => { if (!force && window.MisoListen && MisoListen.running) return false; const n = vnorm(t), id = VOICE_BY_TEXT[n]; if (!id) return false; const now = Date.now(); if (n === vLast && now - vLastAt < 1500) return true; vLast = n; vLastAt = now; return playVoice(id); };
 const speak = t => { if (voice(t, true)) return; try { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t.replace(/<[^>]+>/g, "")); u.lang = "ja-JP"; u.rate = 0.9; u.pitch = 1.3; speechSynthesis.speak(u); if (!navigator.userActivation || !navigator.userActivation.hasBeenActive) pendingSound = () => { speechSynthesis.cancel(); speechSynthesis.speak(u); }; } catch (e) { } };
-const SK_TAG = `<span class="lesson-tag">レッスン0 ・ しろ と くろ</span>`;
+const SK_TAG = `<span class="lesson-tag">チャプター1 ・ レッスン1</span>`;
 function dotsEl(n) { const d = document.createElement("div"); d.className = "dots"; d.innerHTML = "<i></i>".repeat(n); return d; }
 
 SCENES.sk1 = sc => {
@@ -329,13 +329,13 @@ SCENES.skend = sc => {
     `<div class="endpic"><img src="${ART}cat_black.webp" alt="" style="max-height:120px"><img src="${ART}cat_white.webp" alt="" style="max-height:120px"></div>
 `;
   P.chord([60, 64, 67, 72], 0, 1.6, 0.22);
-  lessonResult(sc, "sk", "sk1", "lesson1", "つぎの レッスンへ（ふたつ と みっつ）");
+  lessonResult(sc, "sk", "sk1", "w2a", "つぎの レッスンへ（くろ・しろで えんそう）");
 };
 
 /* レッスン1-1：ふたつ と みっつ を見てみる */
 SCENES.lesson1 = sc => {
   missReset("l1");
-  sc.innerHTML = `<span class="lesson-tag">チャプター1 ・ レッスン1</span>` +
+  sc.innerHTML = `<span class="lesson-tag">チャプター2 ・ レッスン1</span>` +
     heroN("よーく みてみると、くろい けんばんは<br>「ふたつの グループ」と<br>「みっつの グループ」が あるよ。") +
     `<p class="small">ひくい ところから たかい ところへ、「ふたつ、みっつ」と かぞえてみよう！</p>`;
   const kb = keyboard(48, 2); sc.appendChild(kb);
@@ -359,7 +359,7 @@ SCENES.lesson1 = sc => {
 
 /* レッスン1-2：ふたつのグループに チェック（タップでさがす） */
 SCENES.lesson1find = sc => {
-  sc.innerHTML = `<span class="lesson-tag">チャプター1 ・ レッスン1</span>` +
+  sc.innerHTML = `<span class="lesson-tag">チャプター2 ・ レッスン1</span>` +
     hero("ふたつの くろいけんばんの グループを ぜんぶ タップしてみよう。<br>まちがわないように よーくみてね。<br>みっつじゃないからね。ふたつだよ！");
   const low = 48, oct = 3, all = groupsIn(low, oct).filter(g => g.n === 2), found = new Set();
   const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
@@ -384,7 +384,7 @@ SCENES.lesson1find = sc => {
 
 /* レッスン1-3：ひかった グループは ふたつ？みっつ？ */
 SCENES.lesson1quiz = sc => {
-  sc.innerHTML = `<span class="lesson-tag">チャプター1 ・ レッスン1</span>` + hero("じゃあ、クイズだよ！<br>ひかった くろいけんばんは<br>ふたつ？ それとも みっつ？");
+  sc.innerHTML = `<span class="lesson-tag">チャプター2 ・ レッスン1</span>` + hero("じゃあ、クイズだよ！<br>ひかった くろいけんばんは<br>ふたつ？ それとも みっつ？");
   const low = 48, oct = 2, kb = keyboard(low, oct); sc.appendChild(kb);
   const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;"; sc.appendChild(say);
   const ch = document.createElement("div"); ch.className = "choices"; sc.appendChild(ch);
@@ -410,7 +410,7 @@ SCENES.lesson1quiz = sc => {
 
 /* レッスン1-4：ほんものの ピアノで グー「タンタン」（マイクで聞く） */
 SCENES.lesson1piano = sc => {
-  sc.innerHTML = `<span class="lesson-tag">チャプター1 ・ レッスン1</span>` +
+  sc.innerHTML = `<span class="lesson-tag">チャプター2 ・ レッスン1</span>` +
     hero("みんなの ピアノで、ふたつの くろいけんばんの グループを みつけてみよう。<br>みつけたら、グーを つくって「たんたん」って かるく ひいてみよう。") +
     `<div class="mic" id="mic"><div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="#4F8DBA" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
       <div class="taps"><span>たん</span><span>たん</span></div></div>
@@ -418,27 +418,32 @@ SCENES.lesson1piano = sc => {
   const say = sc.querySelector("#say"), mic = sc.querySelector("#mic"), taps = sc.querySelectorAll(".taps span");
   const start = document.createElement("button"); start.className = "btn big sky"; start.textContent = "ピアノで きかせてね"; sc.appendChild(start);
   const skip = document.createElement("button"); skip.className = "btn light"; skip.textContent = "ピアノが ないときは こちら"; sc.appendChild(skip);
-  let hits = 0, lastAt = 0, done = false;
-  const finish = () => { done = true; MisoListen.stop(); mic.classList.remove("on"); cheer(say, "じょうず！ふたつの グループだね！"); P.pinpon(); earn(3, mic); setTimeout(() => go("lesson1end"), 1600); };
+  let hits = 0, lastAt = 0, done = false, screen = false;
+  const finish = () => { done = true; MisoListen.stop(); mic.classList.remove("on"); cheer(say, "じょうず！ふたつの グループだね！"); P.pinpon(); earn(screen ? 1 : 3, mic); setTimeout(() => go("lesson1end"), 1600); };
+  const onNote = m => {
+    if (done) return; const pc = m % 12, now = performance.now();
+    if (pc === 1 || pc === 3) {
+      if (now - lastAt < 150) return; lastAt = now; taps[Math.min(hits, 1)].classList.add("on"); hits++;
+      if (hits >= 2) finish(); else { say.className = "say ok"; (say.textContent = "たん！もういっかい！", voice("たん！もういっかい！")); }
+    } else if (pc === 6 || pc === 8 || pc === 10) { say.className = "say ng"; (say.textContent = "それは みっつの グループだよ", voice("それは みっつの グループだよ")); }
+    else { say.className = "say ng"; (say.textContent = "それは しろい けんばんだよ", voice("それは しろい けんばんだよ")); }
+  };
   start.onclick = async () => {
     start.disabled = true; say.className = "say"; (say.textContent = "きいているよ…", voice("きいているよ…"));
     try {
       await MisoListen.start({
         onLevel: db => mic.style.setProperty("--lv", Math.max(.8, Math.min(1.25, .8 + (db + 60) / 80))),
-        onNote: m => {
-          if (done) return; const pc = m % 12, now = performance.now();
-          if (pc === 1 || pc === 3) {
-            if (now - lastAt < 150) return; lastAt = now; taps[Math.min(hits, 1)].classList.add("on"); hits++;
-            if (hits >= 2) finish(); else { say.className = "say ok"; (say.textContent = "たん！もういっかい！", voice("たん！もういっかい！")); }
-          } else if (pc === 6 || pc === 8 || pc === 10) { say.className = "say ng"; (say.textContent = "それは みっつの グループだよ", voice("それは みっつの グループだよ")); }
-          else { say.className = "say ng"; (say.textContent = "それは しろい けんばんだよ", voice("それは しろい けんばんだよ")); }
-        }
+        onNote
       });
       mic.classList.add("on"); start.hidden = true;
     } catch (e) { start.disabled = false; say.className = "say ng"; (say.textContent = "マイクが つかえなかったよ", voice("マイクが つかえなかったよ")); }
   };
-  /* ピアノがない日：画面のけんばんで。コインはなし（本物のピアノで ひけたときだけ） */
-  skip.onclick = () => { MisoListen.stop(); go("lesson1end"); };
+  /* ピアノがない日：とばさずに、画面の けんばんで 同じ ことを する（コインは すこしだけ） */
+  skip.onclick = () => {
+    MisoListen.stop(); screen = true; start.hidden = true; skip.hidden = true; mic.classList.remove("on"); mic.querySelector(".ring").hidden = true;
+    const kb = keyboard(48, 2, m => { P.play(m, 0, .6, .25); onNote(m); }); kb.classList.add("tall"); mic.after(kb);
+    say.className = "say"; say.textContent = "がめんの けんばんで、ふたつの グループを「たん たん」";
+  };
   cleanup = () => MisoListen.stop();
 };
 
@@ -452,7 +457,7 @@ SCENES.lesson1end = sc => {
    本のチャプター1 レッスン2 のとおり：
    ① ふたつのグループの おさらい → ② 目で：たかい？ひくい？ → ③ 耳で：ことりさん？ぞうさん？
    → ④ 本物のピアノで いちばん たかい／ひくい グループを「たんたん」→ ⑤ だいずの おへやを「タタタン」と ノック */
-const L2_TAG = `<span class="lesson-tag">チャプター1 ・ レッスン2</span>`;
+const L2_TAG = `<span class="lesson-tag">チャプター2 ・ レッスン2</span>`;
 const imgPick = (src, alt) => `<img src="${ART}${src}" alt="${alt}">`;
 
 SCENES.l2a = sc => {
@@ -515,16 +520,16 @@ SCENES.l2d = sc => {
   const steps = [
     { k: "hi", text: "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎてで グーを つくって「たんたん！」", ok: m => m >= 73, img: "bird.webp", after: "たかい おとは ことりさんの ように かわいい おと だったかな？" },
     { k: "lo", text: "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりてで グーを つくって「たんたん！」", ok: m => m <= 51, img: "elephant.webp", after: "ひくい おとは ぞうさんの ように、おおきな ふとい おと だったかな？" }];
-  let i = 0, hits = 0, lastAt = 0, done = false;
+  let i = 0, hits = 0, lastAt = 0, done = false, screen = null;
   sc.innerHTML = L2_TAG + `<div class="hero"><img class="kuri" id="l2dImg" src="${ART}bird.webp" alt=""><div class="bubble" id="l2dB"></div></div>
     <div class="mic" id="mic"><div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="#4F8DBA" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
     <div class="taps"><span>たん</span><span>たん</span></div></div><div class="say" id="say">&nbsp;</div><div class="grow"></div>`;
   const say = sc.querySelector("#say"), mic = sc.querySelector("#mic"), taps = sc.querySelectorAll(".taps span");
   const start = document.createElement("button"); start.className = "btn big sky"; start.textContent = "ピアノで きかせてね"; sc.appendChild(start);
   const skip = document.createElement("button"); skip.className = "btn light"; skip.textContent = "ピアノが ないときは こちら"; sc.appendChild(skip);
-  const show = () => { const s = steps[i]; sc.querySelector("#l2dB").innerHTML = `<span class="who">くりーと</span>${s.text}`; sc.querySelector("#l2dImg").src = ART + s.img; taps.forEach(t => t.classList.remove("on")); hits = 0; speak(s.text); };
+  const show = () => { const s = steps[i]; if (screen) screenKb(); sc.querySelector("#l2dB").innerHTML = `<span class="who">くりーと</span>${s.text}`; sc.querySelector("#l2dImg").src = ART + s.img; taps.forEach(t => t.classList.remove("on")); hits = 0; speak(s.text); };
   const stepDone = () => {
-    const s = steps[i]; cheer(say, "じょうず！"); P.pinpon(); earn(2, mic); sc.querySelector("#l2dB").innerHTML = `<span class="who">くりーと</span>${s.after}`; speak(s.after);
+    const s = steps[i]; cheer(say, "じょうず！"); P.pinpon(); earn(screen ? 1 : 2, mic); sc.querySelector("#l2dB").innerHTML = `<span class="who">くりーと</span>${s.after}`; speak(s.after);
     if (++i >= steps.length) { done = true; MisoListen.stop(); mic.classList.remove("on"); setTimeout(() => go("l2e"), 2600); }
     else setTimeout(() => { say.innerHTML = "&nbsp;"; show(); }, 2600);
   };
@@ -534,18 +539,29 @@ SCENES.l2d = sc => {
     try {
       await MisoListen.start({
         onLevel: db => mic.style.setProperty("--lv", Math.max(.8, Math.min(1.25, .8 + (db + 60) / 80))),
-        onNote: m => {
+        onNote: m => onNote(m)
+      });
+      mic.classList.add("on"); start.hidden = true;
+    } catch (e) { start.disabled = false; say.className = "say ng"; (say.textContent = "マイクが つかえなかったよ", voice("マイクが つかえなかったよ")); }
+  };
+  function onNote(m) {
           if (done) return; const pc = m % 12, now = performance.now(), s = steps[i];
           if (pc !== 1 && pc !== 3) { say.className = "say ng"; say.textContent = isBlack(m) ? "それは みっつの グループだよ" : "それは しろい けんばんだよ"; return; }
           if (!s.ok(m)) { say.className = "say ng"; say.textContent = s.k === "hi" ? "もっと みぎの、たかい ところだよ" : "もっと ひだりの、ひくい ところだよ"; return; }
           if (now - lastAt < 150) return; lastAt = now; taps[Math.min(hits, 1)].classList.add("on"); hits++;
           if (hits >= 2) stepDone(); else { say.className = "say ok"; (say.textContent = "たん！もういっかい！", voice("たん！もういっかい！")); }
-        }
-      });
-      mic.classList.add("on"); start.hidden = true;
-    } catch (e) { start.disabled = false; say.className = "say ng"; (say.textContent = "マイクが つかえなかったよ", voice("マイクが つかえなかったよ")); }
+  }
+  /* ピアノがない日：とばさずに、画面の けんばんで。たかい とき は みぎの はしっこ、ひくい とき は ひだりの はしっこを 見せる */
+  function screenKb() {
+    if (screen) screen.remove(); const hi = steps[i].k === "hi";
+    screen = keyboard(hi ? 84 : 24, 2, m => { P.play(m, 0, .6, .25); onNote(m); }); screen.classList.add("tall");
+    const cap = document.createElement("div"); cap.className = "small"; cap.style.textAlign = hi ? "right" : "left"; cap.textContent = hi ? "ピアノの みぎの はしっこ →" : "← ピアノの ひだりの はしっこ";
+    screen.prepend(cap); mic.after(screen);
+  }
+  skip.onclick = () => {
+    MisoListen.stop(); start.hidden = true; skip.hidden = true; mic.classList.remove("on"); mic.querySelector(".ring").hidden = true;
+    screenKb(); say.className = "say"; say.textContent = "がめんの けんばんで やってみよう";
   };
-  skip.onclick = () => { MisoListen.stop(); go("l2e"); };
   cleanup = () => { MisoListen.stop(); MisoListen.opt.low = 45; MisoListen.opt.maxHz = 2200; };
   show();
 };
@@ -615,7 +631,7 @@ SCENES.l2end = sc => {
     `<div class="endpic"><img src="${ART}elephant.webp" alt="" style="max-height:130px"><img src="${ART}bird.webp" alt="" style="max-height:110px"></div>
 `;
   P.chord([60, 64, 67, 72], 0, 1.6, 0.22);
-  lessonResult(sc, "l2", "l2a", "l3", "つぎの レッスンへ（あそびの きょく）");
+  lessonResult(sc, "l2", "l2a", "g3", "つぎの レッスンへ（ふたつ・みっつの きょく）");
 };
 
 /* ===== レッスン3：ふたつ・みっつの あそびの きょく（はこ だけ。音源と 合図は あとで 入れる） =====
@@ -628,7 +644,7 @@ const L3_SONGS = [
   { id: "demo", title: "ふたつ・みっつ マーチ（かり）", audio: null, bpm: 96, lead: 4,
     cues: [[0, 2, "R"], [2, 2, "R"], [4, 3, "R"], [6, 3, "R"], [8, 2, "L"], [10, 2, "L"], [12, 3, "L"], [14, 3, "L"], [16, 2, "RL"], [18, 3, "RL"], [20, 2, "RL"], [22, 2, "RL"]] }
 ];
-const L3_TAG = `<span class="lesson-tag">チャプター1 ・ レッスン3</span>`;
+const L3_TAG = `<span class="lesson-tag">チャプター2 ・ レッスン4（じゅんびちゅう）</span>`;
 SCENES.l3 = sc => {
   sc.innerHTML = L3_TAG + heroN("おんがくに あわせて、くろい けんばんで グーを つくって「たんたん」しよう！<br>ひかった グループを ひいてね。") +
     `<div class="card small" style="text-align:left">保護者の方へ：このレッスンの曲（音源）は準備中です。今は仮の曲で、しくみだけ試せます。年齢や理解度によっては、このレッスンを飛ばしてチャプター2へ進んでも大丈夫です。</div>`;
@@ -675,18 +691,163 @@ SCENES.l3 = sc => {
   const prev = cleanup; cleanup = () => { timers.forEach(clearTimeout); if (prev) prev(); };
 };
 
+/* ===== チャプター1 レッスン2：くろで えんそう・しろで えんそう =====
+   ① しろ／くろの けんばんを タップ → ② きょうは くろで えんそう（くろい けんばん だけで すきに ひく。くろだけの 伴奏）
+   → ③ きょうは しろで えんそう（しろい けんばん だけ。伴奏つき）
+   チャプター1は しろ と くろ だけ。ふたつ・みっつは チャプター2 から。 */
+const C2_TAG = `<span class="lesson-tag">チャプター1 ・ レッスン2</span>`;
+const G3_TAG = `<span class="lesson-tag">チャプター2 ・ レッスン3</span>`;
+const C2_BEAT = 60 / 100;
+/* 録音が あれば アツコさんの声、なければ 機械の声（マイクを つかっている ときは だまる） */
+const sv = t => { if (window.MisoListen && MisoListen.running) return; speak(t); };
+
+SCENES.w2a = sc => {
+  missReset("w2");
+  const INTRO = "きょうは、くろい けんばん と しろい けんばんで えんそう しよう！<br>さいしょに、しろ と くろ の おさらい だよ。";
+  sc.innerHTML = C2_TAG + `<div class="hero">${kuri()}${bubble((S.name ? esc(nm()) + "！<br>" : "") + INTRO)}</div>`;
+  const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
+  const qs = ["w", "k", "k", "w"].sort(() => Math.random() - .5), dots = dotsEl(qs.length); let q = 0, lock = true;
+  const ASK = { w: "しろい けんばんを タップしてね", k: "くろい けんばんを タップしてね" };
+  const kb = keyboard(48, 2, (m, el) => {
+    P.play(m, 0, .6, .25); if (lock) return;
+    const c = isBlack(m) ? "k" : "w";
+    if (c === qs[q]) {
+      lock = true; el.classList.add("found"); setTimeout(() => el.classList.remove("found"), 900);
+      if (q % 2) cheer(say, "せいかい！"); else { say.className = "say ok"; say.textContent = "せいかい！"; voice("せいかい！"); }
+      P.pinpon(); earn(1, el); dots.children[q].classList.add("on");
+      if (++q >= qs.length) setTimeout(() => go("w2b"), 1300); else setTimeout(ask, 1300);
+    } else { softNo(); say.className = "say ng"; say.textContent = c === "w" ? "それは しろ だよ" : "それは くろ だよ"; sv(say.textContent); }
+  });
+  const ask = () => { lock = false; sc.querySelector(".bubble").innerHTML = `<span class="who">くりーと</span>${ASK[qs[q]]}`; say.innerHTML = "&nbsp;"; speak(ASK[qs[q]]); };
+  kb.classList.add("tall"); sc.appendChild(kb); sc.appendChild(say); sc.appendChild(dots);
+  (async () => { await wait(300); if (S.name) await playName(); if (!(await playVoiceThen("F1", 9000))) { speak(INTRO); await wait(5500); } await wait(300); if (S.scene === "w2a") ask(); })();
+};
+
+/* 伴奏：1小節＝4拍。ベース（1・3拍）と 和音（2・4拍）の「ブン チャッ」。
+   timers で 1小節ずつ 予約するので、ページを はなれると すぐ 止まる。 */
+function backing(bars, prog, onBar) {
+  const timers = []; let on = true;
+  bars.forEach((_, i) => timers.push(setTimeout(() => {
+    if (!on) return; const [bass, ch] = prog[i % prog.length];
+    P.play(bass, 0, C2_BEAT * 1.8, .2); P.chord(ch, C2_BEAT, C2_BEAT * .8, .07);
+    P.play(bass + 7, C2_BEAT * 2, C2_BEAT * 1.8, .16); P.chord(ch, C2_BEAT * 3, C2_BEAT * .8, .07);
+    if (onBar) onBar(i);
+  }, i * 4 * C2_BEAT * 1000)));
+  return () => { on = false; timers.forEach(clearTimeout); };
+}
+const PROG_WHITE = [[36, [60, 64, 67]], [41, [60, 65, 69]], [43, [59, 62, 67]], [36, [60, 64, 67]]];       // ド・ファ・ソ・ド
+const PROG_BLACK = [[42, [61, 66, 70]], [39, [58, 63, 66]], [42, [61, 66, 70]], [37, [61, 65, 68]]];       // くろい けんばんの ひびき（ソ♭・ミ♭m・ソ♭・レ♭）
+
+function freePlay(sc, o) {
+  const BARS = 10, GOAL = 12;
+  sc.innerHTML = C2_TAG + `<div class="today ${o.color === "w" ? "tw" : "tk"}">きょうは ${o.color === "w" ? "しろ" : "くろ"}！</div>` + hero(o.intro);
+  const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
+  const meter = document.createElement("div"); meter.className = "meter"; meter.innerHTML = "<b></b>";
+  let n = 0, playing = false, stop = null, lastWrong = 0;
+  const kb = keyboard(48, 2, (m, el, real) => {
+    const good = o.color === "w" ? !isBlack(m) : isBlack(m);
+    if (!real) P.play(m, 0, good ? .7 : .4, good ? .3 : .15);
+    if (!playing) return;
+    if (good) {
+      n++; meter.firstChild.style.width = Math.min(100, n / GOAL * 100) + "%";
+      if (el) { el.classList.remove("found"); void el.offsetWidth; el.classList.add("found"); setTimeout(() => el.classList.remove("found"), 250); }
+      if (n === GOAL) { say.className = "say ok"; say.textContent = "じょうず！"; sv("じょうず！"); }
+    } else {
+      const now = Date.now(); if (now - lastWrong < 1200) return; lastWrong = now;
+      missOne(); say.className = "say ng"; say.textContent = o.wrong; sv(o.wrong);
+      if (el) { el.classList.remove("wrong"); void el.offsetWidth; el.classList.add("wrong"); }
+    }
+  });
+  kb.classList.add("tall", o.color === "w" ? "only-w" : "only-k");
+  sc.appendChild(realKeysSwitch(sc, kb, kb.onKey)); sc.appendChild(kb); sc.appendChild(meter); sc.appendChild(say);
+  const startBtn = document.createElement("button"); startBtn.className = "btn big"; startBtn.textContent = "はじめる"; sc.appendChild(startBtn);
+  startBtn.onclick = () => {
+    startBtn.hidden = true; P.ac(); playing = true; n = 0; say.className = "say"; say.textContent = "すきなように ひいてね♪";
+    stop = backing(new Array(BARS).fill(0), o.prog);
+    setTimeout(() => {
+      playing = false; if (stop) stop(); P.chord(o.prog[0][1].concat([o.prog[0][0]]), 0, 1.6, .15);
+      if (n >= 6) { cheer(say, o.done); P.pinpon(); earn(n >= GOAL ? 2 : 1, meter); }
+      else { say.className = "say"; say.textContent = o.more; sv(o.more); }
+      const again = document.createElement("button"); again.className = "btn light"; again.textContent = "もういちど ひく"; again.onclick = () => go(S.scene); sc.appendChild(again);
+      next(sc, "つぎへ", o.next);
+    }, BARS * 4 * C2_BEAT * 1000 + 200);
+  };
+  const prev = cleanup; cleanup = () => { playing = false; if (stop) stop(); if (prev) prev(); };
+}
+
+SCENES.w2c = sc => freePlay(sc, { color: "w", prog: PROG_WHITE, next: "w2end",
+  intro: "こんどは しろで えんそう しよう！<br>しろい けんばんを すきなように ひいてね。",
+  wrong: "それは くろ だよ。きょうは しろ！", done: "しろで じょうずに えんそう できたね！", more: "もっと たくさん ひいてみよう！" });
+
+SCENES.w2b = sc => freePlay(sc, { color: "k", prog: PROG_BLACK, next: "w2c",
+  intro: "きょうは くろで えんそう しよう！<br>おんがくに あわせて、くろい けんばんを すきなように ひいてね。",
+  wrong: "それは しろ だよ。きょうは くろ！", done: "くろで じょうずに えんそう できたね！", more: "もっと たくさん ひいてみよう！" });
+
+/* チャプター2 レッスン3 ふたつ・みっつの きょく：1小節ごとに「ふたつ！」「みっつ！」。光らない → 2拍たっても ひけないと ヒントで 光る */
+SCENES.g3 = sc => {
+  missReset("g3");
+  const CUES = [2, 2, 3, 3, 2, 3, 2, 3, 3, 2];
+  sc.innerHTML = G3_TAG + heroN("くろい けんばんの きょく だよ。<br>「ふたつ」って いったら ふたつの グループ、<br>「みっつ」って いったら みっつの グループを ひいてね。");
+  const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
+  const dots = dotsEl(CUES.length);
+  let active = null, hits = 0, stop = null, timers = [];
+  const clear = () => Object.values(kb.els).forEach(e => e.classList.remove("glow2", "glow3", "found"));
+  const kb = keyboard(48, 2, (m, el, real) => {
+    if (!real) P.play(m, 0, .5, .22);
+    if (!active || active.done || !isBlack(m)) return;
+    const g = groupOf(m);
+    if (g.n === active.n) { active.done = true; hits++; dots.children[active.i].classList.add("on"); g.keys.forEach(k => kb.els[k].classList.add("found")); say.className = "say ok"; say.textContent = ["いいね！", "じょうず！", "せいかい！"][hits % 3]; }
+    else if (!active.warned) { active.warned = true; missOne(); say.className = "say ng"; say.textContent = g.n === 3 ? "それは みっつ だよ" : "それは ふたつ だよ"; }
+  });
+  kb.classList.add("tall");
+  sc.appendChild(realKeysSwitch(sc, kb, kb.onKey)); sc.appendChild(kb); sc.appendChild(say); sc.appendChild(dots);
+  const startBtn = document.createElement("button"); startBtn.className = "btn big"; startBtn.textContent = "はじめる"; sc.appendChild(startBtn);
+  startBtn.onclick = () => {
+    startBtn.hidden = true; P.ac(); hits = 0;
+    const bars = new Array(CUES.length + 1).fill(0);
+    stop = backing(bars, PROG_BLACK, i => {
+      if (i === 0) { say.className = "say"; say.textContent = "いち、に、さん、はい！"; if (!(window.MisoListen && MisoListen.running)) playVoice("E2"); return; }
+      const ci = i - 1, n = CUES[ci]; clear(); active = { n, i: ci, done: false };
+      say.className = "say"; say.textContent = n === 2 ? "ふたつ！" : "みっつ！"; if (!(window.MisoListen && MisoListen.running)) playVoice(n === 2 ? "E3" : "E4");
+      timers.push(setTimeout(() => { if (active && active.i === ci && !active.done) groupsIn(48, 2).filter(g => g.n === n).forEach(g => g.keys.forEach(k => kb.els[k].classList.add(n === 2 ? "glow2" : "glow3"))); }, 2 * C2_BEAT * 1000));
+    });
+    timers.push(setTimeout(() => {
+      active = null; clear(); if (stop) stop(); P.chord([42, 61, 66, 70], 0, 1.6, .15);
+      say.className = "say ok"; say.textContent = `${CUES.length}かいの うち ${hits}かい できたよ！`;
+      if (hits >= 5) { earn(hits >= 8 ? 2 : 1, dots); P.pinpon(); }
+      const again = document.createElement("button"); again.className = "btn light"; again.textContent = "もういちど ひく"; again.onclick = () => go("g3"); sc.appendChild(again);
+      next(sc, "つぎへ", "g3end");
+    }, (CUES.length + 1) * 4 * C2_BEAT * 1000 + 300));
+  };
+  const prev = cleanup; cleanup = () => { active = null; timers.forEach(clearTimeout); if (stop) stop(); if (prev) prev(); };
+};
+
+SCENES.w2end = sc => {
+  sc.innerHTML = C2_TAG + heroN("くろ と しろで、じょうずに えんそう できたね！<br>よく がんばりました！<br>また あした、あおうね！", "dance") +
+    `<div class="endpic"><img src="${ART}cat_black.webp" alt="" style="max-height:110px"><img src="${ART}cat_white.webp" alt="" style="max-height:110px"></div>`;
+  P.chord([60, 64, 67, 72], 0, 1.6, 0.2);
+  lessonResult(sc, "w2", "w2a", "lesson1", "チャプター2へ（ふたつ と みっつ）");
+};
+SCENES.g3end = sc => {
+  sc.innerHTML = G3_TAG + heroN("ふたつ と みっつ、ばっちり だね！<br>よく がんばりました！<br>また あした、あおうね！", "dance");
+  P.chord([54, 58, 61, 66], 0, 1.6, 0.2);
+  lessonResult(sc, "g3", "g3", null, "");
+};
+
 /* ---------- 保護者の方へ ---------- */
 const PARENT = {
   l2: `<h2>保護者の方へ（レッスン2）</h2><p>ここでは、二つの黒鍵盤と同時に、高い・低いの認識をしていきます。三つの鍵盤を選んでいたら、必ず指摘してあげてください。</p><p>高い・低いは、目と耳、両方でわかれば合格です。耳のクイズでは、まず音を聞かせてから選ばせてください。</p><p>だいずのお部屋のノックは「1、2」の代わりです。「さん、はい！」のあとに、タ タ タン とノックします。この段階では、音楽的であることより、わかりやすさを大事にしています。</p>
     <div class="check"><b>保護者チェックシート</b><label><input type="checkbox" data-c="two2"> 二つの黒鍵盤</label><label><input type="checkbox" data-c="hiEye"> 高い：目でわかる</label><label><input type="checkbox" data-c="hiEar"> 高い：耳でわかる（弾いてあげる）</label><label><input type="checkbox" data-c="loEye"> 低い：目でわかる</label><label><input type="checkbox" data-c="loEar"> 低い：耳でわかる（弾いてあげる）</label></div>`,
   sk: `<h2>保護者の方へ（レッスン0：しろ と くろ）</h2><p>1歳半ごろからのレッスンです。まず「しろ」と「くろ」を見分けます。画面いっぱいの白と黒 → 半分ずつ → 白い猫と黒い猫 → 白い鍵盤と黒い鍵盤、と進み、最後に黒い鍵盤だけをノックします。</p><p>まちがえても叱らず、正しい方が光るのを一緒に見てあげてください。お子様がタップできないときは、指をそえて一緒にどうぞ。</p>
     <div class="check"><b>保護者チェックシート</b><label><input type="checkbox" data-c="wk"> 「しろ」「くろ」と言われて指させる</label><label><input type="checkbox" data-c="kkey"> 黒い鍵盤だけを押せる</label></div>`,
+  c2: `<h2>保護者の方へ（チャプター1 レッスン2／チャプター2 レッスン3）</h2><p><b>チャプター1 レッスン2</b>：「きょうは くろ」「きょうは しろ」の曲で、決められた色の鍵盤だけを使い、伴奏に合わせて好きなように弾きます。正しい音を探すのではなく、色を守って楽しく弾けたら合格です。ここではまだ、二つ・三つは気にしなくて大丈夫です。</p><p><b>チャプター2 レッスン3</b>：「ふたつ」「みっつ」と言われたグループを、音楽に合わせて弾きます。このあとのレッスンからは「二つはいい、三つはダメ」を徹底していきます。</p>
+    <div class="check"><b>保護者チェックシート</b><label><input type="checkbox" data-c="c2k"> 黒い鍵盤だけで弾ける</label><label><input type="checkbox" data-c="c2w"> 白い鍵盤だけで弾ける</label><label><input type="checkbox" data-c="c223"> 「ふたつ」「みっつ」と言われて、そのグループを弾ける</label></div>`,
   default: `<h2>保護者の方へ</h2><p>「ピアノのえほん」は、みそそっフィ絶対音感コースで養った音感を基盤にピアノを学んでいきます。ピアノが弾けない保護者の方でも心配はいりません。お子様と一緒に読み進めてください。</p><p>コインは、正解したときと、本物のピアノで弾けたときだけ増えます。</p>`,
   lesson: `<h2>保護者の方へ（レッスン1）</h2><p>ここでは、二つの黒鍵盤の認識をします。三つの鍵盤を選んでいたら、必ず指摘してあげてください。</p><p>レッスン1を何度か繰り返して練習してから、レッスン2へ進みましょう。</p>
     <div class="check"><b>保護者チェックシート</b><label><input type="checkbox" data-c="two"> 二つの黒鍵盤がわかる</label></div>`
 };
 $("parentBtn").onclick = () => {
-  const html = S.scene.startsWith("lesson1") ? PARENT.lesson : S.scene.startsWith("sk") ? PARENT.sk : S.scene.startsWith("l2") ? PARENT.l2 : PARENT.default;
+  const html = S.scene.startsWith("lesson1") ? PARENT.lesson : S.scene.startsWith("sk") ? PARENT.sk : S.scene.startsWith("l2") ? PARENT.l2 : /^(w2|g3)/.test(S.scene) ? PARENT.c2 : PARENT.default;
   const hist = Object.keys(LESSON_NAME).filter(k => S.hist && S.hist[k] && S.hist[k].length).map(k => `<li>${LESSON_NAME[k]}：${S.hist[k].slice(-5).map(h => `${h.d.slice(5).replace("-", "/")} まちがい${h.miss}`).join("、")}</li>`).join("");
   $("sheetIn").innerHTML = html + (hist ? `<h2 style="margin-top:14px">これまでの きろく</h2><ul>${hist}</ul><p style="font-size:13px">まちがいが 0〜2こ：次へ進んでOK ／ 3〜5こ：もう一度がおすすめ ／ 6こ以上：もう一度やりましょう。お子様には数ではなく ★ で伝えています。</p>` : "") + `<button class="btn" style="width:100%;margin-top:12px" id="closeSheet">とじる</button>`;
   const ck = S.check || {}; $("sheetIn").querySelectorAll("[data-c]").forEach(c => { c.checked = !!ck[c.dataset.c]; c.onchange = () => { S.check = { ...(S.check || {}), [c.dataset.c]: c.checked }; save(); }; });

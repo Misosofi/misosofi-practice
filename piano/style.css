@@ -166,3 +166,14 @@ input.name{font:inherit;font-size:24px;font-weight:700;border:2.5px dashed #D9C3
 .result .stars .off{color:#E6D6BC}
 .result .rmsg{word-break:keep-all;font-size:20px;font-weight:900;line-height:1.6}
 .result.r3 .rmsg{color:var(--sky2)}.result.r1 .rmsg{color:var(--rose)}
+
+/* チャプター2：きょうは しろ／くろ */
+.today{align-self:center;font-weight:800;font-size:22px;padding:6px 22px;border-radius:999px;border:3px solid #333;margin:2px 0 4px}
+.today.tw{background:#fff;color:#222}
+.today.tk{background:#222;color:#fff}
+.meter{height:16px;border-radius:999px;background:#eee;overflow:hidden;margin:8px 4px 0}
+.meter b{display:block;height:100%;width:0;background:linear-gradient(90deg,#F7C948,#F39C6B);transition:width .2s}
+.kbd-wrap.only-w .b{opacity:.55}
+.kbd-wrap.only-k .w{background:#f1f1f1}
+.kbd .w.found{background:#FFE9A8}
+.kbd .w.wrong{animation:shake .35s}
