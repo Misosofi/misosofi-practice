@@ -36,17 +36,22 @@ button{font:inherit;font-weight:900;border:0;border-radius:14px;min-height:48px;
 .foot{position:fixed;left:0;right:0;bottom:0;background:rgba(251,243,228,.97);padding:10px max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-bottom));box-shadow:0 -2px 0 #E6D6BC;z-index:6}
 .foot .in{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
 .send{background:var(--sun);box-shadow:0 4px 0 var(--sun2);font-size:19px;width:100%}
+.linkbox{background:#fff;border-radius:14px;padding:10px;box-shadow:0 0 0 2px var(--leaf)}
+.linkbox .lt{font-size:14px;font-weight:700;line-height:1.5;margin-bottom:6px}
+.copy{width:100%;background:var(--leaf);color:#fff;font-size:18px}
+.linkbox textarea{width:100%;height:60px;font-size:12px;margin-top:6px}
 .msg{font-size:13px;color:var(--ink2);text-align:center;min-height:18px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>🎙 ピアノのえほん 声の録音</h1>
-  <p class="lead">「● 録音」を押して読み、もう一度押すと止まります。「▶ 聞く」で確認して、やり直したいときはもう一度「● 録音」。<br>途中でやめても、録った声はこのスマホに残ります。全部終わったら、いちばん下の「まとめて送る」を押してください。</p>
+  <p class="lead">「● 録音」を押して読み、もう一度押すと止まります。「▶ 聞く」で確認して、やり直したいときはもう一度「● 録音」。<br>途中でやめても、録った声はこのスマホに残ります。送るときは、いちばん下の「まとめて送る」→「コピー」を押して、Claude のチャットに貼りつけるだけです。</p>
   <div class="prog"><span id="cnt">0 / 0</span><div class="bar"><i id="bar"></i></div></div>
   <div id="list"></div>
 </div>
-<div class="foot"><div class="in"><button class="send" id="send">まとめて送る（1つのファイルにする）</button><div class="msg" id="msg"></div></div></div>
+<div class="foot"><div class="in"><div id="linkbox" class="linkbox" hidden><div class="lt"></div><button type="button" class="copy">📋 コピー</button><textarea hidden readonly></textarea></div><button class="send" id="send">まとめて送る</button><div class="msg" id="msg"></div></div></div>
+<script src="../config.js"></script>
 <script>
 "use strict";
 const SCRIPT = [
@@ -163,19 +168,50 @@ async function makeZip(files) {
   e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
   return new Blob([...parts, ...central, e.buffer], { type: "application/zip" });
 }
+/* ---- 送る：練習アプリと同じログインで、声を Supabase（練習アプリの保存場所）に上げ、
+   チャットに貼るリンクを作る。ログインしていないときは、ファイルで送る。 */
+async function getSession() {
+  const C = window.MISOSOFI_CONFIG; if (!C) return null;
+  let s = null; try { s = JSON.parse(localStorage.getItem("misosofi-auth") || "null"); } catch (e) { }
+  if (s && s.currentSession) s = s.currentSession;
+  if (!s || !s.access_token || !s.user) return null;
+  if ((s.expires_at || 0) * 1000 < Date.now() + 60000 && s.refresh_token) {
+    try {
+      const r = await fetch(C.supabaseUrl + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: { apikey: C.supabaseAnonKey, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: s.refresh_token }) });
+      if (r.ok) { const n = await r.json(); s = n; try { localStorage.setItem("misosofi-auth", JSON.stringify(n)); } catch (e) { } } else return null;
+    } catch (e) { return null; }
+  }
+  return s;
+}
+async function uploadZip(file) {
+  const C = window.MISOSOFI_CONFIG, s = await getSession(); if (!s) return null;
+  const path = `${s.user.id}/piano-voice/${file.name}`, h = { apikey: C.supabaseAnonKey, Authorization: "Bearer " + s.access_token };
+  const up = await fetch(`${C.supabaseUrl}/storage/v1/object/recordings/${path}`, { method: "POST", headers: { ...h, "Content-Type": "application/zip", "x-upsert": "true" }, body: file });
+  if (!up.ok) return null;
+  const sg = await fetch(`${C.supabaseUrl}/storage/v1/object/sign/recordings/${path}`, { method: "POST", headers: { ...h, "Content-Type": "application/json" }, body: JSON.stringify({ expiresIn: 60 * 60 * 24 * 7 }) });
+  if (!sg.ok) return null; const j = await sg.json(); const u = j.signedURL || j.signedUrl; if (!u) return null;
+  return C.supabaseUrl + "/storage/v1" + (u.startsWith("/") ? u : "/" + u);
+}
+function showLink(url, n) {
+  const box = document.getElementById("linkbox"); box.hidden = false;
+  box.querySelector(".lt").textContent = `${n}個の声を送れる形にしました。下の「コピー」を押して、Claude のチャットに貼りつけて送ってください。`;
+  const b = box.querySelector("button"); b.textContent = "📋 コピー";
+  b.onclick = async () => { try { await navigator.clipboard.writeText("ピアノのえほん 声：" + url); b.textContent = "✓ コピーしました。チャットに貼りつけてね"; } catch (e) { box.querySelector("textarea").hidden = false; box.querySelector("textarea").value = url; box.querySelector("textarea").select(); b.textContent = "下の文字を長押ししてコピーしてね"; } };
+}
 document.getElementById("send").onclick = async () => {
   await stopCur();
-  const ids = Object.keys(clips); if (!ids.length) { msg("まだ録音がありません"); return; }
+  const order = Object.keys(rows).filter(id => clips[id]); if (!order.length) { msg("まだ録音がありません"); return; }
   const ext = t => /mp4|m4a|aac/.test(t) ? "m4a" : /ogg/.test(t) ? "ogg" : "webm";
-  const order = Object.keys(rows).filter(id => clips[id]);
+  msg("まとめています…");
   const zip = await makeZip(order.map(id => [`${id}.${ext(clips[id].type)}`, clips[id]]));
   const d = new Date(), stamp = `${d.getMonth() + 1}${String(d.getDate()).padStart(2, "0")}-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
   const file = new File([zip], `piano-voice-${stamp}.zip`, { type: "application/zip" });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: "ピアノのえほん 声" }); msg(`${order.length}個の声を まとめました`); return; } catch (e) { if (e.name === "AbortError") return; }
-  }
+  msg("送っています…");
+  let url = null; try { url = await uploadZip(file); } catch (e) { }
+  if (url) { msg(""); showLink(url, order.length); return; }
+  msg("練習アプリにログインしていないので、ファイルで送ります");
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: "ピアノのえほん 声" }); return; } catch (e) { if (e.name === "AbortError") return; } }
   const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
-  msg(`${order.length}個の声を「${file.name}」にしました`);
 };
 
 openDB().then(dbAll).then(all => { Object.assign(clips, all); refresh(); });
