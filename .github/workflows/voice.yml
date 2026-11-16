@@ -1,24 +1,21 @@
-name: Fetch story voices
+name: Make story voices
 on: workflow_dispatch
 permissions:
   contents: write
 jobs:
-  fetch:
+  make:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download narration and make small mp3 files
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Make the narration
         run: |
-          sudo apt-get install -y -qq ffmpeg >/dev/null
+          sudo apt-get install -y -qq ffmpeg espeak-ng >/dev/null
+          pip install -q "kokoro>=0.9.4" soundfile
           mkdir -p assets/voice
-          i=1
-          for h in 210275f22ce9d956e4176abe69f24dfa0b68201f0a8f5602f88bac79119ddaa4 a7fd57459a185842c0fb0c998906319f610cb10c4207e4e4302d97bf6682e316 87ed10599e2686ff523c9b8472e514a157bedd368613367e483a33f357dfb497 c849b34e902c80e2971690c1cf3510483c1e84f5f40fd90c1a3d56bf3093d5f1 5a0a921d586bef917e3ef51a368007592ebb5650e76fae3395ff6c16de4814bb dff9680eb34a75d3306341193177f384e525e0b40840056899d84e1385e05075 d342fc009e66fbce6e7ee58cfa6b9d712ddc70038d4702ba81623908a50dd8b0; do
-            curl -fsSL -o /tmp/v.wav "https://resembleai-chatterbox.hf.space/--replicas/n9n66/gradio_api/file=/tmp/gradio/$h/audio.wav"
-            ffmpeg -loglevel error -y -i /tmp/v.wav -ac 1 -b:a 64k assets/voice/cp$i.mp3
-            i=$((i+1))
-          done
-          ls -la assets/voice
+          python tools/voices.py
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"; git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git add assets/voice && git commit -m "Story narration voices" && git push
+          git add assets/voice && git commit -m "Story narration voices (Kokoro)" && git push
