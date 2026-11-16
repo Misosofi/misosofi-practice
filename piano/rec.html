@@ -112,21 +112,35 @@ function refresh() {
   document.getElementById("cnt").textContent = `${n} / ${total}`; document.getElementById("bar").style.width = (n / total * 100) + "%";
 }
 
-/* ---- 録音 ---- */
-let stream = null, rec = null, recId = null, chunks = [], player = null;
+/* ---- 録音 ----
+   iPhone の Safari は、同じマイクを2回目に使うと録音が空になることがあるので、
+   1行ごとにマイクを開き直し、終わったら必ずマイクを閉じる。 */
+let cur = null, player = null;   // cur = { id, rec, stream, chunks }
 const mime = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
+function stopCur() {
+  return new Promise(ok => {
+    if (!cur) return ok(); const c = cur; cur = null;
+    c.rec.addEventListener("stop", () => ok(), { once: true });
+    try { if (c.rec.state !== "inactive") c.rec.stop(); else ok(); } catch (e) { ok(); }
+  });
+}
 async function toggleRec(id) {
   if (player) { player.pause(); player = null; }
-  if (rec && rec.state === "recording") { const was = recId; rec.stop(); if (was === id) return; await new Promise(r => setTimeout(r, 300)); }
-  try { if (!stream) stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+  const wasId = cur && cur.id; await stopCur(); if (wasId === id) return;
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
   catch (e) { msg("マイクが使えませんでした。設定でマイクを許可してください。"); return; }
-  chunks = []; recId = id; rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+  const chunks = [], rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined), row = rows[id];
+  cur = { id, rec, stream, chunks };
   rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
   rec.onstop = async () => {
-    const b = new Blob(chunks, { type: rec.mimeType || mime || "audio/mp4" }); rows[id].classList.remove("rec"); rows[id].querySelector(".r").textContent = "● 録音";
-    if (b.size > 800) { clips[id] = b; await dbPut(id, b); msg(`${id} を保存しました`); } refresh();
+    stream.getTracks().forEach(t => t.stop());
+    const b = new Blob(chunks, { type: rec.mimeType || mime || "audio/mp4" });
+    row.classList.remove("rec"); row.querySelector(".r").textContent = "● 録音";
+    if (b.size > 800) { clips[id] = b; await dbPut(id, b); msg(`${id} を保存しました`); } else msg(`${id} がうまく録れませんでした。もう一度どうぞ`);
+    refresh();
   };
-  rec.start(); rows[id].classList.add("rec"); rows[id].querySelector(".r").textContent = "■ 止める"; msg(`${id} 録音中…`);
+  rec.start(500); row.classList.add("rec"); row.querySelector(".r").textContent = "■ 止める"; msg(`${id} 録音中…`);
 }
 function play(id) { if (!clips[id]) return; if (player) player.pause(); player = new Audio(URL.createObjectURL(clips[id])); player.play().catch(() => { }); }
 const msg = t => { document.getElementById("msg").textContent = t; };
@@ -150,7 +164,7 @@ async function makeZip(files) {
   return new Blob([...parts, ...central, e.buffer], { type: "application/zip" });
 }
 document.getElementById("send").onclick = async () => {
-  if (rec && rec.state === "recording") rec.stop();
+  await stopCur();
   const ids = Object.keys(clips); if (!ids.length) { msg("まだ録音がありません"); return; }
   const ext = t => /mp4|m4a|aac/.test(t) ? "m4a" : /ogg/.test(t) ? "ogg" : "webm";
   const order = Object.keys(rows).filter(id => clips[id]);
