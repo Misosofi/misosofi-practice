@@ -1,3 +1,6 @@
+const APPV = "20261116c";
+// 古い版が残っていたら最新に入れかえる
+(function(){try{fetch("index.html?t="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(h=>{const m=h.match(/app\.js\?v=(\w+)/);if(m&&m[1]!==APPV&&sessionStorage.getItem("miso-rl")!==m[1]){sessionStorage.setItem("miso-rl",m[1]);location.reload();}}).catch(()=>{});}catch(e){}})();
 /* ===== ピアノのえほん（みそそっフィ ピアノ導入コース）試作 =====
    文章は「Piano Picture Book（ピアノのえほん）」しまだあつこ作 のまま。絵：Juan Macias。
    コインは 正解したとき・ピアノで本当にひけたとき だけ。 */
@@ -223,7 +226,7 @@ function playVoice(id) {
   try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { }
   if (vAudio) { vAudio.pause(); vAudio = null; }
   vLast = vnorm(VOICE_TEXT[id] || ""); vLastAt = Date.now();
-  const a = new Audio("voice/" + id + ".mp3"); vAudio = a;
+  const a = new Audio("voice/" + id + ".mp3?v=" + APPV); vAudio = a;
   a.addEventListener("loadedmetadata", () => { if (window.MisoListen) MisoListen.mute((a.duration || 3) * 1000 + 300); });
   if (window.MisoListen) MisoListen.mute(4000);
   a.play().catch(() => { pendingSound = () => a.play().catch(() => { }); }); return true;
