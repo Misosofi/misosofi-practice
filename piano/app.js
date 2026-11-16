@@ -186,7 +186,28 @@ SCENES.intro5 = sc => {
    ① 画面ぜんぶ しろ／くろ → ② 半分ずつ「しろは どっち？」 → ③ しろい ねこ・くろい ねこ
    → ④ けんばん「くろい けんばんは どっち？」 → ⑤ くろい けんばんだけ ノック ノック
    小さい子なので、まちがえても ブーは鳴らさない（やさしい音で、正しい方が光る）。 */
-const softNo = () => P.play(55, 0, 0.5, 0.12);
+/* ---------- まちがいの かず（レッスンごと）→ おわりに「もういちど」を すすめる ---------- */
+const LESSON_OF = sc => /^sk/.test(sc) ? "sk" : /^lesson1/.test(sc) ? "l1" : /^l2/.test(sc) ? "l2" : /^l3/.test(sc) ? "l3" : null;
+const LESSON_NAME = { sk: "レッスン0 しろ と くろ", l1: "レッスン1 ふたつ と みっつ", l2: "レッスン2 たかい おと・ひくい おと", l3: "レッスン3 あそびの きょく" };
+function missOne() { const k = LESSON_OF(S.scene); if (!k) return; S.miss = S.miss || {}; S.miss[k] = (S.miss[k] || 0) + 1; save(); }
+function missReset(k) { S.miss = S.miss || {}; S.miss[k] = 0; save(); }
+/* めやす（仮）：0〜2こ＝つぎへ、3〜5こ＝もういちど が おすすめ、6こ いじょう＝もういちど やろう */
+function lessonResult(sc, k, again, nextSc, nextLabel) {
+  const n = (S.miss && S.miss[k]) || 0, lv = n <= 2 ? 3 : n <= 5 ? 2 : 1;
+  S.hist = S.hist || {}; (S.hist[k] = S.hist[k] || []).push({ d: new Date().toISOString().slice(0, 10), miss: n }); S.hist[k] = S.hist[k].slice(-10); save();
+  const msg = lv === 3 ? "ばっちり！ つぎの レッスンに すすめるよ！" : lv === 2 ? "あと すこし！ もういちど やると、もっと じょうずに なるよ。" : "もういちど この レッスンを やってみよう！";
+  const box = document.createElement("div"); box.className = "result r" + lv;
+  box.innerHTML = `<div class="stars">${"★".repeat(lv)}<span class="off">${"★".repeat(3 - lv)}</span></div><div class="rmsg">${msg}</div><p class="small">コイン ${S.coins}こ</p>`;
+  sc.appendChild(box); setTimeout(() => voice(msg), 2600);
+  const g = document.createElement("div"); g.className = "grow"; sc.appendChild(g);
+  const a = document.createElement("button"), b = nextSc ? document.createElement("button") : null;
+  a.textContent = "もういちど やる"; a.onclick = () => go(again);
+  if (b) { b.textContent = nextLabel; b.onclick = () => go(nextSc); }
+  if (lv === 3 && b) { b.className = "btn big"; a.className = "btn light"; sc.appendChild(b); sc.appendChild(a); }
+  else { a.className = "btn big"; sc.appendChild(a); if (b) { b.className = "btn light"; b.style.fontSize = "16px"; sc.appendChild(b); } }
+  const h = document.createElement("button"); h.className = "btn light"; h.style.fontSize = "16px"; h.style.minHeight = "48px"; h.textContent = "おうちに もどる"; h.onclick = () => go("home"); sc.appendChild(h);
+}
+const softNo = () => { missOne(); P.play(55, 0, 0.5, 0.12); };
 const VOICE_TEXT = {"A1": "こんにちは！ぼくの なまえは、くりーと。くろねこの くりーと だよ。みんなの なまえは、なにかな？", "A2": "よろしくね！ぼくは、6さい。みんなは なんさいかな？", "A3": "ぼくは、おんがくが だいすき！うたったり、ピアノを ひいたりするんだ。みんなも おんがくは すきかな？", "A4": "さっそく みんなと いっしょに、したの がっきを ひくよ。ねえ みんな、この がっき、なにか わかる？", "A5": "そう、ピアノだよ！ピアノには「くろい けんばん」と「しろい けんばん」が あるよ。", "A6": "じゃあ これから、たくさん たのしく ぼくと おんがくで あそぼう！ぼくと まいにち、いっしょに あそんでほしいんだ！あそんでくれる？", "B1": "まっしろ！これは しろ だよ。", "B2": "まっくろ！これは くろ だよ。", "B3": "しろは どっち？", "B4": "くろは どっち？", "B5": "しろい ねこさんは どっち？", "B6": "くろい ねこさんは どっち？", "B7": "しろい けんばんは どっち？", "B8": "くろい けんばんは どっち？", "B9": "こっちかな？", "B10": "こんどは くろい けんばん だけ、ノック ノック してみよう！コン コン！", "B11": "それは しろ だよ。くろい けんばんは どこかな？", "B12": "じょうず！くろい けんばん だけ ノック できたね！", "B13": "しろ と くろ、わかったね！よく がんばりました！また あした、あおうね！", "C1": "よーく みてみると、くろい けんばんは「ふたつの グループ」と「みっつの グループ」が あるよ。", "C2": "ひくい ところから たかい ところへ、「ふたつ、みっつ」と かぞえてみよう！", "C3": "ふたつ", "C4": "みっつ", "C5": "ふたつの くろい けんばんの グループを ぜんぶ タップしてみよう。まちがわないように よーく みてね。みっつじゃないからね。ふたつだよ！", "C6": "いいね！ふたつだね！", "C7": "ダメダメ〜、それは みっつ だよ。", "C8": "じゃあ、クイズだよ！ひかった くろい けんばんは ふたつ？それとも みっつ？", "C9": "みんなの ピアノで、ふたつの くろい けんばんの グループを みつけてみよう。みつけたら、グーを つくって「たんたん」って かるく ひいてみよう。", "C10": "たん！もういっかい！", "C11": "じょうずに ひけたかな？よく がんばりました！きょうの おんがくの あそびは これで おしまい！また あした、あおうね！", "D1": "こんにちは！くりーと だよ！きょうも いっしょに あそぼう！ふたつの くろい けんばんの グループ、おぼえてるかな？ひとつ タップしてみて！", "D2": "おぼえてたね！", "D3": "ピアノの みぎの はしっこは たかい おと、ひだりの はしっこは ひくい おと だよ。ひかった ふたつの グループは たかい？ひくい？", "D4": "こんどは みないで、みみで きいてね。ぞうさん？ことりさん？", "D5": "せいかい！ぞうさんの ひくい おと！", "D6": "せいかい！ことりさんの たかい おと！", "D7": "みんなの ピアノで、いちばん たかい ところの ふたつの くろい けんばんを、みぎてで グーを つくって「たんたん！」", "D8": "たかい おとは、ことりさんの ように かわいい おと だったかな？", "D9": "こんどは いちばん ひくい ところの ふたつの くろい けんばんを、ひだりてで グーを つくって「たんたん！」", "D10": "ひくい おとは、ぞうさんの ように、おおきな ふとい おと だったかな？", "D11": "あれ？だいずの おへやから、おかしな おとが きこえるよ…。ちょっと のぞきみに いってみない？", "D12": "まんなかの ふたつの くろい けんばんで、「タ タ タン！」って ノック してね。くりーとの まねっこ だよ。", "D13": "さん、はい！", "D14": "コンコン… あれ？へんじが ないね。もういちど！", "D15": "ドアが すこし あいたよ！もういっかい！", "D16": "だいず、なに してるの？", "D17": "いまは だめ〜！", "D18": "あーっ！だいず、ぬすみぐい してたー！", "D19": "もう、だいずったら！みんな、ノック じょうず だったよ！", "D20": "きょうは、たかい おと と ひくい おと が わかったね！よく がんばりました！また あした、あおうね！", "E1": "おんがくに あわせて、くろい けんばんで グーを つくって「たんたん」しよう！ひかった グループを ひいてね。", "E2": "いち、に、さん、はい！", "E3": "ふたつ！", "E4": "みっつ！", "E5": "みぎて", "E6": "ひだりて", "E7": "りょうて", "E8": "せいかい！", "E9": "いいね！", "E10": "じょうず！", "E11": "ざんねん、もういちど よーく みてね。", "E12": "もういちど よーく きいてね。", "E13": "それは しろい けんばん だよ。", "E14": "それは みっつの グループ だよ。"};
 const VOICE_HAVE = new Set(["A1", "A2", "A3", "A4", "A5", "A6", "B1", "B10", "B11", "B12", "B13", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "C1", "C10", "C11", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"]);
 /* アツコさんの声：文が台本と同じなら録音を流す。録音がない文は、speak は機械の声、voice は何も言わない。
@@ -212,6 +233,7 @@ const SK_TAG = `<span class="lesson-tag">レッスン0 ・ しろ と くろ</sp
 function dotsEl(n) { const d = document.createElement("div"); d.className = "dots"; d.innerHTML = "<i></i>".repeat(n); return d; }
 
 SCENES.sk1 = sc => {
+  missReset("sk");
   const steps = ["w", "k", "w", "k"]; let i = 0;
   const fill = document.createElement("div"); fill.className = "fill"; document.body.appendChild(fill);
   cleanup = () => fill.remove();
@@ -300,14 +322,14 @@ function knock() { const c = P.ac(); if (!c) return; const t = c.currentTime; [0
 SCENES.skend = sc => {
   sc.innerHTML = SK_TAG + heroN("しろ と くろ、わかったね！<br>よく がんばりました！<br>また あした、あおうね！", "dance") +
     `<div class="endpic"><img src="${ART}cat_black.webp" alt="" style="max-height:120px"><img src="${ART}cat_white.webp" alt="" style="max-height:120px"></div>
-     <div class="stars">★</div><p class="small">コイン ${S.coins}こ</p><div class="grow"></div>`;
+`;
   P.chord([60, 64, 67, 72], 0, 1.6, 0.22);
-  const r = document.createElement("button"); r.className = "btn light"; r.textContent = "もういちど あそぶ"; r.onclick = () => go("sk1"); sc.appendChild(r);
-  next(sc, "おうちに もどる", "home");
+  lessonResult(sc, "sk", "sk1", "lesson1", "つぎの レッスンへ（ふたつ と みっつ）");
 };
 
 /* レッスン1-1：ふたつ と みっつ を見てみる */
 SCENES.lesson1 = sc => {
+  missReset("l1");
   sc.innerHTML = `<span class="lesson-tag">チャプター1 ・ レッスン1</span>` +
     heroN("よーく みてみると、くろい けんばんは<br>「ふたつの グループ」と<br>「みっつの グループ」が あるよ。") +
     `<p class="small">ひくい ところから たかい ところへ、「ふたつ、みっつ」と かぞえてみよう！</p>`;
@@ -349,7 +371,7 @@ SCENES.lesson1find = sc => {
       if (found.size === all.length) setTimeout(() => go("lesson1quiz"), 1300);
     } else {
       g.keys.forEach(k => { const e = kb.els[k]; e.classList.remove("wrong"); void e.offsetWidth; e.classList.add("wrong"); });
-      say.className = "say ng"; (say.textContent = "ダメダメ〜、それは みっつ だよ", voice("ダメダメ〜、それは みっつ だよ")); setTimeout(() => P.buzz(), 150);
+      say.className = "say ng"; (say.textContent = "ダメダメ〜、それは みっつ だよ", voice("ダメダメ〜、それは みっつ だよ")); setTimeout(() => (missOne(), P.buzz()), 150);
     }
   });
   sc.appendChild(kb); sc.appendChild(say); sc.appendChild(dots);
@@ -375,7 +397,7 @@ SCENES.lesson1quiz = sc => {
         g.keys.forEach(k => { kb.els[k].classList.remove("ask"); kb.els[k].classList.add(n === 2 ? "found" : "glow3"); });
         if (q % 2) cheer(say, "せいかい！"); else { say.className = "say ok"; (say.textContent = "せいかい！", voice("せいかい！")); } P.pinpon(); earn(1, b); dots.children[q].classList.add("on");
         q++; setTimeout(() => q >= N ? go("lesson1piano") : ask(), 1200);
-      } else { say.className = "say ng"; (say.textContent = "ざんねん、もういちど よーくみてね", voice("ざんねん、もういちど よーくみてね")); P.buzz(); setTimeout(() => { lock = false; }, 600); }
+      } else { say.className = "say ng"; (say.textContent = "ざんねん、もういちど よーくみてね", voice("ざんねん、もういちど よーくみてね")); (missOne(), P.buzz()); setTimeout(() => { lock = false; }, 600); }
     };
   });
   setTimeout(ask, 500);
@@ -416,13 +438,9 @@ SCENES.lesson1piano = sc => {
 };
 
 SCENES.lesson1end = sc => {
-  sc.innerHTML = heroN("じょうずに ひけたかな？<br>よく がんばりました！<br>きょうの おんがくの あそびは これで おしまい！<br>また あした、あおうね！", "dance") +
-    `<div class="stars">★</div><p class="small">レッスン1 おしまい ・ コイン ${S.coins}こ</p>
-     <div class="card">保護者の方へ：レッスン1を何度か繰り返して練習してから、レッスン2へ進みましょう。</div><div class="grow"></div>`;
+  sc.innerHTML = heroN("じょうずに ひけたかな？<br>よく がんばりました！<br>きょうの おんがくの あそびは これで おしまい！<br>また あした、あおうね！", "dance");
   P.chord([60, 64, 67, 72], 0, 1.6, 0.22); setTimeout(() => P.chord([65, 69, 72, 77], 0.9, 1.6, 0.2), 0);
-  const r = document.createElement("button"); r.className = "btn light"; r.textContent = "もういちど あそぶ"; r.onclick = () => go("lesson1"); sc.appendChild(r);
-  const n2 = document.createElement("button"); n2.className = "btn light"; n2.textContent = "レッスン2へ（何度か練習してから）"; n2.style.fontSize = "16px"; n2.onclick = () => go("l2a"); sc.appendChild(n2);
-  next(sc, "おうちに もどる", "home");
+  lessonResult(sc, "l1", "lesson1", "l2a", "つぎの レッスンへ（たかい おと・ひくい おと）");
 };
 
 /* ===== レッスン2：たかい おと・ひくい おと と だいずの おへや =====
@@ -433,6 +451,7 @@ const L2_TAG = `<span class="lesson-tag">チャプター1 ・ レッスン2</spa
 const imgPick = (src, alt) => `<img src="${ART}${src}" alt="${alt}">`;
 
 SCENES.l2a = sc => {
+  missReset("l2");
   sc.innerHTML = L2_TAG + heroN("こんにちは！くりーと だよ！<br>きょうも いっしょに あそぼう！<br>ふたつの くろい けんばんの グループ、おぼえてるかな？<br>ひとつ タップしてみて！");
   
   const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
@@ -589,10 +608,9 @@ SCENES.l2g = sc => {
 SCENES.l2end = sc => {
   sc.innerHTML = L2_TAG + heroN("きょうは、たかい おと と ひくい おと が わかったね！<br>よく がんばりました！<br>また あした、あおうね！", "dance") +
     `<div class="endpic"><img src="${ART}elephant.webp" alt="" style="max-height:130px"><img src="${ART}bird.webp" alt="" style="max-height:110px"></div>
-     <div class="stars">★</div><p class="small">レッスン2 おしまい ・ コイン ${S.coins}こ</p><div class="grow"></div>`;
+`;
   P.chord([60, 64, 67, 72], 0, 1.6, 0.22);
-  const r = document.createElement("button"); r.className = "btn light"; r.textContent = "もういちど あそぶ"; r.onclick = () => go("l2a"); sc.appendChild(r);
-  next(sc, "おうちに もどる", "home");
+  lessonResult(sc, "l2", "l2a", "l3", "つぎの レッスンへ（あそびの きょく）");
 };
 
 /* ===== レッスン3：ふたつ・みっつの あそびの きょく（はこ だけ。音源と 合図は あとで 入れる） =====
@@ -663,7 +681,8 @@ const PARENT = {
 };
 $("parentBtn").onclick = () => {
   const html = S.scene.startsWith("lesson1") ? PARENT.lesson : S.scene.startsWith("sk") ? PARENT.sk : S.scene.startsWith("l2") ? PARENT.l2 : PARENT.default;
-  $("sheetIn").innerHTML = html + `<button class="btn" style="width:100%;margin-top:12px" id="closeSheet">とじる</button>`;
+  const hist = Object.keys(LESSON_NAME).filter(k => S.hist && S.hist[k] && S.hist[k].length).map(k => `<li>${LESSON_NAME[k]}：${S.hist[k].slice(-5).map(h => `${h.d.slice(5).replace("-", "/")} まちがい${h.miss}`).join("、")}</li>`).join("");
+  $("sheetIn").innerHTML = html + (hist ? `<h2 style="margin-top:14px">これまでの きろく</h2><ul>${hist}</ul><p style="font-size:13px">まちがいが 0〜2こ：次へ進んでOK ／ 3〜5こ：もう一度がおすすめ ／ 6こ以上：もう一度やりましょう。お子様には数ではなく ★ で伝えています。</p>` : "") + `<button class="btn" style="width:100%;margin-top:12px" id="closeSheet">とじる</button>`;
   const ck = S.check || {}; $("sheetIn").querySelectorAll("[data-c]").forEach(c => { c.checked = !!ck[c.dataset.c]; c.onchange = () => { S.check = { ...(S.check || {}), [c.dataset.c]: c.checked }; save(); }; });
   $("sheet").hidden = false; $("closeSheet").onclick = () => { $("sheet").hidden = true; };
 };

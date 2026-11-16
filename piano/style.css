@@ -160,3 +160,7 @@ input.name{font:inherit;font-size:24px;font-weight:700;border:2.5px dashed #D9C3
 .namerec .row{margin-top:8px}
 .namerec .btn{font-size:17px;min-height:52px}
 .namerec .btn.on{background:var(--rose)}
+.result{background:#fff;border-radius:22px;padding:12px;text-align:center;box-shadow:0 3px 0 #E6D6BC}
+.result .stars .off{color:#E6D6BC}
+.result .rmsg{word-break:keep-all;font-size:20px;font-weight:900;line-height:1.6}
+.result.r3 .rmsg{color:var(--sky2)}.result.r1 .rmsg{color:var(--rose)}
