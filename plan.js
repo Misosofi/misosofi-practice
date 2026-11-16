@@ -42,7 +42,7 @@ function actPlan() {
 async function planStart(kind) {
   try {
     const cons = kind === "video" ? { audio: true, video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 20 } } } : { audio: true };
-    const stream = await navigator.mediaDevices.getUserMedia(cons);
+    const stream = await (sessRec(), navigator.mediaDevices).getUserMedia(cons);
     const opts = {}; if (kind === "video") { opts.videoBitsPerSecond = 350000; opts.audioBitsPerSecond = 48000; } else opts.audioBitsPerSecond = 48000;
     let mr; try { mr = new MediaRecorder(stream, opts); } catch (e) { mr = new MediaRecorder(stream); }
     PLANREC = { mr, stream, chunks: [], t0: Date.now(), timer: 0, kind };

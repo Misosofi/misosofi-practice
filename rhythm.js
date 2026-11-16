@@ -140,6 +140,8 @@ function sayAt(w, when, soft) {
   if (!("speechSynthesis" in window)) return;
   setTimeout(() => { const u = new SpeechSynthesisUtterance(SAYTXT[w] || w); u.lang = "en-GB"; u.rate = 1.6; u.volume = soft ? .35 : 1; try { speechSynthesis.speak(u); } catch (e) { } }, Math.max(0, when * 1000 - 90));
 }
+/* a quiet metronome tick (the microphone must not take it for a clap) */
+function softClick(acc) { const c = ac(); if (!c) return; const o = c.createOscillator(), g = c.createGain(); o.frequency.value = acc ? 1500 : 1000; g.gain.setValueAtTime(.06, c.currentTime); g.gain.exponentialRampToValueAtTime(.0001, c.currentTime + .04); o.connect(g); g.connect(outNode()); o.start(); o.stop(c.currentTime + .05); }
 /* count-in (4 clicks), then the rhythm said by the voice with a soft metronome underneath */
 function rsPlay(pat, countIn = true, metro = true) {
   const c = ac(); if (!c) return 0; const B = beatS(), start = countIn ? 4 * B : 0;
@@ -162,23 +164,23 @@ async function ccStart() {
   try {
     let st = null, own = true;
     if (typeof SM !== "undefined" && SM.on && SM.stream && SM.stream.getAudioTracks().some(x => x.readyState === "live")) { st = SM.stream; own = false; }
-    else st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    else st = await (sessRec(), navigator.mediaDevices).getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
     const c2 = await acReady() || ac(), src = c2.createMediaStreamSource(st), an = c2.createAnalyser(), mute = c2.createGain();
     an.fftSize = 2048; mute.gain.value = 0; src.connect(an); an.connect(mute); mute.connect(c2.destination);
     CC = { c: c2, st, own, src, an, mute, sr: c2.sampleRate, buf: new Float32Array(2048), on: [], last: -1, floor: .01, run: false, max: 0 }; return true;
   } catch (e) { return false; }
 }
-function ccStop() { if (CC) { CC.run = false; clearInterval(CC.tm); try { CC.src.disconnect(); CC.mute.disconnect(); } catch (e) { } if (CC.own) CC.st.getTracks().forEach(x => x.stop()); CC = null; } }
+function ccStop() { setTimeout(sessPlay, 300); if (CC) { CC.run = false; clearInterval(CC.tm); try { CC.src.disconnect(); CC.mute.disconnect(); } catch (e) { } if (CC.own) CC.st.getTracks().forEach(x => x.stop()); CC = null; } }
 function ccListen(ms, done) {
-  if (!CC) return; CC.on = []; CC.max = 0; CC.run = true; const t0 = performance.now();
+  if (!CC) return; CC.on = []; CC.amp = []; CC.max = 0; CC.run = true; const t0 = performance.now();
   if (CC.c.state !== "running") CC.c.resume().catch(() => { });
   /* a timer, not animation frames (those can pause); the window (≈43 ms) is longer than the tick, so no clap slips through */
   CC.tm = setInterval(() => {
     if (!CC || !CC.run) return; CC.an.getFloatTimeDomainData(CC.buf); let pk = 0, pi = 0; for (let i = 0; i < CC.buf.length; i++) { const v = Math.abs(CC.buf[i]); if (v > pk) { pk = v; pi = i; } }
     const now = performance.now(), at = now - (CC.buf.length - pi) / CC.sr * 1000; CC.max = Math.max(CC.max, pk);
     if (pk < CC.floor * 2.5) CC.floor = Math.max(.004, CC.floor * .9 + pk * .1);
-    if (pk > Math.max(.03, CC.floor * 3.5) && at - CC.last > 120) { CC.last = at; CC.on.push((at - t0) / 1000); }
-    if (now - t0 >= ms) { CC.run = false; clearInterval(CC.tm); done(CC.on.slice(), CC.max); }
+    if (pk > Math.max(.03, CC.floor * 3.5) && at - CC.last > 120) { CC.last = at; CC.on.push((at - t0) / 1000); (CC.amp ||= []).push(pk); }
+    if (now - t0 >= ms) { CC.run = false; clearInterval(CC.tm); done(CC.on.slice(), CC.max, CC.amp.slice()); }
   }, 20);
 }
 /* expect/got in seconds from the first beat. Children may start a little early or late, so the whole clapping is
@@ -236,7 +238,7 @@ function rsRender() {
     body = `<div class="card stack" style="align-items:center"><b>👏 ${t("rs_copyHow")}</b>
       <div class="rs-ear">👂</div><div class="small muted">${t("rs_copyEar")}</div>
       ${RS.res ? `<div class="rs-res">${RS.res.marks.map(m => `<i class="${m ? "ok" : "no"}">${m ? "✓" : "✗"}</i>`).join("")}</div><b style="color:${RS.res.ok ? "var(--good)" : "var(--bad)"}">${RS.res.ok ? t("rs_copyOk") : RS.res.msg || t("rs_copyNo")}</b>${!RS.res.ok && RS.res.lvl != null ? `<div class="small muted">🎤 ${Math.round(RS.res.lvl * 1000)}</div>` : ""}` : ""}
-      ${RS.busy ? `<div class="rs-beat" id="rsBeat">${RS.busy}</div>` : `<div class="row" style="gap:8px"><button class="btn soft" data-rs="listen">🔊 ${t("rs_listen")}</button><b class="rs-count" id="rsCount"></b><button class="btn" data-rs="clap">👏 ${t("rs_myTurn")}</button></div>`}
+      ${RS.busy ? `<div class="rs-beat" id="rsBeat">${RS.busy}</div><div class="rs-dots" id="rsDots">${[0, 1, 2, 3].map(() => "<i></i>").join("")}</div>` : `<button class="btn" data-rs="callresp">▶ ${t("rs_cr")}</button><div class="small muted">${t("rs_crHow")}</div>`}
       ${RS.noMic ? `<div class="small muted">${t("rs_noMic")}</div><button class="btn sm ghost" data-rs="selfok">✓ ${t("rs_selfOk")}</button>` : ""}
       ${RS.res ? `<button class="btn sm ghost" data-rs="newpat">↻ ${t("rs_newOne")}</button>` : ""}</div>`;
   } else if (RS.stage === "apple") {
@@ -292,6 +294,25 @@ document.addEventListener("click", async e => {
       const exp = rsOnsets(RS.pat).map(o => o * B), g = got.map(x => x - lead);
       RS.busy = null; RS.res = ccScore(exp, g); RS.res.msg = rsClapWhy(RS.pat, RS.res, g, B); if (RS.res.msg) RS.res.ok = false; RS.res.lvl = mx; if (RS.res.ok) rsDone("copy"); rsRender();
     }), 4 * B * 1000 - 150);
+  }
+  else if (a === "callresp") {
+    /* count-in 1 2 3 4 → the rhythm (listen) → straight away the child claps it back while the metronome keeps going */
+    const ok = await ccStart(); if (!ok) { RS.noMic = true; rsRender(); return; }
+    await acReady(); await voiceLoad(); const B = beatS(); RS.busy = t("rs_ready"); RS.res = null; rsRender();
+    const show = (txt, beat) => { const el = document.getElementById("rsBeat"); if (el) el.textContent = txt; document.querySelectorAll("#rsDots i").forEach((d, k) => d.classList.toggle("on", k === beat)); };
+    for (let i = 0; i < 4; i++) setTimeout(() => { click(i === 0); show(String(i + 1), i); }, i * B * 1000);
+    setTimeout(() => rsPlay(RS.pat, false, false), 4 * B * 1000);
+    for (let i = 0; i < 4; i++) setTimeout(() => { softClick(i === 0); show("👂", i); }, (4 + i) * B * 1000);
+    for (let i = 0; i < 4; i++) setTimeout(() => { softClick(i === 0); show("👏 " + t("rs_go2"), i); }, (8 + i) * B * 1000);
+    ccListen((12 * B + .6) * 1000, (got, mx, amp) => {
+      /* how loud the count-in clicks sound in the mic; a soft click later is ignored, a real clap is louder */
+      const near = (x, k0, k1) => { for (let k = k0; k < k1; k++) if (x - k * B > -.03 && x - k * B < .09) return true; return false; };
+      const clickPk = Math.max(0, ...got.map((x, i) => near(x, 0, 4) ? amp[i] : 0));
+      const w0 = 8 * B - Math.min(.25, B * .3), g = [];
+      got.forEach((x, i) => { if (x < w0) return; if (near(x, 8, 12) && amp[i] < Math.max(.05, clickPk * .5)) return; g.push(x - 8 * B); });
+      const exp = rsOnsets(RS.pat).map(o => o * B);
+      RS.busy = null; RS.res = ccScore(exp, g); RS.res.msg = rsClapWhy(RS.pat, RS.res, g, B); if (RS.res.msg) RS.res.ok = false; RS.res.lvl = mx; if (RS.res.ok) rsDone("copy"); rsRender();
+    });
   }
   else if (a === "selfok") { RS.res = { marks: rsOnsets(RS.pat).map(() => true), ok: true }; rsRender(); }
   else if (a === "line") { RS.line.push(b.dataset.x); await voiceLoad(); rsOnsets([b.dataset.x]).forEach(o => clapSound(o * .45, .3)); rsWords([b.dataset.x]).forEach(x => sayAt(x.w, x.t * .45, x.soft)); rsRender(); }
@@ -388,7 +409,7 @@ document.addEventListener("click", async e => {
   if (b.dataset.vox === "play") { try { const a = new Audio(await signed("scores", path)); a.play(); } catch (er) { } return; }
   if (TVOX.mr) { TVOX.mr.stop(); return; }
   try {
-    await acReady(); const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false } });
+    await acReady(); const st = await (sessRec(), navigator.mediaDevices).getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false } });
     const mr = new MediaRecorder(st), ch = []; TVOX.mr = mr; TVOX.rec = w; redraw();
     mr.ondataavailable = ev => { if (ev.data.size) ch.push(ev.data); };
     mr.onstop = async () => {

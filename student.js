@@ -266,7 +266,7 @@ async function saveRec(blob, dur, pid, kind = "audio") {
 }
 async function startRec(pid) {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const chunks = []; mr = new MediaRecorder(stream); recStart = Date.now(); isRec = true; smAttach(stream);
+    const stream = await (sessRec(), navigator.mediaDevices).getUserMedia({ audio: true }); const chunks = []; mr = new MediaRecorder(stream); recStart = Date.now(); isRec = true; smAttach(stream);
     mr.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
     mr.onstop = () => { stream.getTracks().forEach(x => x.stop()); isRec = false; if (!SM.own) { smStop(); if (A?.start) smStart(); } const type = (mr && mr.mimeType) || chunks[0]?.type || "audio/webm"; saveRec(new Blob(chunks, { type }), (Date.now() - recStart) / 1000, pid); mr = null; };
     mr.start(1000); if (A) renderAct();
@@ -335,6 +335,7 @@ function vHome() {
  ${typeof vreqHome === "function" ? vreqHome() : ""}
  ${typeof ppHome === "function" ? ppHome() : ""}
  <div class="section"><div class="section-head"><h2>🎮 ${t("freeH")}</h2></div><div class="muted small" style="margin:-6px 0 10px">${t("freeSub")}</div>
+ ${typeof msCard === "function" ? msCard() : ""}
  <button class="card rs-quick" data-rs="open" data-u="${typeof rsOpenN === "function" ? (rsS(), rsOpenN() - 1) : 0}"><span class="rs-quick-ic">🍎</span><span class="grow"><b>${t("rs_h")}</b><span class="small muted">${t("rs_quickSub")}</span></span><span>→</span></button>
  ${typeof flHome === "function" ? flHome() : ""}
  ${pitchSections()}
@@ -423,7 +424,7 @@ function vMe() {
 function openSheet(html, full) { const sh = document.getElementById("sheet"); sh.classList.toggle("full", !!full); const p = document.getElementById("panel"); p.innerHTML = html; sh.hidden = false; if (S) { hydrateMedia(p); hydratePlans(p); } }
 function closeSheet() { if (document.getElementById("sheet")?.dataset.lock) return; silenceAll(); if (typeof ccStop === "function") ccStop(); if (typeof smStop === "function" && !isRec && !(A && A.start)) smStop(); if (typeof micStop === "function") micStop(); if (typeof FOLLOW !== "undefined") FOLLOW = null; if (isRec) stopRec(); stopMetro(); stopAlong(); if (A?.run?.timer) clearInterval(A.run.timer); if (A && A.start) savePieceTime(); if (A && A.timer) clearInterval(A.timer); if (isRec) stopRec(); A = null; document.getElementById("sheet").hidden = true; refresh(); }
 function actHead(k) { return `<div class="act-head"><span class="ic" style="background:${ACT[k].col}">${I[ACT[k].ic]}</span><h2>${t("a_" + k)}</h2>${q()[k] ? `<span class="pill g">✓</span>` : `<span class="price">${I.coin}${ACT[k].coins}</span>`}<button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>`; }
-function openAct(k, opt = {}) { A = { k, ...opt }; renderAct(); if (k === "ear") setTimeout(() => A && A.qs && tone(A.qs[0].midi), 300); }
+function openAct(k, opt = {}) { A = { k, ...opt }; renderAct(); if (k === "ear") setTimeout(() => A && A.qs && toneSure(A.qs[0].midi), 150); }
 function renderAct() { if (!A) return; const k = A.k; if (k === "plan") { openSheet(`<div class="act-head"><span class="ic" style="background:#5C6BC0">${I.book}</span><h2>${t("pl_title")}</h2><button class="icon-btn" data-act="close" aria-label="Close">${I.close}</button></div>` + actPlan(), true); return; } const b = k === "piece" ? actPiece() : k === "sight" ? actSight() : k === "nr" ? actNR() : k === "tech" ? actTech() : k === "theory" ? actTheory() : actQuiz(); openSheet(actHead(k) + b, true); }
 /* piece practice: exact seconds */
 const elapsed = () => A && A.start ? (Date.now() - A.start) / 1000 : 0;
@@ -729,8 +730,9 @@ function actQuiz() {
  ${Q.p ? `<h2>${esc(Q.p)}</h2>` : ""}${Q.vis ? `<div class="staffbox ${k === "solf" ? "big" : ""}">${Q.vis}</div>` : ""}
  ${k === "solf" && typeof solfMicBtn === "function" ? solfMicBtn() : ""}
  ${Q.ear ? `<div style="text-align:center;padding:16px"><button class="btn" data-act="earPlay" style="font-size:1.1rem;padding:16px 26px">${I.play} ${t("playAgain")}</button></div>` : ""}
- ${k === "solf" && !A.tap && A.picked == null ? `<button class="linkbtn" data-act="solfTap">${t("solf_tap")}</button>` : `<div class="opts ${Q.grid || ""}">${Q.opts.map(o => `<button class="opt ${A.picked != null ? (o === Q.ans ? "right" : o === A.picked ? "wrong" : "") : ""}" data-act="ans" data-o="${esc(o)}" ${A.picked != null ? "disabled" : ""}>${esc(o)}</button>`).join("")}</div>`}
- ${A.picked != null ? `<div class="card" style="text-align:center;font-weight:800;color:${A.picked === Q.ans ? "var(--good)" : "var(--bad)"}">${A.picked === Q.ans ? (A.sung ? t("mic_sungRight") : t("correct")) : t("notQuite", { a: esc(Q.ans) })}</div><button class="btn block" data-act="nextQ">${A.i === A.qs.length - 1 ? t("finish") : t("next")}</button>` : ""}</div>`;
+ ${k === "solf" && A.nameOk && A.picked == null ? "" : `<div class="opts ${Q.grid || ""}">${Q.opts.map(o => `<button class="opt ${A.picked != null ? (o === Q.ans ? "right" : o === A.picked ? "wrong" : "") : ""}" data-act="ans" data-o="${esc(o)}" ${A.picked != null ? "disabled" : ""}>${esc(o)}</button>`).join("")}</div>`}
+ ${k === "solf" && A.picked == null && !A.nameOk ? `<div class="small muted" style="text-align:center">${t("solf_step1")}</div>` : ""}
+ ${A.picked != null ? `<div class="card" style="text-align:center;font-weight:800;color:${A.picked === Q.ans && A.res[A.i] ? "var(--good)" : A.picked === Q.ans ? "#c98a00" : "var(--bad)"}">${k === "solf" && A.picked === Q.ans ? `${t("solf_name")} ✓ · ${t("solf_pitch")} ${A.sung ? "✓" : "✗"}<div class="small" style="font-weight:600">${A.sung ? t("mic_sungRight") : A.tap ? "" : t("solf_pitchLater")}</div>` : A.picked === Q.ans ? t("correct") : t("notQuite", { a: esc(Q.ans) })}</div><button class="btn block" data-act="nextQ">${A.i === A.qs.length - 1 ? t("finish") : t("next")}</button>` : ""}</div>`;
 }
 function guessArea(s) {
   const x = s.toLowerCase();
@@ -817,6 +819,9 @@ function studentClick(b, e) {
     case "sightNew": A.ex = null; A.rated = null; if (typeof FOLLOW !== "undefined" && FOLLOW) { micStop(); FOLLOW = null; } renderAct(); return;
     case "sightBars": A.nb = +b.dataset.n; A.ex = null; A.rated = null; renderAct(); return;
     case "ncLvl": A.lvl = id; S.ncLvl = id; save(); renderAct(); return;
+    case "solfHear": toneSure(A.qs[A.i].midi); return;
+    case "solfRetry": A.miss = null; renderAct(); return;
+    case "solfSkip": A.picked = A.qs[A.i].ans; A.res[A.i] = false; A.sung = false; A.miss = null; renderAct(); return;
     case "solfTap": A.tap = true; if (typeof micStop === "function") micStop(); renderAct(); return;
     case "ncTap": if (A.run) { A.run.mic = false; micStop(); renderAct(); } return;
     case "ncStart": case "ncAgain": { ac(); const lvl = A.lvl || S.ncLvl || NC_LEVELS[0].id, L = NC_LEVELS.find(x => x.id === lvl) || NC_LEVELS[0]; A.run = { lvl: L.id, i: 0, ok: 0, res: [], t0: Date.now(), cur: ncNote(L) }; A.run.timer = setInterval(() => { const e = document.getElementById("ncT"); if (e && A?.run) e.textContent = clockOf((Date.now() - A.run.t0) / 1000); }, 250);
@@ -838,16 +843,19 @@ function studentClick(b, e) {
     case "dAns": { if (A.picked != null) return; const Q = A.daily; A.picked = b.dataset.o; const ok = A.picked === Q.ans; if (Q.midi) tone(Q.midi); else if (Q.midis) Q.midis.forEach((m, i) => tone(m, i * .55)); else ding(ok); award("theory", ACT.theory.coins, ok ? 2 : 0); renderAct(); refreshTop(); return; }
     case "theoryMore": A = { k: "theory", more: true }; renderAct(); return;
     case "vidWatched": { const v = vwOf(id); v.w[TK] = !v.w[TK]; if (!v.w[TK]) delete v.w[TK]; save(); if (v.w[TK] && !v.p[TK]) { v.p[TK] = 1; } renderAct(); refreshTop(); return; }
-    case "earPlay": tone(A.qs[A.i].midi); return;
+    case "earPlay": toneSure(A.qs[A.i].midi); return;
     case "ans": {
-      if (A.picked != null) return; const Q = A.qs[A.i]; A.picked = b.dataset.o; const ok = A.picked === Q.ans; A.res[A.i] = ok;
-      if (Q.midi && !Q.ear) tone(Q.midi); else if (Q.midis) Q.midis.forEach((m, i) => tone(m, i * .55)); else ding(ok); renderAct(); return;
+      if (A.picked != null) return; const Q = A.qs[A.i];
+      /* solfège: 1) the name (tap)  2) then sing it — both must be right */
+      if (A.k === "solf" && !A.tap && b.dataset.o === Q.ans) { A.nameOk = true; A.miss = null; okPop(true); renderAct(); return; }
+      A.picked = b.dataset.o; const ok = A.picked === Q.ans; A.res[A.i] = ok;
+      if (Q.ear) okPop(ok); else if (Q.midi) tone(Q.midi); else if (Q.midis) Q.midis.forEach((m, i) => tone(m, i * .55)); else ding(ok); renderAct(); return;
     }
-    case "nextQ": A.i++; A.picked = null; A.sung = false; if (typeof micStop === "function") micStop();
+    case "nextQ": A.i++; A.picked = null; A.sung = false; A.nameOk = false; A.miss = null; if (typeof micStop === "function") micStop();
       if (A.i >= A.qs.length) { const c = A.res.filter(Boolean).length; if (A.more) earn(c); else if (c * 2 >= A.qs.length) award(A.k, ACT[A.k].coins, c); else { earn(c); toast(t("tryMore")); } if (A.res.every(Boolean)) celebrate(); }
-      else if (A.qs[A.i].ear) setTimeout(() => tone(A.qs[A.i].midi), 250);
+      else if (A.qs[A.i].ear) setTimeout(() => toneSure(A.qs[A.i].midi), 250);
       renderAct(); refreshTop(); return;
-    case "again": { const k = A.k, more = A.more; A = { k, more }; renderAct(); if (k === "ear") setTimeout(() => tone(A.qs[0].midi), 250); return; }
+    case "again": { const k = A.k, more = A.more; A = { k, more }; renderAct(); if (k === "ear") setTimeout(() => toneSure(A.qs[0].midi), 250); return; }
     case "shopTab": shopTab = b.dataset.v; break;
     case "shop": { const it = ACCS.find(x => x.id === id); if (!S.owned.includes(id)) { if (S.coins < it.price) { toast(t("notEnough")); return; } S.coins -= it.price; S.owned.push(id); toast(t("bought")); celebrate(); } S.avatar.acc = id; break; }
     case "card": { const c = CARDS.find(x => x.id === id); if (S.cards.includes(id)) return; if (S.coins < c.p) { toast(t("notEnough")); return; } S.coins -= c.p; S.cards.push(id); toast(t("cardGot")); celebrate(); break; }

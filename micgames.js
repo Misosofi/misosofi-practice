@@ -20,11 +20,16 @@ async function micStart(mode, onLive, onNote) {
 
 /* ---------- solfège: sing it ---------- */
 function solfMicBtn() {
-  if (A?.k !== "solf" || A.picked != null) return "";
+  if (A?.k !== "solf" || A.picked != null || !A.nameOk) return "";
   if (A.tap) return "";
+  const Q = A.qs[A.i], nm = esc(Q.ans);
+  if (A.miss) return `<div class="card stack" style="text-align:center"><b>${t("solf_name")} ✓ <span style="color:var(--bad)">· ${t("solf_pitch")} ✗</span></b>
+    <div class="small">${A.miss === "quiet" ? t("mic_quiet") : t("solf_heard", { n: A.miss, a: nm })}</div>
+    <div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn soft" data-act="solfHear">🔊 ${t("solf_hear", { a: nm })}</button><button class="btn" data-act="solfRetry">🎤 ${t("solf_retry")}</button></div>
+    <button class="linkbtn" data-act="solfSkip">${t("next")} →</button></div>`;
   if (MIC.mode !== "solf" && S.micOk) setTimeout(() => { if (A?.k === "solf" && A.picked == null && !A.tap && MIC.mode !== "solf") micStart("solf", solfLive).then(ok => ok && renderAct()); }, 150);
-  return MIC.mode === "solf" ? `${micLiveHTML()}<div class="big-msg" style="text-align:center">🎤 ${t("mic_singNow")}</div>`
-    : `<button class="btn block" data-mic="solf" style="padding:18px">🎤 ${t("mic_sing")}</button>`;
+  return MIC.mode === "solf" ? `<div class="big-msg" style="text-align:center;color:var(--good)">✓ ${nm} — ${t("solf_nowSing")}</div>${micLiveHTML()}<div class="big-msg" style="text-align:center">🎤 ${t("mic_singNow")}</div><button class="linkbtn" data-act="solfTap">${t("solf_tap")}</button>`
+    : `<div class="big-msg" style="text-align:center;color:var(--good)">✓ ${nm} — ${t("solf_nowSing")}</div><button class="btn block" data-mic="solf" style="padding:18px">🎤 ${t("mic_sing")}</button><button class="linkbtn" data-act="solfTap">${t("solf_tap")}</button>`;
 }
 function solfLive(o) {
   micShow(o);
@@ -33,8 +38,8 @@ function solfLive(o) {
   if (o.midi != null && pcOf(o.midi) === pcOf(Q.midi) && Math.abs(o.cents) < 45) MIC.hold++; else MIC.hold = Math.max(0, MIC.hold - 1);
   if (o.midi != null) MIC.heard = o.midi;
   if (MIC.hold >= 14) {   /* about half a second on the right note */
-    micStop(); A.picked = Q.ans; A.res[A.i] = true; A.sung = true; S.sangOn = TK; ding(true); renderAct();
-  } else if (Date.now() - MIC.t0 > 15000) { micStop(); toast(MIC.heard != null ? t("mic_heard", { n: pcName(MIC.heard) }) : t("mic_quiet")); A.tap = true; renderAct(); }
+    micStop(); A.picked = Q.ans; A.res[A.i] = true; A.sung = true; S.sangOn = TK; okPop(true); renderAct();
+  } else if (Date.now() - MIC.t0 > 9000) { micStop(); A.miss = MIC.heard != null ? pcName(MIC.heard) : "quiet"; renderAct(); }
 }
 
 /* ---------- Note Catcher: play on my piano ---------- */

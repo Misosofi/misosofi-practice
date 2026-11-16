@@ -7,12 +7,12 @@ const PITCH = { on: false, stream: null, an: null, buf: null, timer: 0, onNote: 
 async function pitchStart(onNote, onLive) {
   pitchStop();
   const c = ac(); if (!c || !navigator.mediaDevices?.getUserMedia) throw new Error("nomic");
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  const stream = await (sessRec(), navigator.mediaDevices).getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
   const src = c.createMediaStreamSource(stream), an = c.createAnalyser(); an.fftSize = 4096; src.connect(an);
   Object.assign(PITCH, { floor: null, on: true, stream, an, buf: new Float32Array(an.fftSize), onNote, onLive, cand: null, n: 0, held: null, prev: 0, armed: false });
   PITCH.timer = setInterval(pitchTick, 25);
 }
-function pitchStop() {
+function pitchStop() { setTimeout(sessPlay, 300);
   clearInterval(PITCH.timer); PITCH.on = false;
   if (PITCH.stream) PITCH.stream.getTracks().forEach(t => t.stop());
   PITCH.stream = null; PITCH.an = null;
@@ -59,7 +59,7 @@ const SM = { on: false, own: false, stream: null, an: null, buf: null, timer: 0,
 async function smStart() {
   if (SM.on) return true;
   try {
-    const c = ac(); const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const c = ac(); const stream = await (sessRec(), navigator.mediaDevices).getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
     smUse(stream, true); return true;
   } catch (e) { return false; }
 }
@@ -78,7 +78,7 @@ function smUse(stream, own) {
 }
 /* the recorder hands over its microphone so both can run together */
 function smAttach(stream) { if (SM.on) smUse(stream, false); }
-function smStop() { clearInterval(SM.timer); if (SM.own && SM.stream) SM.stream.getTracks().forEach(t => t.stop()); Object.assign(SM, { on: false, own: false, stream: null, an: null }); }
+function smStop() { setTimeout(sessPlay, 300); clearInterval(SM.timer); if (SM.own && SM.stream) SM.stream.getTracks().forEach(t => t.stop()); Object.assign(SM, { on: false, own: false, stream: null, an: null }); }
 const smLabel = () => t("heardLbl", { t: fmtDur(Math.round(((SM.heardMs || 0) - ((typeof A !== "undefined" && A?.h0) || 0)) / 1000)) });
 /* the quiet level of the room: drops at once when it gets quieter, and only creeps up with background noise (never with playing) */
 function smFloor(f, r) { if (f == null) return Math.min(r, 0.003); if (r < f) return Math.max(r, 0.0005); if (r < f * 2) return f * .99 + r * .01; return f; }

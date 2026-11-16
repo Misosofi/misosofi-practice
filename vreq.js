@@ -48,7 +48,7 @@ function vrSheet() {
 async function vrCam() {
   const au = VR?.req?.media === "audio", v = document.getElementById("vrLive"); if (!au && !v) return;
   try {
-    if (!VR.stream) VR.stream = await navigator.mediaDevices.getUserMedia(au ? { audio: true } : { audio: true, video: { facingMode: { ideal: VR.facing }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24 } } });
+    if (!VR.stream) VR.stream = await (sessRec(), navigator.mediaDevices).getUserMedia(au ? { audio: true } : { audio: true, video: { facingMode: { ideal: VR.facing }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24 } } });
     if (v) v.srcObject = VR.stream;
   } catch (e) { toast(au ? t("micBlocked") : t("pl_camBlocked")); }
 }
@@ -129,7 +129,7 @@ function tvrStop() { if (TVR?.mr && TVR.mr.state !== "inactive") TVR.mr.stop(); 
 function tvrRelease() { if (TVR?.mr && TVR.mr.state !== "inactive") { TVR.discard = true; TVR.mr.stop(); } TVR?.stream?.getTracks().forEach(x => x.stop()); if (TVR?.url) URL.revokeObjectURL(TVR.url); TVR = null; }
 async function tvrOpen(id, kind) {
   tvrRelease(); TVR = { id, kind };
-  try { TVR.stream = await navigator.mediaDevices.getUserMedia(kind === "video" ? { audio: true, video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } } : { audio: true }); }
+  try { TVR.stream = await (sessRec(), navigator.mediaDevices).getUserMedia(kind === "video" ? { audio: true, video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } } : { audio: true }); }
   catch (e) { TVR = null; toast(kind === "video" ? t("pl_camBlocked") : t("micBlocked")); }
   TrenderDetail();
 }

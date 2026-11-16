@@ -133,7 +133,7 @@ function cpAnswer(v) {
     F.miss = true; const b = document.querySelector(`[data-cp="ans"][data-v="${v}"]`); if (b) { b.classList.add("nope"); setTimeout(() => b.classList.remove("nope"), 500); }
   }
 }
-function cpDone() { const F = CP; F.phase = "done"; gvStop(); clearTimeout(F.tm); earn(Math.floor(F.ok / 2)); if (typeof refreshTop === "function") refreshTop(); if (F.ok >= 9) celebrate();
+function cpDone() { const F = CP; F.phase = "done"; if (typeof markDone === "function") markDone("cplace"); gvStop(); clearTimeout(F.tm); earn(Math.floor(F.ok / 2)); if (typeof refreshTop === "function") refreshTop(); if (F.ok >= 9) celebrate();
   S.cplaceLog = (S.cplaceLog || []).concat({ date: TK, key: F.key, lv: F.lv + 1, ok: F.ok, of: CP_N }).slice(-60); save(); cpRender(); }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-cp]"); if (!b) return; const a = b.dataset.cp, F = CP;

@@ -60,7 +60,7 @@ function THwAfter() {
 async function THwRec(kind) {
   try {
     const cons = kind === "video" ? { audio: true, video: { facingMode: { ideal: "user" }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 20 } } } : { audio: true };
-    const stream = await navigator.mediaDevices.getUserMedia(cons);
+    const stream = await (sessRec(), navigator.mediaDevices).getUserMedia(cons);
     const opts = kind === "video" ? { videoBitsPerSecond: 400000, audioBitsPerSecond: 48000 } : { audioBitsPerSecond: 48000 };
     let mr; try { mr = new MediaRecorder(stream, opts); } catch (e) { mr = new MediaRecorder(stream); }
     const chunks = []; HWREC = { mr, stream, kind, t0: Date.now(), timer: 0 };

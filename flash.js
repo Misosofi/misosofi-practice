@@ -123,7 +123,7 @@ function flHeard(midi) {
   else if (Math.abs(midi - flMidi(want)) <= 24) flJudge(false);
 }
 function flDone() {
-  const F = FL; F.phase = "done"; micStop();
+  const F = FL; F.phase = "done"; micStop(); if (typeof markDone === "function") markDone("flash");
   if (F.ans !== "say") { earn(Math.floor(F.ok / 2)); const B = S.flash.best ||= {}, k = F.lv + F.kind; if (B[k] == null || F.ok > B[k]) B[k] = F.ok; }
   if (F.ok >= 9) celebrate(); save(); flRender();
 }

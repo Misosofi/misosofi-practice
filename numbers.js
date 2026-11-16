@@ -63,12 +63,12 @@ function nbRender() {
       <button class="btn block" data-nb="start">🔁 ${t("fl_again")}</button><button class="btn ghost block" data-nb="settings">⚙️ ${t("fl_change")}</button></div>`);
     return;
   }
-  const k = nbKey(), slots = F.q.map((d, i) => `<span class="nb-slot ${i < F.got.length ? "ok" : ""} ${F.phase === "reveal" && !F.lastOk ? "bad" : ""}">${i < F.got.length || F.phase === "reveal" ? d : "?"}</span>`).join("");
+  const k = nbKey(), slots = F.phase === "home" ? `<span class="nb-home">🏠 ${t("nb_homeNow")}</span>` : F.q.map((d, i) => `<span class="nb-slot ${i < F.got.length ? "ok" : ""} ${F.phase === "reveal" && !F.lastOk ? "bad" : ""}">${i < F.got.length || F.phase === "reveal" ? d : "?"}</span>`).join("");
   openSheet(`<div class="stack nb">${head}
     <div class="fl-top"><span>${F.i + 1} / ${NB_N}</span><span>${F.recOn ? "🔴 REC · " : ""}✓ ${F.ok}</span></div>
     <div class="nb-key">🔑 ${esc(k[0])} ${t("nb_major")} · 1 = ${esc(pcName(k[1]))}</div>
     <div class="nb-slots">${slots}</div>
-    <div class="fl-msg">${F.phase === "listen" ? "👂 " + t("nb_listen") : F.phase === "reveal" ? (F.lastOk ? "✅ " : "❌ ") + F.q.join(" – ") : F.ans === "piano" ? "🗣🎹 " + t("nb_sayPlay") : "🗣👆 " + t("nb_sayTap")}</div>
+    <div class="fl-msg">${F.phase === "home" ? "🏠 " + t("nb_homeHow") : F.phase === "listen" ? `<span class="nb-qnow">❓ ${t("nb_qNow")}</span>` : F.phase === "reveal" ? (F.lastOk ? "✅ " : "❌ ") + F.q.join(" – ") : F.ans === "piano" ? "🗣🎹 " + t("nb_sayPlay") : "🗣👆 " + t("nb_sayTap")}</div>
     ${F.ans === "tap" && F.phase === "ask" ? `<div class="nb-pad">${[1, 2, 3, 4, 5, 6, 7, 8].filter(n => n <= Math.max(F.top, 5)).map(n => `<button class="btn soft" data-nb="tap" data-v="${n}">${n}</button>`).join("")}</div>` : ""}
     <div class="row" style="gap:8px"><button class="btn soft grow" data-nb="again">🔁 ${t("nb_again")}</button><button class="btn soft grow" data-nb="one">🎵 ${t("nb_one")}</button></div>
     ${F.ans === "piano" ? micLiveHTML() : ""}</div>`);
@@ -82,9 +82,12 @@ async function nbStart() {
 }
 function nbNext(first) {
   const F = NB; if (!F) return; if (F.i >= NB_N) return nbDone();
-  F.q = nbQ(); F.got = []; F.phase = "listen"; nbRender(); const run = F.run;
-  const ms = (first || F.newKey) ? nbCadence() : 0; F.newKey = false;
-  const end = nbPlayQ(ms + (ms ? 300 : 0));
+  F.q = nbQ(); F.got = []; const run = F.run, home = first || F.newKey; F.newKey = false;
+  /* first "this is home" (chords + 1), a clear pause, THEN the question — each part shown on the screen */
+  F.phase = home ? "home" : "listen"; nbRender();
+  const ms = home ? nbCadence() + 900 : 0;
+  if (home) setTimeout(() => { if (NB?.run === run && NB.phase === "home") { NB.phase = "listen"; nbRender(); } }, ms - 150);
+  const end = nbPlayQ(ms);
   clearTimeout(F.tm); F.tm = setTimeout(() => { if (NB?.run === run && NB.phase === "listen") { NB.phase = "ask"; nbRender(); } }, end);
 }
 const nbPc = m => ((m % 12) + 12) % 12;
@@ -101,7 +104,7 @@ function nbJudge(ok) {
   else { const ms = nbPlayQ(450); F.tm = setTimeout(() => nbNext(), ms + 700); }
 }
 async function nbDone() {
-  const F = NB; F.phase = "done"; earn(Math.floor(F.ok / 2)); if (typeof refreshTop === "function") refreshTop(); if (F.ok >= 7) celebrate();
+  const F = NB; F.phase = "done"; if (typeof markDone === "function") markDone("numb"); earn(Math.floor(F.ok / 2)); if (typeof refreshTop === "function") refreshTop(); if (F.ok >= 7) celebrate();
   S.numbLog = (S.numbLog || []).concat({ date: TK, key: F.key, lv: F.lv + 1, ok: F.ok, of: NB_N }).slice(-60); save();
   if (F.recOn) await nbRecStop(true);
   micStop(); nbRender();
@@ -109,7 +112,7 @@ async function nbDone() {
 /* recording the whole round (the app's sounds, the child's voice and the piano) → sent to the teacher */
 async function nbRecStart() {
   const F = NB; let st = (typeof PITCH !== "undefined" && PITCH.stream) || null;
-  try { if (!st) { st = await navigator.mediaDevices.getUserMedia({ audio: true }); F.ownSt = st; } } catch (e) { toast(t("micBlocked")); return; }
+  try { if (!st) { st = await (sessRec(), navigator.mediaDevices).getUserMedia({ audio: true }); F.ownSt = st; } } catch (e) { toast(t("micBlocked")); return; }
   let mr; try { mr = new MediaRecorder(st, { audioBitsPerSecond: 64000 }); } catch (e) { try { mr = new MediaRecorder(st); } catch (e2) { return; } }
   F.mr = mr; F.chunks = []; F.t0 = Date.now(); F.recOn = true;
   mr.ondataavailable = e => { if (e.data.size) F.chunks.push(e.data); };

@@ -122,7 +122,9 @@ const TERMS=[
  [["smorzando","dying away"],["stringendo","gradually getting faster"],["sotto voce","in an undertone, quietly"],["attacca","go straight on"],["calando","getting softer and slower"]]];
 const TECHN=["tonic","supertonic","mediant","subdominant","dominant","submediant","leading note"];
 let AC=null;
-function ac(){try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state!=="running")AC.resume().catch(()=>{});if(!PIANO.loading)pianoLoad()}catch(e){}return AC}
+function sessPlay(){try{if((typeof PITCH!=="undefined"&&PITCH.on)||(typeof SM!=="undefined"&&SM.on)||(typeof CC!=="undefined"&&CC))return;if(navigator.audioSession&&navigator.audioSession.type!=="playback")navigator.audioSession.type="playback"}catch(e){}}
+function sessRec(){try{if(navigator.audioSession)navigator.audioSession.type="play-and-record"}catch(e){}}
+function ac(){try{if(!AC){sessPlay()}if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state!=="running")AC.resume().catch(()=>{});if(!PIANO.loading)pianoLoad()}catch(e){}return AC}
 /* iPhone: after the microphone was used (or a call/other app), the sound engine can be paused ("interrupted").
    Wake it on every tap, and let actions wait until it really runs before scheduling sounds. */
 /* every sound goes through one gain node, so leaving a screen can silence sounds that were already scheduled */
@@ -312,3 +314,8 @@ Object.assign(I,{
 });
 /* exact seconds stored with one decimal */
 const sec1=x=>Math.round((+x||0)*10)/10;
+
+/* a note to listen to: wait until the sound is really on and the piano is loaded (the first note was sometimes silent) */
+async function toneSure(midi){await acReady();const t0=performance.now();while(!PIANO.ready&&performance.now()-t0<2500)await new Promise(r=>setTimeout(r,100));tone(midi)}
+/* "right!" without a pitch, so ear games never hear a second note */
+function okPop(ok){const c=ac();if(!c)return;const n=c.sampleRate*.18|0,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,ok?6:2);const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=b;f.type=ok?"highpass":"lowpass";f.frequency.value=ok?3500:500;g.gain.value=ok?.5:.35;s.connect(f);f.connect(g);g.connect(outNode());s.start()}
