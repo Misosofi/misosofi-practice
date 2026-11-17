@@ -1,4 +1,4 @@
-const APPV = "20261117i";
+const APPV = "20261117j";
 /* iPhone は「ズームしない」設定を むしするので、2かい つづけて たたいた ときの ズームと、ピンチの ズームを ここで とめる */
 (function () {
   let last = 0;
@@ -408,7 +408,7 @@ SCENES.sk5 = sc => {
   const demo = () => {
     lock = true; say.className = "say"; say.textContent = "コン コン！"; playVoice("B10k");
     const k = [61, 63, 66, 68, 70][Math.floor(Math.random() * 5)];
-    [0, 1].forEach(i => setTimeout(() => { if (S.scene !== "sk5") return; const e = kb.els[k]; e.classList.remove("found"); void e.offsetWidth; e.classList.add("found"); setTimeout(() => e.classList.remove("found"), 300); }, 120 + i * 380));
+    
     setTimeout(() => { lock = false; say.className = "say"; say.textContent = "どうぞ！"; }, 1100);
   };
   const kb = keyboard(60, 1, (m, el, real) => {
@@ -916,7 +916,6 @@ SCENES.g3 = sc => {
     CUES.forEach((n, ci) => timers.push(setTimeout(() => {
       clear(); active = { n, i: ci, done: false };
       say.className = "say"; say.textContent = n === 2 ? "ふたつ！" : "みっつ！"; if (!(window.MisoListen && MisoListen.running)) playVoice(n === 2 ? "E3" : "E4");
-      timers.push(setTimeout(() => { if (active && active.i === ci && !active.done) groupsIn(48, 2).filter(g => g.n === n).forEach(g => g.keys.forEach(k => kb.els[k].classList.add(n === 2 ? "glow2" : "glow3"))); }, 1500));
     }, 2000 + ci * GAP)));
     timers.push(setTimeout(() => {
       active = null; clear(); if (stop) stop(); stop = null;
@@ -978,7 +977,7 @@ function playAlong(sc, o) {
     /* くりーとの ばん：ながい 音（ター）を 1つ */
     const m = keysOf[Math.floor(Math.random() * keysOf.length)], e = kb.els[m];
     say.className = "say"; say.textContent = "ター…"; if (!playVoice("I3")) { }
-    P.play(m, .05, 1.6, .3); e.classList.add("found"); T(() => e.classList.remove("found"), 1500);
+    P.play(m, .05, 1.6, .3);
     if (window.MisoListen) MisoListen.mute(3400);
     /* さん、はい！ → こどもの ばん */
     T(() => { say.textContent = "さん、はい！"; playVoice("D13"); }, 1900);
@@ -1114,7 +1113,7 @@ function rhythmCopy(sc, o) {
     /* すべて 音の 時計で よやく：1小節め ぜんそう／2小節め くりーとの おてほん（ピアノ＋「タン」「タ」の こえ）／3小節め「さん・はい」／4小節め こどもの ばん */
     const t0 = c.currentTime + .9, rel = t => (t - c.currentTime) * 1000;
     for (let b = 0; b < 4; b++) waltzBar(t0 - c.currentTime + b * bar, ...R4_PROG[b % 2]);
-    let at = t0 + bar; D.forEach(d => { P.chord(g.keys, at - c.currentTime, Math.min(d, 1.6) * B * .9, .3); playVAt(R4_SYL(d), at - .04); flash(g.keys, rel(at)); at += d * B; });
+    let at = t0 + bar; D.forEach(d => { P.chord(g.keys, at - c.currentTime, Math.min(d, 1.6) * B * .9, .3); playVAt(R4_SYL(d), at - .04); at += d * B; });
     if (window.MisoListen) MisoListen.mute(rel(t0 + bar * 2) + 300);
     const cnt = t0 + bar * 2;
     [0, 1, 2].forEach(k => P.play(84, cnt + k * B - c.currentTime, .1, .07));
