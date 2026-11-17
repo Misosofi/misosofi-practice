@@ -189,3 +189,11 @@ input.name{font:inherit;font-size:24px;font-weight:700;border:2.5px dashed #D9C3
 .cue.go{animation:cuego .45s ease-out}
 .cue.hit{background:#F7C948;border-color:#E0A82E}
 @keyframes cuego{0%{transform:scale(1.35);background:#BFE0F7;border-color:#4F8DBA}100%{transform:scale(1)}}
+/* もどる・つづきから */
+.top{gap:8px;justify-content:flex-start}
+.top .coins{margin-left:auto}
+.back-btn{font:inherit;font-size:14px;font-weight:800;color:#3b2f25;background:#fff;border:2px solid #E6D6BC;border-radius:999px;padding:6px 14px;min-height:40px}
+.back-btn[hidden]{display:none}
+.btn.cont{background:#7FB77E;box-shadow:0 5px 0 #5E9A5D;color:#fff}
+.donestar{display:block;color:#E0A82E;font-size:14px;letter-spacing:2px}
+.kbd .b.rest{opacity:.35}
