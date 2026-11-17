@@ -208,3 +208,8 @@ input.name{font:inherit;font-size:24px;font-weight:700;border:2.5px dashed #D9C3
 .sdots i.done{background:var(--sky2)}
 .sdots i.now{width:16px;height:16px;background:var(--sun);box-shadow:0 0 0 3px #FFF0C8}
 .fill{padding-top:110px}
+/* みっつは ダメ：× */
+.kbd .b.nope{background:#C9605A;box-shadow:inset 0 -5px 0 #9E443F}
+.kbd .b.nope::after{content:"✕";position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);color:#fff;font-weight:900;font-size:22px}
+/* うえの ホーム・点は スクロールしても いつも 見える */
+.top{position:sticky;top:0;background:rgba(248,241,228,.94);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);padding-top:max(10px, env(safe-area-inset-top))}
