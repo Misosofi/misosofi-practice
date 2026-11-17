@@ -1,4 +1,4 @@
-const APPV = "20261117m";
+const APPV = "20261117n";
 /* iPhone は「ズームしない」設定を むしするので、2かい つづけて たたいた ときの ズームと、ピンチの ズームを ここで とめる */
 (function () {
   let last = 0;
@@ -86,9 +86,8 @@ let KEYTAP = null;
 const gp = (m, dur = .6, vol = .22) => { if (isBlack(m)) P.chord(groupOf(m).keys, 0, dur, vol * .8); else P.play(m, 0, dur, vol); };
 /* ねんれいで くりかえしの かずを かえる：1さい＝ぜんぶ、2さい＝ひとつとばし、3さい〜＝ふたつとばし（さいていでも 3こ） */
 function byAge(list, min = 3) {
-  const a = S.age || 2, step = a <= 1 ? 1 : a === 2 ? 2 : 3;
-  const out = list.filter((_, i) => i % step === 0);
-  return out.length >= min ? out : list.slice(0, Math.max(min, out.length));
+  /* どれを とばすかは アツコさんが きめる（2026-11-17）。きまるまでは ぜんぶ やる */
+  return list;
 }
 /* こえを 音の 時計で ぴったりの タイミングに ならす（一部分だけ も ならせる） */
 const VBUF = {};
@@ -422,7 +421,7 @@ function realKeysSwitch(sc, kb, onKey, label = "キーボード・ピアノで �
 
 SCENES.sk5 = sc => {
   /* くりーとが「コン コン！」→ こどもが 2かい ノック → また くりーとが「コン コン！」…（いわれた かずだけ たたく） */
-  const NEED = (S.age || 2) <= 1 ? 8 : (S.age || 2) === 2 ? 6 : 4; let n = 0, done = false, lock = true;
+  const NEED = 8; let n = 0, done = false, lock = true;
   sc.innerHTML = SK_TAG + hero("こんどは くろい けんばん だけ<br>ノック ノック してみよう！<br>コン コン！");
   const say = document.createElement("div"); say.className = "say"; say.innerHTML = "&nbsp;";
   const knocks = document.createElement("div"); knocks.className = "knocks"; knocks.innerHTML = "<i></i>".repeat(NEED);
