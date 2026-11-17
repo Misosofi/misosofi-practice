@@ -1,4 +1,4 @@
-const APPV = "20261117j";
+const APPV = "20261117k";
 /* iPhone は「ズームしない」設定を むしするので、2かい つづけて たたいた ときの ズームと、ピンチの ズームを ここで とめる */
 (function () {
   let last = 0;
@@ -155,7 +155,21 @@ const groupsIn = (low, octaves) => { const g = []; for (let o = 0; o < octaves; 
 const SCENES = {};
 let cleanup = null;
 /* もどる：いままで 見た ばめんを おぼえておく（アプリを とじても のこる） */
+/* セリフの とちゅうで つぎの がめんに いかない：
+   こどもが タップして すすむ とき → すぐ（こえは とめる）／じどうで すすむ とき → いまの セリフが おわるまで まつ */
+let lastTap = 0;
+document.addEventListener("pointerdown", () => { lastTap = Date.now(); }, true);
+const voiceBusy = () => (vAudio && !vAudio.paused && !vAudio.ended) || (window.speechSynthesis && speechSynthesis.speaking);
+function stopVoice() { try { if (vAudio) { vAudio.pause(); vAudio = null; } if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { } }
+let goWait = 0;
 function go(name, back) {
+  clearTimeout(goWait);
+  const byTap = Date.now() - lastTap < 600;
+  if (byTap) stopVoice();
+  else if (voiceBusy()) { const t0 = Date.now(), from = S.scene; const w = () => { if (S.scene !== from) return; if (voiceBusy() && Date.now() - t0 < 12000) goWait = setTimeout(w, 150); else goTo(name, back); }; goWait = setTimeout(w, 150); return; }
+  goTo(name, back);
+}
+function goTo(name, back) {
   if (cleanup) { try { cleanup(); } catch (e) { } cleanup = null; }
   S.nav = S.nav || [];
   if (!back && name !== "home" && S.scene && S.scene !== "home" && S.scene !== name) { S.nav.push(S.scene); S.nav = S.nav.slice(-40); }
@@ -314,6 +328,8 @@ let vAudio = null, vLast = "", vLastAt = 0, pendingSound = null;
 document.addEventListener("pointerdown", () => { if (pendingSound) { const f = pendingSound; pendingSound = null; f(); } }, true);
 function playVoice(id) {
   if (!VOICE_HAVE.has(id)) return false;
+  /* まえの セリフが まだ とちゅう（タップされて いない）なら、おわってから ながす */
+  if (vAudio && !vAudio.paused && !vAudio.ended && Date.now() - lastTap > 600 && !nameBusy) { const cur = vAudio; cur.addEventListener("ended", () => { if (vAudio === cur) playVoice(id); }, { once: true }); return true; }
   if (nameBusy) { vLast = vnorm(VOICE_TEXT[id] || ""); vLastAt = Date.now(); nameBusy.then(() => playVoice(id)); return true; }
   try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { }
   if (vAudio) { vAudio.pause(); vAudio = null; }
