@@ -1,4 +1,4 @@
-const APPV = "20261117h";
+const APPV = "20261117i";
 /* iPhone は「ズームしない」設定を むしするので、2かい つづけて たたいた ときの ズームと、ピンチの ズームを ここで とめる */
 (function () {
   let last = 0;
@@ -408,7 +408,7 @@ SCENES.sk5 = sc => {
   const demo = () => {
     lock = true; say.className = "say"; say.textContent = "コン コン！"; playVoice("B10k");
     const k = [61, 63, 66, 68, 70][Math.floor(Math.random() * 5)];
-    [0, 1].forEach(i => setTimeout(() => { if (S.scene !== "sk5") return; P.play(k, 0, .5, .2); knock(); const e = kb.els[k]; e.classList.remove("found"); void e.offsetWidth; e.classList.add("found"); setTimeout(() => e.classList.remove("found"), 300); }, 120 + i * 380));
+    [0, 1].forEach(i => setTimeout(() => { if (S.scene !== "sk5") return; const e = kb.els[k]; e.classList.remove("found"); void e.offsetWidth; e.classList.add("found"); setTimeout(() => e.classList.remove("found"), 300); }, 120 + i * 380));
     setTimeout(() => { lock = false; say.className = "say"; say.textContent = "どうぞ！"; }, 1100);
   };
   const kb = keyboard(60, 1, (m, el, real) => {
