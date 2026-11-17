@@ -1,4 +1,4 @@
-const APPV = "20261117l";
+const APPV = "20261117m";
 /* iPhone は「ズームしない」設定を むしするので、2かい つづけて たたいた ときの ズームと、ピンチの ズームを ここで とめる */
 (function () {
   let last = 0;
@@ -80,6 +80,9 @@ const WHITE_PC = [0, 2, 4, 5, 7, 9, 11];
 const isBlack = m => (m % 12) in BLACK_PC;
 const groupOf = m => { const pc = m % 12, o = Math.floor(m / 12); return pc === 1 || pc === 3 ? { n: 2, id: o + "-2", keys: [o * 12 + 1, o * 12 + 3] } : { n: 3, id: o + "-3", keys: [o * 12 + 6, o * 12 + 8, o * 12 + 10] }; };
 /* くろい けんばんを おしたら、その グループ（ふたつ／みっつ）を まとめて ならす */
+/* こどもが くろい けんばんを おした ときは、どの ばめんでも グループごと（ふたつ いっぺん／みっつ いっぺん）ならす */
+let KEYTAP = null;
+{ const _play = P.play.bind(P); P.play = (m, ...a) => { if (KEYTAP === m && isBlack(m)) { KEYTAP = null; groupOf(m).keys.forEach(k => _play(k, ...a)); return; } return _play(m, ...a); }; }
 const gp = (m, dur = .6, vol = .22) => { if (isBlack(m)) P.chord(groupOf(m).keys, 0, dur, vol * .8); else P.play(m, 0, dur, vol); };
 /* ねんれいで くりかえしの かずを かえる：1さい＝ぜんぶ、2さい＝ひとつとばし、3さい〜＝ふたつとばし（さいていでも 3こ） */
 function byAge(list, min = 3) {
@@ -141,7 +144,7 @@ function keyboard(low, octaves, onKey) {
   keys.addEventListener("pointerdown", e => {
     e.preventDefault(); const m = hit(e); const el = els[m];
     if (el && !isBlack(m)) { el.classList.add("down"); setTimeout(() => el.classList.remove("down"), 180); }
-    if (onKey) onKey(m, el); else P.play(m, 0, 0.9);
+    KEYTAP = m; try { if (onKey) onKey(m, el); else P.play(m, 0, 0.9); } finally { KEYTAP = null; }
   });
   box.els = els; box.keys = keys; box.nW = nW; box.low = low; box.onKey = onKey;
   const bx = m => (Math.floor((m - low) / 12) * 7 + BLACK_PC[m % 12] + 1) / nW * 100;
