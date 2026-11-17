@@ -1,4 +1,4 @@
-const APPV = "20261117a";
+const APPV = "20261117b";
 /* iPhone は「ズームしない」設定を むしするので、2かい つづけて たたいた ときの ズームと、ピンチの ズームを ここで とめる */
 (function () {
   let last = 0;
@@ -123,10 +123,37 @@ function go(name, back) {
   /* つづきから：さいごに いた レッスンの ばめんを ほぞん */
   if (name !== "home" && !/^intro/.test(name)) S.last = name;
   S.scene = name; save();
-  const bb = $("backBtn"); if (bb) bb.hidden = name === "home"; view.innerHTML = ""; const sc = document.createElement("section"); sc.className = "scene"; view.appendChild(sc);
+  drawSteps(name); view.innerHTML = ""; const sc = document.createElement("section"); sc.className = "scene"; view.appendChild(sc);
   SCENES[name](sc); window.scrollTo(0, 0);
 }
 function goBack() { $("sheet").hidden = true; const prev = (S.nav || []).pop(); go(prev && SCENES[prev] ? prev : "home", true); }
+/* レッスンの ばめんの ならび：上の 点で「いま どこ」が わかる。左右に スライドで まえ・つぎ */
+const SEQ = {
+  intro: ["intro1", "intro2", "intro3", "intro4", "intro5"],
+  sk: ["sk1", "sk2", "sk3", "sk4", "sk5", "skend"],
+  w2: ["w2a", "w2b", "w2s1", "w2c", "w2s2", "w2end"],
+  l1: ["lesson1", "lesson1find", "lesson1quiz", "lesson1piano", "lesson1end"],
+  l2: ["l2a", "l2b", "l2c", "l2d", "l2e", "l2f", "l2g", "l2end"],
+  g3: ["g3", "g3end"],
+  r4: ["r4i", "r4j", "r4a", "r4b", "r4c", "r4end"]
+};
+const seqOf = name => { for (const k in SEQ) { const i = SEQ[k].indexOf(name); if (i >= 0) return { list: SEQ[k], i }; } return null; };
+function drawSteps(name) {
+  const home = name === "home", hb = $("homeBtn"), st = $("steps");
+  if (hb) hb.hidden = home;
+  const q = seqOf(name); if (!st) return;
+  if (!q || home) { st.hidden = true; return; }
+  st.hidden = false;
+  $("stepDots").innerHTML = q.list.map((_, k) => `<i class="${k < q.i ? "done" : k === q.i ? "now" : ""}"></i>`).join("");
+  $("prevBtn").disabled = q.i === 0 && !(S.nav && S.nav.length);
+  $("nextBtn").disabled = q.i === q.list.length - 1 || (name === "intro1" && !S.name);
+}
+function stepGo(dir) {
+  const q = seqOf(S.scene); $("sheet").hidden = true;
+  if (dir < 0) { if (q && q.i > 0) go(q.list[q.i - 1], true); else goBack(); return; }
+  if (!q || q.i >= q.list.length - 1 || (S.scene === "intro1" && !S.name)) return;
+  P.ac(); go(q.list[q.i + 1]);
+}
 const next = (sc, label, to, cls = "") => { const b = document.createElement("button"); b.className = "btn big " + cls; b.textContent = label; b.onclick = () => { P.ac(); go(to); }; sc.appendChild(b); return b; };
 
 SCENES.home = sc => {
@@ -1085,7 +1112,18 @@ $("parentBtn").onclick = () => {
   const ck = S.check || {}; $("sheetIn").querySelectorAll("[data-c]").forEach(c => { c.checked = !!ck[c.dataset.c]; c.onchange = () => { S.check = { ...(S.check || {}), [c.dataset.c]: c.checked }; save(); }; });
   $("sheet").hidden = false; $("closeSheet").onclick = () => { $("sheet").hidden = true; };
 };
-$("backBtn").onclick = goBack;
+$("homeBtn").onclick = () => { $("sheet").hidden = true; go("home"); };
+$("prevBtn").onclick = () => stepGo(-1);
+$("nextBtn").onclick = () => stepGo(1);
+/* 指で 左右に スライド（けんばんの 上では しない） */
+(function () {
+  let x0 = 0, y0 = 0, ok = false;
+  document.addEventListener("touchstart", e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; ok = e.touches.length === 1 && !e.target.closest(".kbd, .keys, input, textarea, .sheet, .dragzone"); }, { passive: true });
+  document.addEventListener("touchend", e => {
+    if (!ok || S.scene === "home") return; const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) stepGo(dx < 0 ? 1 : -1);
+  }, { passive: true });
+})();
 $("sheet").addEventListener("click", e => { if (e.target.id === "sheet") $("sheet").hidden = true; });
 
 showCoins();
