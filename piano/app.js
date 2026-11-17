@@ -1,4 +1,4 @@
-const APPV = "20261117k";
+const APPV = "20261117l";
 /* iPhone は「ズームしない」設定を むしするので、2かい つづけて たたいた ときの ズームと、ピンチの ズームを ここで とめる */
 (function () {
   let last = 0;
@@ -170,6 +170,8 @@ function go(name, back) {
   goTo(name, back);
 }
 function goTo(name, back) {
+  /* ちいさい子の「しろ と くろ」：画面に 文字や キャラクターを 出さない。耳で きいて、目で 見るのは 白と黒の 色だけ */
+  document.body.classList.toggle("quiet", /^sk[1-5]$/.test(name));
   if (cleanup) { try { cleanup(); } catch (e) { } cleanup = null; }
   S.nav = S.nav || [];
   if (!back && name !== "home" && S.scene && S.scene !== "home" && S.scene !== name) { S.nav.push(S.scene); S.nav = S.nav.slice(-40); }

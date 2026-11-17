@@ -216,3 +216,6 @@ input.name{font:inherit;font-size:24px;font-weight:700;border:2.5px dashed #D9C3
 .agerow{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
 .agerow button{font:inherit;font-weight:800;min-width:42px;min-height:38px;border-radius:999px;border:2px solid #E6D6BC;background:#fff}
 .agerow button.on{background:var(--sun);border-color:#E0A82E}
+/* ちいさい子の しろ・くろ：文字・キャラクター・点を かくす（色だけ） */
+body.quiet .scene .hero, body.quiet .scene .lesson-tag, body.quiet .scene .say, body.quiet .scene .dots, body.quiet .scene .knocks,
+body.quiet .fill-word, body.quiet .fill-cat, body.quiet .fill-tap, body.quiet .rk-wrap .small{display:none !important}
