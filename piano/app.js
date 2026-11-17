@@ -1,4 +1,4 @@
-const APPV = "20261117g";
+const APPV = "20261117h";
 /* iPhone は「ズームしない」設定を むしするので、2かい つづけて たたいた ときの ズームと、ピンチの ズームを ここで とめる */
 (function () {
   let last = 0;
@@ -58,6 +58,8 @@ async function nameLoad() { const db = await nameDB(); if (!db) return; await ne
 async function nameSave(b) { nameBlob = b; const db = await nameDB(); if (!db) return; await new Promise(ok => { const t = db.transaction("k", "readwrite"); t.objectStore("k").put(b, "name"); t.oncomplete = ok; t.onerror = ok; }); }
 /* なまえを よぶ：録音が あれば その声、なければ 何も ならさない（文字には いつも 出す） */
 function playName() {
+  /* なまえの こえは つかわない（ほかの こえと あわないため・2026-11-17） */
+  return Promise.resolve();
   if (!nameBlob) return Promise.resolve(false);
   const a = new Audio(URL.createObjectURL(nameBlob));
   if (window.MisoListen) MisoListen.mute(2500);
@@ -852,7 +854,7 @@ function freePlay(sc, o) {
     if (good) {
       n++; meter.firstChild.style.width = Math.min(100, n / GOAL * 100) + "%";
       if (el) { el.classList.remove("found"); void el.offsetWidth; el.classList.add("found"); setTimeout(() => el.classList.remove("found"), 250); }
-      if (n === GOAL) { say.className = "say ok"; say.textContent = "じょうず！"; sv("じょうず！"); }
+      if (n === GOAL) { say.className = "say ok"; say.textContent = "じょうず！"; sv("じょうず！"); setTimeout(endPlay, 900); }
     } else {
       const now = Date.now(); if (now - lastWrong < 1200) return; lastWrong = now;
       missOne(); say.className = "say ng"; say.textContent = o.wrong; sv(o.wrong);
@@ -865,14 +867,17 @@ function freePlay(sc, o) {
   startBtn.onclick = () => {
     startBtn.hidden = true; P.ac(); playing = true; n = 0; say.className = "say"; say.textContent = "すきなように ひいてね♪";
     stop = pad(o.color === "w" ? PAD_WHITE : PAD_BLACK);
-    setTimeout(() => {
+    endT = setTimeout(endPlay, 18000);
+  };
+  let endT = 0, ended = false;
+  function endPlay() {
+      if (ended || !playing) return; ended = true; clearTimeout(endT);
       playing = false; if (stop) stop(); stop = null;
       if (n >= 6) { cheer(say, o.done); P.pinpon(); earn(n >= GOAL ? 2 : 1, meter); }
       else { say.className = "say"; say.textContent = o.more; sv(o.more); }
       const again = document.createElement("button"); again.className = "btn light"; again.textContent = "もういちど ひく"; again.onclick = () => go(S.scene); sc.appendChild(again);
       next(sc, "つぎへ", o.next);
-    }, 18000);
-  };
+  }
   const prev = cleanup; cleanup = () => { playing = false; if (stop) stop(); if (prev) prev(); };
 }
 
