@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>教材紹介動画 声の録音</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root{--paper:#FBF3E4;--ink:#3B2F27;--ink2:#7A6656;--sun:#F2B544;--sun2:#E0962B;--sky:#7FB2D6;--sky2:#4F8DBA;--rose:#E98C7E;--leaf:#8DBF7A}
+*{box-sizing:border-box;touch-action:manipulation}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;
+  padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 120px max(12px,env(safe-area-inset-left))}
+.wrap{max-width:620px;margin:0 auto}
+h1{font-size:22px;margin:6px 0 2px}
+.lead{font-size:14px;color:var(--ink2);margin:0 0 10px;line-height:1.6}
+.prog{position:sticky;top:0;z-index:5;background:var(--paper);padding:8px 0;display:flex;align-items:center;gap:10px;font-weight:900}
+.bar{flex:1;height:12px;background:#E6D6BC;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--leaf);width:0;transition:width .3s}
+h2{font-size:17px;margin:18px 0 6px;color:var(--sky2)}
+.line{background:#fff;border-radius:18px;padding:12px;margin:8px 0;box-shadow:0 3px 0 #E6D6BC}
+.line.done{box-shadow:0 0 0 2px var(--leaf),0 3px 0 #E6D6BC}
+.line.rec{box-shadow:0 0 0 3px var(--rose)}
+.id{font-size:12px;font-weight:900;color:var(--ink2)}
+.txt{font-size:19px;font-weight:700;line-height:1.6;margin:2px 0 10px}
+.note{font-size:13px;color:var(--rose);font-weight:700}
+.btns{display:flex;gap:8px}
+button{font:inherit;font-weight:900;border:0;border-radius:14px;min-height:48px;padding:6px 12px;cursor:pointer}
+.r{flex:2;background:var(--rose);color:#fff;font-size:18px}
+.line.rec .r{background:#C0392B;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.75}}
+.p{flex:1;background:var(--sky);color:#fff}
+.p[disabled]{opacity:.35}
+.ok{font-size:22px;color:var(--leaf);align-self:center;width:28px;text-align:center}
+.foot{position:fixed;left:0;right:0;bottom:0;background:rgba(251,243,228,.97);padding:10px max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-bottom));box-shadow:0 -2px 0 #E6D6BC;z-index:6}
+.foot .in{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.send{background:var(--sun);box-shadow:0 4px 0 var(--sun2);font-size:19px;width:100%}
+.linkbox{background:#fff;border-radius:14px;padding:10px;box-shadow:0 0 0 2px var(--leaf)}
+.linkbox .lt{font-size:14px;font-weight:700;line-height:1.5;margin-bottom:6px}
+.copy{width:100%;background:var(--leaf);color:#fff;font-size:18px}
+.linkbox textarea{width:100%;height:60px;font-size:12px;margin-top:6px}
+.msg{font-size:13px;color:var(--ink2);text-align:center;min-height:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎙 教材紹介動画 声の録音</h1>
+  <p class="lead">「● 録音」を押して読み、もう一度押すと止まります。「▶ 聞く」で確認して、やり直したいときはもう一度「● 録音」。<br>途中でやめても、録った声はこのスマホに残ります。送るときは、いちばん下の「まとめて送る」→「コピー」を押して、Claude のチャットに貼りつけるだけです。</p>
+  <div class="prog"><span id="cnt">0 / 0</span><div class="bar"><i id="bar"></i></div></div>
+  <div id="list"></div>
+</div>
+<div class="foot"><div class="in"><div id="linkbox" class="linkbox" hidden><div class="lt"></div><button type="button" class="copy">📋 コピー</button><textarea hidden readonly></textarea></div><button class="send" id="send">まとめて送る</button><div class="msg" id="msg"></div></div></div>
+<script src="../config.js"></script>
+<script>
+"use strict";
+const SCRIPT = [
+ ["P","教材紹介動画（販売ページ用）",[
+  "みそそっフィの絶対音感教材です。絵本3冊と、CD12枚分の音源、ビデオ2本、そして40本のプレイリストがあります。",
+  "メインブック「くりーと、このおと なぁに？」。お話を読みながら音源を聴いて、絶対音感を感覚的に育てていきます。",
+  "絵本は、YouTubeのアニメでも楽しめます。",
+  "プレブックでは、キャラクターと一緒に歌って、絶対音感を強化します。",
+  "エクササイズブックでは、リズムを見て手をたたき、リズム感の基礎を育てます。",
+  "プロの演奏家の演奏を厳選した、YouTubeのプレイリストもついています。",
+  "毎日の宿題は、アプリに届きます。聴いて、まねして、歌って、録音して送ります。",
+  "胎児から6歳まで、おうちで、耳を育てていきましょう。"]],
+];
+
+/* ---- このスマホの中に保存（IndexedDB） ---- */
+let db = null;
+const openDB = () => new Promise(ok => { try { const r = indexedDB.open("miso-promo-voice", 1); r.onupgradeneeded = () => r.result.createObjectStore("clips"); r.onsuccess = () => ok(db = r.result); r.onerror = () => ok(null); } catch (e) { ok(null); } });
+const dbPut = (k, v) => new Promise(ok => { if (!db) return ok(); const t = db.transaction("clips", "readwrite"); t.objectStore("clips").put(v, k); t.oncomplete = ok; t.onerror = ok; });
+const dbAll = () => new Promise(ok => { if (!db) return ok({}); const out = {}, t = db.transaction("clips"), s = t.objectStore("clips"); const c = s.openCursor(); c.onsuccess = () => { const r = c.result; if (r) { out[r.key] = r.value; r.continue(); } else ok(out); }; c.onerror = () => ok(out); });
+const clips = {};   // id → Blob
+
+const list = document.getElementById("list"); const rows = {}; let total = 0;
+SCRIPT.forEach(([g, title, lines]) => {
+  const h = document.createElement("h2"); h.textContent = `録音${g}：${title}`; list.appendChild(h);
+  lines.forEach((raw, i) => {
+    const [text, note] = raw.split("|"), id = g + (i + 1); total++;
+    const d = document.createElement("div"); d.className = "line"; d.id = "L" + id;
+    d.innerHTML = `<div class="id">${id}</div><div class="txt"></div>${note ? `<div class="note">（${note}）</div>` : ""}
+      <div class="btns"><button class="r" type="button">● 録音</button><button class="p" type="button" disabled>▶ 聞く</button><span class="ok"></span></div>`;
+    d.querySelector(".txt").textContent = text; list.appendChild(d);
+    rows[id] = d; d.querySelector(".r").onclick = () => toggleRec(id); d.querySelector(".p").onclick = () => play(id);
+  });
+});
+function refresh() {
+  let n = 0; for (const id in rows) { const has = !!clips[id]; rows[id].classList.toggle("done", has); rows[id].querySelector(".p").disabled = !has; rows[id].querySelector(".ok").textContent = has ? "✓" : ""; if (has) n++; }
+  document.getElementById("cnt").textContent = `${n} / ${total}`; document.getElementById("bar").style.width = (n / total * 100) + "%";
+}
+
+/* ---- 録音 ----
+   iPhone の Safari は、同じマイクを2回目に使うと録音が空になることがあるので、
+   1行ごとにマイクを開き直し、終わったら必ずマイクを閉じる。 */
+let cur = null, player = null;   // cur = { id, rec, stream, chunks }
+const mime = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
+function stopCur() {
+  return new Promise(ok => {
+    if (!cur) return ok(); const c = cur; cur = null;
+    c.rec.addEventListener("stop", () => ok(), { once: true });
+    try { if (c.rec.state !== "inactive") c.rec.stop(); else ok(); } catch (e) { ok(); }
+  });
+}
+async function toggleRec(id) {
+  if (player) { player.pause(); player = null; }
+  const wasId = cur && cur.id; await stopCur(); if (wasId === id) return;
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+  catch (e) { msg("マイクが使えませんでした。設定でマイクを許可してください。"); return; }
+  const chunks = [], rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined), row = rows[id];
+  cur = { id, rec, stream, chunks };
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    const b = new Blob(chunks, { type: rec.mimeType || mime || "audio/mp4" });
+    row.classList.remove("rec"); row.querySelector(".r").textContent = "● 録音";
+    if (b.size > 800) { clips[id] = b; await dbPut(id, b); msg(`${id} を保存しました`); } else msg(`${id} がうまく録れませんでした。もう一度どうぞ`);
+    refresh();
+  };
+  rec.start(500); row.classList.add("rec"); row.querySelector(".r").textContent = "■ 止める"; msg(`${id} 録音中…`);
+}
+function play(id) { if (!clips[id]) return; if (player) player.pause(); player = new Audio(URL.createObjectURL(clips[id])); player.play().catch(() => { }); }
+const msg = t => { document.getElementById("msg").textContent = t; };
+
+/* ---- まとめて1つのファイル（zip）にする ---- */
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = u => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+async function makeZip(files) {
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  for (const [name, blob] of files) {
+    const data = new Uint8Array(await blob.arrayBuffer()), nm = enc.encode(name), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, nm.length, true);
+    parts.push(h.buffer, nm, data);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    central.push(c.buffer, nm); off += 30 + nm.length + data.length;
+  }
+  const csize = central.reduce((a, b) => a + b.byteLength, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...central, e.buffer], { type: "application/zip" });
+}
+/* ---- 送る：練習アプリと同じログインで、声を Supabase（練習アプリの保存場所）に上げ、
+   チャットに貼るリンクを作る。ログインしていないときは、ファイルで送る。 */
+async function getSession() {
+  const C = window.MISOSOFI_CONFIG; if (!C) return null;
+  let s = null; try { s = JSON.parse(localStorage.getItem("misosofi-auth") || "null"); } catch (e) { }
+  if (s && s.currentSession) s = s.currentSession;
+  if (!s || !s.access_token || !s.user) return null;
+  if ((s.expires_at || 0) * 1000 < Date.now() + 60000 && s.refresh_token) {
+    try {
+      const r = await fetch(C.supabaseUrl + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: { apikey: C.supabaseAnonKey, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: s.refresh_token }) });
+      if (r.ok) { const n = await r.json(); s = n; try { localStorage.setItem("misosofi-auth", JSON.stringify(n)); } catch (e) { } } else return null;
+    } catch (e) { return null; }
+  }
+  return s;
+}
+async function uploadZip(file) {
+  const C = window.MISOSOFI_CONFIG, s = await getSession(); if (!s) return null;
+  const path = `${s.user.id}/promo-voice/${file.name}`, h = { apikey: C.supabaseAnonKey, Authorization: "Bearer " + s.access_token };
+  const up = await fetch(`${C.supabaseUrl}/storage/v1/object/recordings/${path}`, { method: "POST", headers: { ...h, "Content-Type": "application/zip", "x-upsert": "true" }, body: file });
+  if (!up.ok) return null;
+  const sg = await fetch(`${C.supabaseUrl}/storage/v1/object/sign/recordings/${path}`, { method: "POST", headers: { ...h, "Content-Type": "application/json" }, body: JSON.stringify({ expiresIn: 60 * 60 * 24 * 7 }) });
+  if (!sg.ok) return null; const j = await sg.json(); const u = j.signedURL || j.signedUrl; if (!u) return null;
+  return C.supabaseUrl + "/storage/v1" + (u.startsWith("/") ? u : "/" + u);
+}
+function showLink(url, n) {
+  const box = document.getElementById("linkbox"); box.hidden = false;
+  box.querySelector(".lt").textContent = `${n}個の声を送れる形にしました。下の「コピー」を押して、Claude のチャットに貼りつけて送ってください。`;
+  const b = box.querySelector("button"); b.textContent = "📋 コピー";
+  b.onclick = async () => { try { await navigator.clipboard.writeText("ピアノのえほん 声：" + url); b.textContent = "✓ コピーしました。チャットに貼りつけてね"; } catch (e) { box.querySelector("textarea").hidden = false; box.querySelector("textarea").value = url; box.querySelector("textarea").select(); b.textContent = "下の文字を長押ししてコピーしてね"; } };
+}
+document.getElementById("send").onclick = async () => {
+  await stopCur();
+  const order = Object.keys(rows).filter(id => clips[id]); if (!order.length) { msg("まだ録音がありません"); return; }
+  const ext = t => /mp4|m4a|aac/.test(t) ? "m4a" : /ogg/.test(t) ? "ogg" : "webm";
+  msg("まとめています…");
+  const zip = await makeZip(order.map(id => [`${id}.${ext(clips[id].type)}`, clips[id]]));
+  const d = new Date(), stamp = `${d.getMonth() + 1}${String(d.getDate()).padStart(2, "0")}-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
+  const file = new File([zip], `promo-voice-${stamp}.zip`, { type: "application/zip" });
+  msg("送っています…");
+  let url = null; try { url = await uploadZip(file); } catch (e) { }
+  if (url) { msg(""); showLink(url, order.length); return; }
+  msg("練習アプリにログインしていないので、ファイルで送ります");
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: "ピアノのえほん 声" }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+};
+
+openDB().then(dbAll).then(all => { Object.assign(clips, all); refresh(); });
+refresh();
+</script>
+</body>
+</html>
