@@ -104,7 +104,8 @@ async function toggleRec(id) {
   if (player) { player.pause(); player = null; }
   const wasId = cur && cur.id; await stopCur(); if (wasId === id) return;
   let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+  try { if (navigator.audioSession) navigator.audioSession.type = "play-and-record"; } catch (e) { }
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1, sampleRate: 48000 } }); }
   catch (e) { msg("マイクが使えませんでした。設定でマイクを許可してください。"); return; }
   const chunks = [], rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined), row = rows[id];
   cur = { id, rec, stream, chunks };
@@ -118,7 +119,10 @@ async function toggleRec(id) {
   };
   rec.start(500); row.classList.add("rec"); row.querySelector(".r").textContent = "■ 止める"; msg(`${id} 録音中…`);
 }
-function play(id) { if (!clips[id]) return; if (player) player.pause(); player = new Audio(URL.createObjectURL(clips[id])); player.play().catch(() => { }); }
+function play(id) { if (!clips[id]) return; if (player) player.pause();
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) { }
+  player = new Audio(URL.createObjectURL(clips[id])); player.volume = 1; player.setAttribute("playsinline", "");
+  player.play().then(() => msg(`${id} を再生中…（聞こえないときは、iPhoneの音量を上げて、横のマナーモードのスイッチを切ってください）`)).catch(() => msg("再生できませんでした。もう一度「▶ 聞く」を押してください")); }
 const msg = t => { document.getElementById("msg").textContent = t; };
 
 /* ---- まとめて1つのファイル（zip）にする ---- */
